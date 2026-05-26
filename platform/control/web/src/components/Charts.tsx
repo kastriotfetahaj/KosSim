@@ -128,7 +128,13 @@ export function LineChart({
   }
   return (
     <div className="chart line-chart">
-      <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" width="100%" height={height}>
+      <div className="chart-plot">
+        <div className="chart-y">
+          <span>{`${formatNumber(max)}${suffix}`}</span>
+          <span>{`${formatNumber((max + min) / 2)}${suffix}`}</span>
+          <span>{`${formatNumber(min)}${suffix}`}</span>
+        </div>
+        <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" width="100%" height={height}>
         {[0.25, 0.5, 0.75].map((p) => (
           <line
             key={p}
@@ -163,7 +169,8 @@ export function LineChart({
             </g>
           );
         })}
-      </svg>
+        </svg>
+      </div>
       <div className="chart-x">
         {sampleLabels(data.labels).map((l) => (
           <span key={l}>{l}</span>

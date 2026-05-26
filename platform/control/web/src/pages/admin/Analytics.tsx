@@ -64,7 +64,7 @@ export default function Analytics() {
         <Stat value={data.first_bloods.length} label="First bloods" />
       </div>
 
-      <div className="grid grid-2">
+      <div className="grid analytics-grid">
         <section className="card">
           <div className="card-header">
             <h2>Top team score history</h2>
