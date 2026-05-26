@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { admin, type WikiPage } from "../../api";
 import { usePoll } from "../../hooks";
 
@@ -27,21 +27,23 @@ export default function Wiki() {
 
   const pages: WikiPage[] = data?.rows ?? [];
 
-  useEffect(() => {
-    if (selected === "new") setDraft(EMPTY);
-    else if (selected) {
-      const p = pages.find((x) => x.slug === selected);
-      if (p) {
-        setDraft({
-          slug: p.slug,
-          title: p.title,
-          body_md: p.body_md ?? "",
-          is_published: p.is_published,
-          sort_order: p.sort_order,
-        });
-      }
+  // Load a page into the draft when it is selected from the list. Doing this
+  // on the click (instead of in an effect keyed on `pages`) means the 30s
+  // list poll no longer clobbers in-progress edits.
+  const selectPage = (slug: string) => {
+    const p = pages.find((x) => x.slug === slug);
+    setSelected(slug);
+    setMsg(null);
+    if (p) {
+      setDraft({
+        slug: p.slug,
+        title: p.title,
+        body_md: p.body_md ?? "",
+        is_published: p.is_published,
+        sort_order: p.sort_order,
+      });
     }
-  }, [selected, pages]);
+  };
 
   const save = async () => {
     if (!draft.slug.trim() || !draft.title.trim()) {
@@ -115,7 +117,7 @@ export default function Wiki() {
                 <button
                   className={`nav-item ${selected === p.slug ? "active" : ""}`}
                   style={{ width: "100%", textAlign: "left" }}
-                  onClick={() => setSelected(p.slug)}
+                  onClick={() => selectPage(p.slug)}
                 >
                   {p.title}
                   {!p.is_published && (
