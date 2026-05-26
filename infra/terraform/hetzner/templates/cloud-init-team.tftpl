@@ -11,6 +11,9 @@ runcmd:
   - echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo $VERSION_CODENAME) stable" > /etc/apt/sources.list.d/docker.list
   - apt-get update
   - apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+  - echo "iptables-persistent iptables-persistent/autosave_v4 boolean false" | debconf-set-selections
+  - echo "iptables-persistent iptables-persistent/autosave_v6 boolean false" | debconf-set-selections
+  - DEBIAN_FRONTEND=noninteractive apt-get install -y iptables-persistent
   - systemctl enable --now docker
   - mkdir -p /opt/${competition_name}
   - git clone ${repo_url} /opt/${competition_name}
@@ -27,3 +30,20 @@ runcmd:
     TEAM_SERVICE_5_PORT=${service_5_port}
     EOF
   - cd /opt/${competition_name} && docker compose -f infra/compose/team-stack.yml --env-file infra/compose/.env.${team_name} up -d --build
+  # --- Transparent NAT for ALL protocols: present this team's private IP as the single egress identity ---
+  - echo "net.ipv4.ip_forward=1" > /etc/sysctl.d/99-kossim-nat.conf
+  - sysctl --system
+  - |
+    PRIVATE_CIDR="${private_cidr}"
+    TEAM_IP="${team_private_ip}"
+    # Interface that holds this team's private (competition) address.
+    NAT_IF="$(ip -o -4 addr show to "$PRIVATE_CIDR" | awk '{print $2; exit}')"
+    [ -n "$NAT_IF" ] || NAT_IF="$(ip -o -4 route show default | awk '{print $5; exit}')"
+    # Forward competition traffic in both directions for every protocol.
+    iptables -C FORWARD -s "$PRIVATE_CIDR" -j ACCEPT 2>/dev/null || iptables -A FORWARD -s "$PRIVATE_CIDR" -j ACCEPT
+    iptables -C FORWARD -d "$PRIVATE_CIDR" -j ACCEPT 2>/dev/null || iptables -A FORWARD -d "$PRIVATE_CIDR" -j ACCEPT
+    # Masquerade every protocol leaving this host toward the competition network as TEAM_IP.
+    # Inserted at the top of POSTROUTING so it wins over Docker's per-bridge MASQUERADE.
+    iptables -t nat -C POSTROUTING -d "$PRIVATE_CIDR" ! -s "$PRIVATE_CIDR" -o "$NAT_IF" -j SNAT --to-source "$TEAM_IP" 2>/dev/null \
+      || iptables -t nat -I POSTROUTING 1 -d "$PRIVATE_CIDR" ! -s "$PRIVATE_CIDR" -o "$NAT_IF" -j SNAT --to-source "$TEAM_IP"
+    netfilter-persistent save

@@ -225,6 +225,9 @@ scp root@&lt;vpn_public_ipv4&gt;:/etc/wireguard/clients/team1/team1-user1.conf .
       <h2>NAT Identity Requirement</h2>
       <p><strong>What:</strong> Team-originated attacks should appear from team NAT/host IP, not internal container IP.</p>
       <p><strong>Why:</strong> Keeps source identity model realistic and consistent with production-like routing.</p>
+      <p><strong>How:</strong> Each team host is provisioned as a kernel NAT gateway by cloud-init &mdash; it enables <code>net.ipv4.ip_forward</code> and installs a persistent <code>iptables</code> rule
+        <code>POSTROUTING -d &lt;private_cidr&gt; ! -s &lt;private_cidr&gt; -j SNAT --to-source &lt;team_private_ip&gt;</code>.
+        This masks <em>all protocols</em> (TCP, UDP, ICMP, raw) leaving the host toward the competition network as the team's private IP, not just HTTP via the <code>nat-gateway</code> proxy. The rule is inserted at the top of <code>POSTROUTING</code> so it takes precedence over Docker's per-bridge masquerade, and saved with <code>netfilter-persistent</code> so it survives reboot.</p>
     </section>
 
     <section class="card">
