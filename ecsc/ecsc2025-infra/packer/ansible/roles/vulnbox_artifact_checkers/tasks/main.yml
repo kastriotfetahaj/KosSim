@@ -1,0 +1,116 @@
+---
+# - name: Create /services
+#   ansible.builtin.file:
+#     path: /services
+#     state: directory
+#     mode: "0755"
+
+- name: "Template vulnbox-artifacts path"
+  ansible.builtin.set_fact:
+    vulnbox_artifact_checkers_local_repo_path: "./services/{{ inventory_hostname }}/vulnbox_artifacts"
+
+- name: Clean local services cache
+  become: false
+  ansible.builtin.file:
+    path: "{{ vulnbox_artifact_checkers_local_repo_path }}"
+    state: absent
+    mode: "0755"
+  delegate_to: localhost
+
+- name: "Pull vulnbox-repo"
+  become: false
+  ansible.builtin.git: # noqa: latest
+    repo: "{{ vulnbox_artifact_checkers_repo_url }}"
+    dest: "{{ vulnbox_artifact_checkers_local_repo_path }}"
+  delegate_to: localhost
+
+- name: "Get submodule urls"
+  become: false
+  ansible.builtin.command:
+    argv: ["git", "submodule", "--quiet", "foreach", "git", "remote", "get-url", "origin"]
+    chdir: "{{ vulnbox_artifact_checkers_local_repo_path }}"
+  delegate_to: "localhost"
+  register: vulnbox_artifact_checkers_submodule_urls
+
+- name: 'Log builder into "artifact" registry'
+  ansible.builtin.command:
+    argv:
+      - docker
+      - login
+      - "--username"
+      - "{{ vulnbox_artifact_checkers_registry.username }}"
+      - "--password-stdin"
+      - "{{ vulnbox_artifact_checkers_registry.server }}"
+    stdin: "{{ vulnbox_artifact_checkers_registry.password }}\n"
+  delegate_to: localhost
+
+- name: "Run build step"
+  become: false
+  ansible.builtin.command:
+    chdir: "{{ vulnbox_artifact_checkers_local_repo_path }}"
+    argv: ["bash", "build_artifacts.sh"]
+  delegate_to: localhost
+  changed_when: true
+
+- name: "Copy checkers to checker"
+  ansible.posix.synchronize:
+    src: "{{ vulnbox_artifact_checkers_local_repo_path }}/checker_build/"
+    dest: "/root/checkers"
+    rsync_path: "sudo rsync"
+
+- name: "Find checkers on vulnbox"
+  ansible.builtin.find:
+    paths: "/root/checkers"
+    recurse: false
+    file_type: directory
+  register: vulnbox_artifact_checkers_checker_directories
+
+- name: "Load all provided docker images"
+  ansible.builtin.shell:
+    executable: /usr/bin/bash
+    cmd: |
+      shopt -s nullglob
+      for image_tar in images/*; do
+        echo "Loading image tar $image_tar";
+        docker load -i "$image_tar";
+      done
+    chdir: "{{ item.path }}"
+  with_items: "{{ vulnbox_artifact_checkers_checker_directories.files }}"
+
+- name: "Prepare checker"
+  ansible.builtin.include_tasks:
+    file: "prepare_checker.yml"
+  loop: "{{ vulnbox_artifact_checkers_checker_directories.files }}"
+  loop_control:
+    loop_var: checker_item
+
+
+# - name: "Pre-Start services"
+#   ansible.builtin.command:
+#     argv: ["docker", "compose", "up", "--build", "-d"]
+#     chdir: "{{ item.path }}"
+#   with_items: "{{ vulnbox_artifact_checkers_checker_directories.files }}"
+
+# - name: "Set up systemd unit"
+#   ansible.builtin.copy:
+#     src: start-vulnservices.service
+#     dest: /etc/systemd/system/start-vulnservices.service
+#     mode: "0644"
+
+# - name: "Pre-Start services"
+#   ansible.builtin.command:
+#     argv: ["systemctl", "enable", "start-vulnservices.service"]
+
+
+### load checker repos just in case
+- name: Create /root/checker_repos_backup
+  ansible.builtin.file:
+    path: "/root/checker_repos_backup"
+    state: directory
+    mode: "0755"
+
+- name: "Clone checker backups"
+  ansible.builtin.command:
+    argv: ["git", "clone", "{{ item }}"]
+    chdir: "/root/checker_repos_backup"
+  with_items: "{{ vulnbox_artifact_checkers_submodule_urls.stdout_lines }}"

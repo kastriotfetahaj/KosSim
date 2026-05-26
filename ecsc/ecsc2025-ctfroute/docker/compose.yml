@@ -1,0 +1,205 @@
+name: ctfr
+
+volumes:
+  metrics:
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+      o: "size=100M"
+
+networks:
+  public:
+    ipam:
+      config:
+        - subnet: 10.43.2.0/24
+          gateway: 10.43.2.1
+    driver_opts:
+      com.docker.network.driver.mtu: 1500
+      com.docker.network.container_iface_prefix: ext
+
+  data-plane:
+    ipam:
+      config:
+        - subnet: 10.232.32.0/24
+    driver_opts:
+      com.docker.network.driver.mtu: 1500
+      com.docker.network.container_iface_prefix: data-plane
+
+  infra-net:
+    ipam:
+      config:
+        - subnet: 10.32.251.0/24
+          ip_range: 10.32.251.128/26
+    driver_opts:
+      com.docker.network.driver.mtu: 1420
+      com.docker.network.container_iface_prefix: infra-net
+
+services:
+  router1: &router
+    image: ci.attacking-lab.com/ctf-route/ctfroute
+    build:
+      context: ../
+      dockerfile: ./docker/Dockerfile
+      target: ctfroute
+      args:
+        PYCHARM_PYDEV_VERSION: ${PYCHARM_PYDEV_VERSION:-251.23536.40}
+    volumes:
+      - ./dumps/router1:/mnt/pcaps
+      - ./ctfroute.yml:/opt/ctfroute/ctfroute.yml
+      - metrics:/var/ctfroute/metrics/
+    working_dir: /opt/ctfroute
+    environment:
+      CTF_ROUTE_RID: 1
+    command: ctfroute ./ctfroute.yml
+    cap_add:
+      - NET_ADMIN
+    stop_grace_period: 1s
+    networks:
+      public:
+        ipv4_address: 10.43.2.11
+      data-plane:
+        aliases:
+          - router1.mesh.local
+
+  router2:
+    <<: *router
+    volumes:
+      - ./dumps/router2:/mnt/pcaps
+      - ./ctfroute.yml:/opt/ctfroute/ctfroute.yml
+      - metrics:/var/ctfroute/metrics/
+    environment:
+      CTF_ROUTE_RID: 2
+    networks:
+      public:
+        ipv4_address: 10.43.2.12
+      data-plane:
+        aliases:
+          - router2.mesh.local
+
+  router3:
+    <<: *router
+    volumes:
+      - ./dumps/router3:/mnt/pcaps
+      - ./ctfroute.yml:/opt/ctfroute/ctfroute.yml
+      - metrics:/var/ctfroute/metrics/
+    environment:
+      CTF_ROUTE_RID: 3
+    networks:
+      public:
+        ipv4_address: 10.43.2.13
+      data-plane:
+        aliases:
+          - router3.mesh.local
+
+  router-infra:
+    <<: *router
+    volumes:
+      - ./dumps/routerInfra:/mnt/pcaps
+      - ./ctfroute.yml:/opt/ctfroute/ctfroute.yml
+      - metrics:/var/ctfroute/metrics/
+    environment:
+      CTF_ROUTE_RID: infra
+    networks:
+      data-plane:
+        aliases:
+          - router-infra.mesh.local
+      infra-net:
+        ipv4_address: 10.32.251.254
+
+  vulnbox1: &vulnbox
+    image: ci.attacking-lab.com/ctf-route/ctftest
+    build:
+      context: ../
+      dockerfile: ./docker/Dockerfile
+      target: ctftest
+      args:
+        PYCHARM_PYDEV_VERSION: ${PYCHARM_PYDEV_VERSION:-251.23536.40}
+    cap_add:
+      - NET_ADMIN
+    entrypoint: /bin/sh
+    working_dir: /opt/ctfroute/
+    command: -c "wg-quick up client1 && ctftest-agent & iperf3 -s -p 1999"
+    stop_grace_period: 1s
+    volumes:
+      - ./wg-confs:/etc/wireguard:ro
+      - ./dumps/vulnbox1:/mnt/pcaps
+    networks:
+      public:
+        ipv4_address: 10.43.2.21
+
+  player:
+    <<: *vulnbox
+    volumes:
+      - ./wg-confs:/etc/wireguard:ro
+      - ./dumps/player:/mnt/pcaps
+    command: -c "wg-quick up player && iperf3 -s -p 1999"
+    networks:
+      public:
+        ipv4_address: 10.43.2.31
+
+  vulnbox2:
+    <<: *vulnbox
+    volumes:
+      - ./wg-confs:/etc/wireguard:ro
+      - ./dumps/vulnbox2:/mnt/pcaps
+    command: -c "wg-quick up client2 && ctftest-agent & iperf3 -s -p 1999"
+    networks:
+      public:
+        ipv4_address: 10.43.2.22
+
+
+  vulnbox3:
+    <<: *vulnbox
+    volumes:
+      - ./wg-confs:/etc/wireguard:ro
+      - ./dumps/vulnbox3:/mnt/pcaps
+    command: -c "wg-quick up client3 && ctftest-agent & iperf3 -s -p 1999"
+    networks:
+      public:
+        ipv4_address: 10.43.2.23
+
+  vulnbox4:
+    <<: *vulnbox
+    volumes:
+      - ./wg-confs:/etc/wireguard:ro
+      - ./dumps/vulnbox4:/mnt/pcaps
+    command: -c "wg-quick up client4 && ctftest-agent & iperf3 -s -p 1999"
+    networks:
+      public:
+        ipv4_address: 10.43.2.24
+
+  metrics:
+    image: caddy:2.10-alpine
+    networks:
+      public:
+    ports:
+      - 127.0.0.1:8032:80
+    volumes:
+      - metrics:/srv/metrics/
+    command: caddy file-server --browse --root /srv/metrics -l 0.0.0.0:80
+
+  api:
+    <<: *vulnbox
+    command: -c "fastapi run --host 0.0.0.0 --port 80 ctftest/ctftest/test_rest_server/__init__.py"
+    networks:
+      data-plane:
+    volumes:
+      - ./ctfroute.yml:/opt/ctfroute/ctfroute.yml
+    ports:
+      - 127.0.0.1:8031:80
+
+  checker:
+    <<: *vulnbox
+    networks:
+      infra-net:
+    # Route team networks over infra router, then sleep
+    command: >
+      -c "ip route add 10.32.0.0/17 via 10.32.251.254 && iperf3 -s -p 1999"
+
+  gameserver:
+    <<: *vulnbox
+    networks:
+      infra-net:
+        ipv4_address: 10.32.251.2
+    command: >
+      -c "ip route add 10.32.0.0/17 via 10.32.251.254 && iperf3 -s -p 1999"

@@ -1,0 +1,6 @@
+---
+- name: Ensure wg directory exists
+  ansible.builtin.file:
+    path: /etc/wireguard
+    state: directory
+    mode: "700"

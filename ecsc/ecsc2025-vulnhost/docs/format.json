@@ -1,0 +1,18 @@
+{
+  "vms": [
+    {
+      "team": 1,
+      "kind": "samplepod",
+      "sshkey": "ssh-rsa ...",
+      "root_password": "12345",
+      "status": "RUNNING",
+      "files": {
+        "/etc/wireguard/vulnbox.conf": {
+          "content": "TODO",
+          "permission": "0600",
+          "owner": "root:root"
+        }
+      }
+    }
+  ]
+}

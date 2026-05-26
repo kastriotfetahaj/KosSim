@@ -1,0 +1,76 @@
+---
+# Used when testing for minimal install / uninstall friction
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: longhorn-experimental
+provisioner: driver.longhorn.io
+reclaimPolicy: Delete
+allowVolumeExpansion: true
+parameters:
+  numberOfReplicas: "1"
+  dataLocality: "strict-local"
+---
+# Used for databases that have their own replication / backup mechanisms,
+# like for example elasticsearch
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: longhorn-ha-databases
+provisioner: driver.longhorn.io
+reclaimPolicy: Delete
+allowVolumeExpansion: true
+parameters:
+  numberOfReplicas: "1"
+  dataLocality: "strict-local"
+---
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: longhorn-core-ha-databases
+provisioner: driver.longhorn.io
+reclaimPolicy: Delete
+allowVolumeExpansion: true
+parameters:
+  numberOfReplicas: "1"
+  dataLocality: "strict-local"
+  nodeSelector: "core"
+---
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: longhorn-zone-replicated
+provisioner: driver.longhorn.io
+reclaimPolicy: Retain
+allowVolumeExpansion: true
+parameters:
+  numberOfReplicas: "2"
+  replicaAutoBalance: "best-effort"
+  dataLocality: "best-effort"
+---
+# Used for postgres-databases that have their own replication / backup
+# mechanisms.
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: longhorn-ha-postgres
+provisioner: driver.longhorn.io
+reclaimPolicy: Retain
+allowVolumeExpansion: true
+parameters:
+  numberOfReplicas: "1"
+  dataLocality: "strict-local"
+---
+# Used for postgres-databases that have their own replication / backup
+# mechanisms.
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: longhorn-core-replicated
+provisioner: driver.longhorn.io
+reclaimPolicy: Retain
+allowVolumeExpansion: true
+parameters:
+  numberOfReplicas: "2"
+  nodeSelector: "core"
+---

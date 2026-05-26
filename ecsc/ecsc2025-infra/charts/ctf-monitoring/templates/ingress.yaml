@@ -1,0 +1,53 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grafana-oauth2-proxy
+  labels:
+    {{- include "ctf-monitoring.labels" . | nindent 4 }}
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - grafana-{{ .Values.ctf }}.gartenverein-tackenberg.de
+  rules:
+    - host: grafana-{{ .Values.ctf }}.gartenverein-tackenberg.de
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: grafana-oauth2-proxy
+                port:
+                  name: http
+{{- if not .Values.analysisMode }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kibana-oauth2-proxy
+  labels:
+    {{- include "ctf-monitoring.labels" . | nindent 4 }}
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - kibana-{{ .Values.ctf }}.gartenverein-tackenberg.de
+  rules:
+    - host: kibana-{{ .Values.ctf }}.gartenverein-tackenberg.de
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: kibana-oauth2-proxy
+                port:
+                  name: http
+{{- end }}

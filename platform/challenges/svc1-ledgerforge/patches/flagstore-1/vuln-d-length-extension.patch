@@ -1,0 +1,25 @@
+Subject: switch settlement viewer token from sha256(secret||...) to HMAC
+
+The settlement viewer token uses raw sha256 over a message that begins with
+the server secret. SHA-256 length extension lets a holder of a valid public
+token forge a token for any extended viewer string, including one whose
+comma-split scopes contain "admin". Replace the construction with
+HMAC-SHA-256, which is immune to length extension.
+
+--- a/service/src/crypto.rs
++++ b/service/src/crypto.rs
+@@ -101,11 +101,9 @@
+ pub fn sign_settlement_token(secret: &str, id: &str, viewer_bytes: &[u8]) -> String {
+-    let mut h = Sha256::new();
+-    h.update(secret.as_bytes());
+-    h.update(b"|");
+-    h.update(id.as_bytes());
+-    h.update(b"|");
+-    h.update(viewer_bytes);
+-    hex::encode(&h.finalize()[..SETTLEMENT_TOKEN_BYTES])
++    let mut mac = HmacSha256::new_from_slice(secret.as_bytes()).unwrap();
++    mac.update(id.as_bytes());
++    mac.update(b"|");
++    mac.update(viewer_bytes);
++    hex::encode(&mac.finalize().into_bytes()[..SETTLEMENT_TOKEN_BYTES])
+ }

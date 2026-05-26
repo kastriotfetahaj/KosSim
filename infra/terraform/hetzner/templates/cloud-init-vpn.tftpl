@@ -1,0 +1,124 @@
+#cloud-config
+package_update: true
+package_upgrade: false
+
+runcmd:
+  - apt-get update
+  - apt-get install -y wireguard qrencode curl
+  - mkdir -p /etc/wireguard/clients
+  - chmod 700 /etc/wireguard /etc/wireguard/clients
+  - echo "net.ipv4.ip_forward=1" > /etc/sysctl.d/99-kossim-vpn.conf
+  - sysctl --system
+  - |
+    cat > /usr/local/bin/kossim-wireguard-setup.sh << 'EOF'
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    WG_IF="wg0"
+    WG_PORT=${vpn_udp_port}
+    WG_CLIENT_CIDR="${vpn_client_cidr}"
+    PRIVATE_CIDR="${private_cidr}"
+    TEAM_COUNT=${team_count}
+    USERS_PER_TEAM=${vpn_users_per_team}
+    CLIENT_DIR="/etc/wireguard/clients"
+
+    CIDR_IP="$(echo "$WG_CLIENT_CIDR" | cut -d/ -f1)"
+    CIDR_PREFIX="$(echo "$WG_CLIENT_CIDR" | cut -d/ -f2)"
+    IFS='.' read -r OCT1 OCT2 OCT3 OCT4 <<< "$CIDR_IP"
+
+    if [[ "$CIDR_PREFIX" != "16" ]]; then
+      echo "vpn_client_cidr must use /16 prefix for team/user addressing (current: $WG_CLIENT_CIDR)"
+      exit 1
+    fi
+
+    if (( TEAM_COUNT > 250 )); then
+      echo "team_count too high for /16 allocation: $TEAM_COUNT"
+      exit 1
+    fi
+
+    if (( USERS_PER_TEAM > 250 )); then
+      echo "vpn_users_per_team too high for /16 allocation: $USERS_PER_TEAM"
+      exit 1
+    fi
+
+    WG_SERVER_IP="$OCT1.$OCT2.0.1"
+    WG_SERVER_ADDR="$WG_SERVER_IP/$CIDR_PREFIX"
+
+    umask 077
+    mkdir -p "$CLIENT_DIR"
+
+    if [[ ! -f /etc/wireguard/server_private.key ]]; then
+      wg genkey | tee /etc/wireguard/server_private.key | wg pubkey > /etc/wireguard/server_public.key
+    fi
+
+    SERVER_PRIVATE_KEY="$(cat /etc/wireguard/server_private.key)"
+    SERVER_PUBLIC_KEY="$(cat /etc/wireguard/server_public.key)"
+
+    ENDPOINT_IP="$(curl -4 -fsSL https://ifconfig.me || true)"
+    if [[ -z "$ENDPOINT_IP" ]]; then
+      ENDPOINT_IP="$(hostname -I | awk '{print $1}')"
+    fi
+
+    cat > /etc/wireguard/$WG_IF.conf <<CFG
+[Interface]
+Address = $WG_SERVER_ADDR
+ListenPort = $WG_PORT
+PrivateKey = $SERVER_PRIVATE_KEY
+SaveConfig = false
+PostUp = iptables -A FORWARD -i $WG_IF -j ACCEPT; iptables -A FORWARD -o $WG_IF -j ACCEPT; iptables -t nat -A POSTROUTING -s $WG_CLIENT_CIDR -d $PRIVATE_CIDR -j MASQUERADE
+PostDown = iptables -D FORWARD -i $WG_IF -j ACCEPT; iptables -D FORWARD -o $WG_IF -j ACCEPT; iptables -t nat -D POSTROUTING -s $WG_CLIENT_CIDR -d $PRIVATE_CIDR -j MASQUERADE
+CFG
+
+    for team in $(seq 1 "$TEAM_COUNT"); do
+      team_name="team$team"
+      mkdir -p "$CLIENT_DIR/$team_name"
+
+      for user in $(seq 1 "$USERS_PER_TEAM"); do
+        client_name="$team_name-user$user"
+        host_octet=$((user + 1))
+        client_ip="$OCT1.$OCT2.$team.$host_octet"
+        client_private_key="$(wg genkey)"
+        client_public_key="$(printf '%s' "$client_private_key" | wg pubkey)"
+
+        cat >> /etc/wireguard/$WG_IF.conf <<PEER
+
+[Peer]
+# $client_name
+PublicKey = $client_public_key
+AllowedIPs = $client_ip/32
+PEER
+
+        client_path="$CLIENT_DIR/$team_name/$client_name.conf"
+        cat > "$client_path" <<CLIENT
+[Interface]
+PrivateKey = $client_private_key
+Address = $client_ip/32
+DNS = 1.1.1.1
+
+[Peer]
+PublicKey = $SERVER_PUBLIC_KEY
+Endpoint = $ENDPOINT_IP:$WG_PORT
+AllowedIPs = $PRIVATE_CIDR,$WG_CLIENT_CIDR
+PersistentKeepalive = 25
+CLIENT
+      done
+    done
+
+    chmod 600 /etc/wireguard/$WG_IF.conf /etc/wireguard/server_private.key /etc/wireguard/server_public.key
+    find "$CLIENT_DIR" -type f -name '*.conf' -exec chmod 600 {} \;
+    EOF
+  - chmod +x /usr/local/bin/kossim-wireguard-setup.sh
+  - /usr/local/bin/kossim-wireguard-setup.sh
+  - systemctl enable --now wg-quick@wg0
+  - |
+    cat > /etc/motd << 'EOF'
+    KosSim VPN host is ready.
+
+    Client profiles:
+      /etc/wireguard/clients/teamX/teamX-userY.conf
+
+    Useful commands:
+      wg show
+      ls -R /etc/wireguard/clients
+      qrencode -t ansiutf8 < /etc/wireguard/clients/team1/team1-user1.conf
+    EOF

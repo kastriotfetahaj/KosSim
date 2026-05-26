@@ -1,0 +1,9 @@
+track "tcp" for ("10.0.0.0/24" "fd00:ec5c::/112")
+track "ftp" for ("10.0.0.2" "fd00:ec5c::2")
+
+state new {
+  port 21 || port 80 allow
+  drop
+}
+
+allow

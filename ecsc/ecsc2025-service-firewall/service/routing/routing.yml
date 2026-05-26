@@ -1,0 +1,32 @@
+# These sidecar containers take care of the networking setup.
+# They should start simultaneously with the main containers in which they adjust the routes.
+# If those restart (on-failure), they will come back up also.
+# If they are restarted manually, make sure to also restart the corresponding routing container.
+
+x-routing:
+  service: &routing
+    image: ecsc2025-service-firewall/routing
+    build: .
+    pull_policy: never
+    restart: on-failure
+    cap_add:
+      - NET_ADMIN
+
+services:
+  routing-ftp:
+    <<: *routing
+    container_name: firewall-routing-ftp
+    network_mode: "service:ftp"
+    pid: "service:ftp"
+
+  routing-db:
+    <<: *routing
+    container_name: firewall-routing-db
+    network_mode: "service:db"
+    pid: "service:db"
+
+  routing-firewall:
+    <<: *routing
+    container_name: firewall-routing-firewall
+    network_mode: "service:firewall"
+    pid: "service:firewall"

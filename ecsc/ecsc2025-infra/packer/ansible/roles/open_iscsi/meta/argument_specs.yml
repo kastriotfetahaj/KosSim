@@ -1,0 +1,10 @@
+---
+argument_specs:
+  main:
+    short_description: "Install open_iscsi (with daemon)"
+    author:
+      - "Marc Munier"
+    options:
+      open_iscsi_daemon_enabled:
+        type: bool
+        default: false

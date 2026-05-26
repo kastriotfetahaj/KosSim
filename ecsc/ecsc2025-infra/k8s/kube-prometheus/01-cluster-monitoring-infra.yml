@@ -1,0 +1,136 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  namespace: kube-prometheus
+  name: prometheus
+---
+apiVersion: rbac.authorization.k8s.io/v1
+# This prometheus instance monitors services in many namespaces, so
+# we give it the permissions cluster-wide
+kind: ClusterRoleBinding
+metadata:
+  namespace: kube-prometheus
+  name: prometheus
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: prometheus
+subjects:
+  - kind: ServiceAccount
+    namespace: kube-prometheus
+    name: prometheus
+---
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  namespace: kube-prometheus
+  name: cluster-prometheus
+spec:
+  serviceAccountName: prometheus
+  serviceMonitorNamespaceSelector:
+    matchLabels: {}
+  serviceMonitorSelector:
+    matchLabels:
+      cluster-prometheus: "true"
+  scrapeConfigNamespaceSelector:
+    matchLabels: {}
+  scrapeConfigSelector:
+    matchLabels:
+      cluster-prometheus: "true"
+  podMonitorSelector:
+    matchLabels: { }
+  ruleSelector:
+    matchLabels: { }
+  probeSelector:
+    matchLabels: { }
+  serviceDiscoveryRole: EndpointSlice
+  scrapeClasses:
+    - name: daemonset
+      relabelings:
+        - sourceLabels: [ __meta_kubernetes_pod_node_name ]
+          targetLabel: node
+    - name: router
+      relabelings:
+        - sourceLabels: [ __meta_dns_srv_record_target ]
+          targetLabel: node
+          regex: '([^.]+)\..*'
+          replacement: '$1'
+        # Avoid scraping workers twice, they are already scraped using the daemonset
+        # ServiceMonitor
+        - sourceLabels: [ __meta_dns_srv_record_target ]
+          regex: '.*-worker-.*'
+          action: drop
+  replicas: 2
+  retention: "10d"
+  retentionSize: "39GiB"
+  storage:
+    volumeClaimTemplate:
+      spec:
+        resources:
+          requests:
+            storage: 20Gi
+        storageClassName: longhorn-experimental
+  nodeSelector:
+    ctfr.attacking-lab.com/role: core
+  tolerations:
+    - key: ctfr.attacking-lab.com/role
+      operator: Equal
+      value: core
+      effect: NoExecute
+  securityContext:
+    fsGroup: 2000
+    runAsGroup: 2000
+    runAsNonRoot: true
+    runAsUser: 1000
+    seccompProfile:
+      type: RuntimeDefault
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  namespace: kube-prometheus
+  name: cluster-grafana
+  labels:
+    name: cluster-grafana
+spec:
+  config:
+    auth:
+      disable_login_form: "true"
+    auth.basic:
+      enabled: "false"
+    auth.anonymous:
+      enabled: "true"
+      org_name: Main Org.
+      org_role: Admin
+  deployment:
+    spec:
+      template:
+        spec:
+          nodeSelector:
+            ctfr.attacking-lab.com/role: core
+          tolerations:
+            - key: ctfr.attacking-lab.com/role
+              operator: Equal
+              value: core
+              effect: NoExecute
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  namespace: kube-prometheus
+  name: cluster-prometheus
+spec:
+  instanceSelector:
+    matchLabels:
+      name: cluster-grafana
+  datasource:
+    access: proxy
+    name: cluster-prometheus
+    type: prometheus
+    url: http://prometheus-operated.kube-prometheus.svc.cluster.local:9090
+    isDefault: true
+    jsonData:
+      "tlsSkipVerify": true
+      "timeInterval": "5s"
+---

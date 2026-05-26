@@ -1,0 +1,27 @@
+---
+- name: "Fetch attack_api"
+  ansible.builtin.git: # noqa: latest[git]
+    repo: "{{ attack_api_repo_url }}"
+    dest: "/srv/attack_api"
+    version: "ecsc2025"
+
+- name: "Set (prod) attack_api"
+  ansible.builtin.lineinfile:
+    path: "/srv/attack_api/.env"
+    state: present
+    create: true
+    mode: "0644"
+    line: "{{ item }}"
+  loop:
+    - "SCOREBOARD_URL=http://10.42.251.2"
+    - "CONTROLPANEL_URL=http://10.42.251.2:5000"
+
+- name: "Pull missing images"
+  ansible.builtin.command:
+    argv: ["docker", "compose", "pull", "--ignore-buildable", "--include-deps"]
+    chdir: "/srv/attack_api"
+
+- name: "Build attack_api"
+  ansible.builtin.command:
+    argv: ["docker", "compose", "build"]
+    chdir: "/srv/attack_api"

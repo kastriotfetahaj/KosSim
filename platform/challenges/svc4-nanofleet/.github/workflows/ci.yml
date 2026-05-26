@@ -1,0 +1,113 @@
+name: nanofleet
+
+on:
+  push:
+    paths:
+      - "platform/challenges/svc4-nanofleet/**"
+      - ".github/workflows/nanofleet-ci.yml"
+  pull_request:
+    paths:
+      - "platform/challenges/svc4-nanofleet/**"
+
+defaults:
+  run:
+    working-directory: platform/challenges/svc4-nanofleet
+
+jobs:
+  go-build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+      - working-directory: platform/challenges/svc4-nanofleet/service
+        run: go build ./...
+      - working-directory: platform/challenges/svc4-nanofleet/service
+        run: go vet ./...
+
+  docker-checker-baseline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build service image
+        working-directory: platform/challenges
+        run: docker build -t nanofleet-service -f svc4-nanofleet/service/Dockerfile .
+      - name: Run service
+        run: |
+          docker run -d --rm --name nfsvc \
+            -e SERVICE_PUSH_SECRET=ci-secret-32-bytes-padding-hellllo \
+            -e TEAM_NAME=ci \
+            -e SERVICE_NAME=svc4 \
+            -p 8084:8080 \
+            nanofleet-service
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8084/health >/dev/null 2>&1; then
+              break
+            fi
+            sleep 1
+          done
+      - name: Run sync checker
+        env:
+          SERVICE_PUSH_SECRET: ci-secret-32-bytes-padding-hellllo
+        run: |
+          pip install --quiet requests
+          python checker/checker.py http://127.0.0.1:8084
+      - name: Run exploits against unpatched service
+        env:
+          SERVICE_PUSH_SECRET: ci-secret-32-bytes-padding-hellllo
+        run: |
+          set -eux
+          for v in 0 1 2; do
+            FLAG="FLAG{CI_EXP_NANO_${v}_$(date +%s)}"
+            INFO=$(curl -fsS -H "X-Checker-Secret: $SERVICE_PUSH_SECRET" \
+              -H 'Content-Type: application/json' \
+              -d "{\"method\":\"PUTFLAG\",\"current_round_id\":900,\"variant_id\":${v},\"flag\":\"${FLAG}\"}" \
+              http://127.0.0.1:8084/ | python -c "import sys,json;print(json.load(sys.stdin)['attack_info'])")
+            python "exploits/exp$((v+1)).py" 127.0.0.1:8084 "$INFO" | grep -F "$FLAG"
+          done
+      - name: Stop service
+        if: always()
+        run: docker rm -f nfsvc || true
+
+  sla-after-patch:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        patch:
+          - patches/flagstore-0/vuln-a-route-shadow.patch
+          - patches/flagstore-0/vuln-b-tlv-magic-length.patch
+          - patches/flagstore-0/vuln-c-firmware-manifest-public.patch
+          - patches/flagstore-1/vuln-d-firmware-reveal-binding.patch
+          - patches/flagstore-2/vuln-e-jwt-kid-confusion.patch
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply patch
+        run: patch -p1 < "${{ matrix.patch }}"
+      - name: Build patched service
+        working-directory: platform/challenges
+        run: docker build -t nanofleet-patched -f svc4-nanofleet/service/Dockerfile .
+      - name: Run patched service
+        run: |
+          docker run -d --rm --name nfpatched \
+            -e SERVICE_PUSH_SECRET=ci-secret-32-bytes-padding-hellllo \
+            -e TEAM_NAME=ci \
+            -e SERVICE_NAME=svc4 \
+            -p 8084:8080 \
+            nanofleet-patched
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8084/health >/dev/null 2>&1; then
+              break
+            fi
+            sleep 1
+          done
+      - name: SLA must hold under patch
+        env:
+          SERVICE_PUSH_SECRET: ci-secret-32-bytes-padding-hellllo
+        run: |
+          pip install --quiet requests
+          python checker/checker.py http://127.0.0.1:8084
+      - name: Stop service
+        if: always()
+        run: docker rm -f nfpatched || true

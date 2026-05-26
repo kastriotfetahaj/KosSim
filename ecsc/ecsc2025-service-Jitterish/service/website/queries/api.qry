@@ -1,0 +1,49 @@
+// public append-only endpoint:
+// > POST /api/<database>/create
+// ==> created data format: {"key": "aaaa-bbb...ccc", "value": <user input>, "owner": "..."}
+// add an access token:
+// > POST /api/<database>/grant/<key>/<token>
+// ==> created data format: {"key": "...", "token": "..."}
+// finally, retrieve your data:
+// > GET /api/<database>/value/<key>[?token=<token>]
+// handled by this function, with params = {"key": "...", "user": "...", "token": "..."|null}
+func get_value(params) {
+    result = value(params);
+    if result["auth"] return result["value"];
+    return null;
+}
+
+// Used for: POST /api/<database>/grant/<key>/<token>
+// params: {"key": "...", "user": "...", "token": "..."|null}
+func is_authorized(params) {  // = can add token?
+    return !!value(params)["auth"];
+}
+
+func by_key(entry, params) {
+    return entry["key"] == params["key"];
+}
+
+func select_key(entry, acc, params) {
+    if !defined acc acc = {};
+    if entry["value"] acc["value"] = entry["value"];
+    if entry["owner"] == params["user"] acc["auth"] = true;
+    if entry["token"] == params["token"] acc["auth"] = true;
+    return acc;
+}
+
+func has_value(entry) {
+    return !!entry["value"];
+}
+
+func extract_key(entry) {
+    return entry["key"];
+}
+
+query value on kv
+filter by_key
+reduce select_key;
+
+// > GET /api/<database>/keys/all
+query get_keys on kv
+filter has_value
+map extract_key;

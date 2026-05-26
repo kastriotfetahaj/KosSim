@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Guppy &mdash; Firewall management</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <style>
+      nav a[href="{{ endpoint }}"] {
+        color: var(--highlight);
+      }
+      {% block customization %}
+      {% endblock %}
+    </style>
+    {% block head %}
+    {% endblock %}
+  </head>
+  <body>
+    <header>
+      <div class="logo">
+        <img src="{{ url_for('static', filename='assets/guppy-logo.svg') }}" alt="Guppy Networks"></img>
+      </div>
+      <span>Logged in as {{ user }}</span>
+      <form action="/logout" method="POST">
+        <input type="submit" value="Log out" />
+      </form>
+    </header>
+    <div class="root">
+      <nav>
+        <ul>
+          <li>
+            <a href="/">Firewall Management</a>
+            <ul>
+              <li>
+                <span>Network Log</span>
+                <ul>
+                  <li><a href="/traffic/">Dropped Traffic</a></li>
+                </ul>
+              </li>
+              <li>
+                <span>SNMP</span>
+                <ul>
+                  <li><a href="/manager/monitoring/">Monitoring</a></li>
+                  <li><a href="/manager/monitoring_user/">User Monitoring</a></li>
+                  <li><a href="/manager/custom/">Custom Values</a></li>
+                  <li><a href="/manager/advanced/">Advanced</a></li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </nav>
+      <main>
+        <div class="content">
+          {% block content %}
+          {% endblock %}
+        </div>
+      </main>
+    </div>
+    {% block atend %}
+    {% endblock %}
+  </body>
+</html>

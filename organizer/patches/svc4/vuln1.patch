@@ -1,0 +1,6 @@
+diff --git a/platform/challenges/svc4-nanofleet/service/internal/routes/routes.go b/platform/challenges/svc4-nanofleet/service/internal/routes/routes.go
+--- a/platform/challenges/svc4-nanofleet/service/internal/routes/routes.go
++++ b/platform/challenges/svc4-nanofleet/service/internal/routes/routes.go
+@@
+-	if length == "260" {
++	if length == "260" && node.Kind == "public" {

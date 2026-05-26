@@ -1,0 +1,9 @@
+diff --git a/platform/challenges/svc3-specterlog/service/src/routes.ts b/platform/challenges/svc3-specterlog/service/src/routes.ts
+--- a/platform/challenges/svc3-specterlog/service/src/routes.ts
++++ b/platform/challenges/svc3-specterlog/service/src/routes.ts
+@@
+-    if (q.mode === "delta") stream = q.stream ?? stream;
++    if (q.mode === "delta" && q.stream && q.stream !== stream) return reply.code(403).send({ error: "stream_denied" });
+@@
+-    const allowPrivate = filter.toLowerCase().includes("public||private");
++    const allowPrivate = false;

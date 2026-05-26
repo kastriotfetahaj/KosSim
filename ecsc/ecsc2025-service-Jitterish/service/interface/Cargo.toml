@@ -1,0 +1,13 @@
+[package]
+name = "interface"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+serde = "1.0.219"
+serde_json = { version = "1.0.141", features = ["raw_value"] }
+
+[dependencies.rocket]
+version = "0.5.1"
+features = ["secrets"]

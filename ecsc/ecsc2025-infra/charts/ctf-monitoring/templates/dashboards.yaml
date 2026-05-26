@@ -1,0 +1,25 @@
+{{- range $path, $_ := .Files.Glob "dashboards/*.json" }}
+{{- $name := base $path -}}
+{{- $stripped := trimSuffix ".json" $name -}}
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: {{ $stripped }}
+  labels:
+    {{- include "ctf-monitoring.labels" $ | nindent 4 }}
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: ctf-grafana
+  datasources:
+    - datasourceName: ctf-prometheus
+      inputName: DS_CTF-PROMETHEUS
+    - datasourceName: gameserver-db
+      inputName: DS_GAMESERVER-DB
+    - datasourceName: ctf-metrics
+      inputName: DS_CTF-METRICS
+    - datasourceName: ctf-es
+      inputName: DS_CTF-ES
+  json: |{{ $.Files.Get $path | nindent 4 }}
+{{end}}

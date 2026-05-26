@@ -1,0 +1,34 @@
+name: jitterishdb
+
+services:
+  dbengine:
+    build:
+      context: .
+      dockerfile: dbengine.Dockerfile
+    volumes:
+      - ./data/db-engine-data:/app/dbengine/data
+      - ./data/db-engine-queries:/app/dbengine/queries
+    # BEGIN REMOVE IN PROD
+    ports:
+      - "9401:9401"  # for debug only
+    # END REMOVE IN PROD
+    restart: unless-stopped
+    cap_add:
+      - SYS_ADMIN
+    security_opt:
+      - apparmor=unconfined
+
+  website:
+    build:
+      context: .
+      dockerfile: website.Dockerfile
+    volumes:
+      - ./data/website:/app/website/data
+    ports:
+      - "9400:9400"
+    environment:
+      DB: "dbengine:9401"
+    depends_on:
+      dbengine:
+        condition: service_started
+    restart: unless-stopped

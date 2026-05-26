@@ -1,0 +1,31 @@
+Subject: reject alg=none in view-token verifier
+
+verifyView dispatches by the alg field on the JOSE header and the "none"
+branch accepts the token when the signature segment is empty. A forged
+token with admin-ish claims passes the scope check and the handler
+returns the brief body. Allow only HS256.
+
+--- a/service/src/tokens.ts
++++ b/service/src/tokens.ts
+@@ -83,17 +83,12 @@
+   try {
+     header = JSON.parse(fromB64(headerB64).toString("utf8")) as Record<string, unknown>;
+     body = JSON.parse(fromB64(bodyB64).toString("utf8")) as Record<string, unknown>;
+   } catch {
+     return { ok: false, reason: "decode" };
+   }
+   const alg = String(header.alg ?? "");
+-  if (alg === "HS256") {
+-    const want = createHmac("sha256", secret).update(`${headerB64}.${bodyB64}`).digest("base64url");
+-    if (want !== sig) return { ok: false, reason: "sig" };
+-  } else if (alg === "none") {
+-    if (sig.length !== 0) return { ok: false, reason: "sig" };
+-  } else {
+-    return { ok: false, reason: "alg" };
+-  }
++  if (alg !== "HS256") return { ok: false, reason: "alg" };
++  const want = createHmac("sha256", secret).update(`${headerB64}.${bodyB64}`).digest("base64url");
++  if (want !== sig) return { ok: false, reason: "sig" };
+   const claims: ViewClaims = {
+     sub: String(body.sub ?? ""),
+     scope: String(body.scope ?? ""),

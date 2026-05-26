@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block content %}
+<br>
+<section>
+    <div class="container align-items-center mb-5">
+        <div class="page-header">
+            <h1>All Teams</h1>
+        </div>
+        <div class="flatpage-content col-xs-12">
+            {% if user and user.is_superuser %}
+                <p><a href="{% url 'team_list' %}">&rArr; go to our internal team list with more information ...</a></p>
+            {% endif %}
+            <table class="table table-hover">
+                <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Team</th>
+                    <th scope="col">Affiliation</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for t in teams %}
+                    <tr>
+                        <th scope="row">{{ t.team_id }}</th>
+                        <td>{{ t.name }}</td>
+                        <td>{{ t.affiliation|default:'' }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+<br><br>
+{% endblock %}

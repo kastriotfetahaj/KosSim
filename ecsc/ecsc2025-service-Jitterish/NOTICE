@@ -1,0 +1,70 @@
+This product includes software developed by the following third-party projects:
+
+## base64 (Version 0.22.1)
+Copyright (c) 2025: Alice Maz
+Licensed under: MIT OR Apache-2.0
+
+## chrono (Version 0.4.41)
+Copyright (c) 2025: Kang Seonghoon and contributors
+Licensed under: MIT OR Apache-2.0
+
+## getrandom (Version 0.3.3)
+Copyright (c) 2025: The rust-random Project Developers
+Licensed under: MIT OR Apache-2.0
+
+## hex (Version 0.4.3)
+Copyright (c) 2020: The rust-hex Developers
+Licensed under: MIT OR Apache-2.0
+
+## lazy_static (Version 1.5.0)
+Licensed under: MIT OR Apache-2.0
+
+## nix (Version 0.29.0)
+Copyright (c) 2015: Carl Lerche + nix-rust Authors
+Licensed under: MIT
+
+## regex (Version 1.11.1)
+Copyright (c) 2014: The Rust Project Developers
+Licensed under: MIT OR Apache-2.0
+
+## rocket (Version 0.5.1)
+Copyright (c) 2016: Sergio Benitez
+Licensed under: MIT OR Apache-2.0 (*)
+
+## rocket_dyn_templates (Version 0.2.0)
+Copyright (c) 2016: Sergio Benitez
+Licensed under: MIT OR Apache-2.0
+
+## serde (Version 1.0.219)
+Licensed under: MIT OR Apache-2.0 (*)
+
+## serde_json (Version 1.0.141)
+Licensed under: MIT OR Apache-2.0 (*)
+
+## sha2 (Version 0.10.9)
+Copyright (c) 2025: The RustCrypto Project Developers
+Licensed under: MIT OR Apache-2.0 (*)
+
+## tokio (Version 1.46.1)
+Copyright (c): Tokio Contributors
+Licensed under: MIT (*)
+
+## tokio-util (Version 0.7.15)
+Copyright (c): Tokio Contributors
+Licensed under: MIT (*)
+
+## unshare (Version 0.7.1)
+Copyright (c) 2016: The unshare Developers
+Licensed under: MIT/Apache-2.0
+
+## uuid (Version 1.17.0)
+Copyright (c) 2018: Ashley Mannix, Christopher Armstrong, Dylan DPC, Hunar Roop Kahlon
+Licensed under: Apache-2.0 OR MIT
+
+## nlohmann/json (Version 3.12.0)
+Copyright (c) 2025: Niels Lohmann
+Licensed under: MIT
+
+## ANTLR (Version 4)
+Copyright (c) 2022: The ANTLR Project
+Licensed under: BSD-3-Clause

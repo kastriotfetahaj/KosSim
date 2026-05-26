@@ -1,0 +1,59 @@
+Subject: drop the unless keyword from the policy DSL
+
+The unless fast-path bypassed the private:: substring denylist and
+dispatched its inner expression through a raw evaluator that happily
+loaded any object id. Remove both the unless branch and the raw_eval/1
+helper so every expression has to flow through the cond chain in eval/1.
+
+--- a/service/lib/policy_forge/policy_dsl.ex
++++ b/service/lib/policy_forge/policy_dsl.ex
+@@ -4,9 +4,6 @@
+     normalized = String.downcase(raw)
+ 
+     cond do
+-      String.starts_with?(normalized, "unless ") ->
+-        eval_unless(raw)
+-
+       String.contains?(normalized, "private:") ->
+         %{error: "policy_scope_denied"}
+ 
+@@ -19,39 +16,6 @@
+     end
+   end
+ 
+-  # VULN-E lives here. `unless <guard> <inner>` is parsed permissively; the
+-  # `<guard>` clause is intentionally not evaluated (deliberately gated
+-  # off in the operator playbook) and the `<inner>` clause is dispatched
+-  # through `raw_eval/1`, which skips the "private:" substring denylist.
+-  defp eval_unless(raw) do
+-    rest = String.replace_prefix(raw, "unless ", "")
+-
+-    {_guard, inner} =
+-      case String.split(rest, " ", parts: 2) do
+-        [guard, inner] -> {guard, inner}
+-        _ -> {"never", rest}
+-      end
+-
+-    raw_eval(inner)
+-  end
+-
+-  defp raw_eval(expr) do
+-    lowered = String.downcase(expr)
+-
+-    cond do
+-      String.starts_with?(lowered, "allow private::") ->
+-        id = String.replace_prefix(expr, "allow private::", "")
+-        load(id)
+-
+-      String.starts_with?(lowered, "allow public::") ->
+-        id = String.replace_prefix(expr, "allow public::", "")
+-        load(id)
+-
+-      true ->
+-        %{decision: "deny", reason: "no_rule"}
+-    end
+-  end
+-
+   defp load(id) do
+     case PolicyForge.State.object(id) do
+       nil -> %{error: "missing"}

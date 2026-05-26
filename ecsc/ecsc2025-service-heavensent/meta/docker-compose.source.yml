@@ -1,0 +1,6 @@
+services:
+  heavensent:
+    environment:
+      - AS_ENTRYPOINT=as_src/heavensent.as
+    volumes:
+      - ../meta/as_src:/service/as_src

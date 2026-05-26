@@ -1,0 +1,101 @@
+name: policyforge
+
+on:
+  push:
+    paths:
+      - "platform/challenges/svc5-policyforge/**"
+      - ".github/workflows/policyforge-ci.yml"
+  pull_request:
+    paths:
+      - "platform/challenges/svc5-policyforge/**"
+
+defaults:
+  run:
+    working-directory: platform/challenges/svc5-policyforge
+
+jobs:
+  docker-checker-baseline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build service image
+        working-directory: platform/challenges
+        run: docker build -t policyforge-service -f svc5-policyforge/service/Dockerfile .
+      - name: Run service
+        run: |
+          docker run -d --rm --name pfsvc \
+            -e SERVICE_PUSH_SECRET=ci-secret-32-bytes-padding-hellllo \
+            -e TEAM_NAME=ci \
+            -e SERVICE_NAME=svc5 \
+            -p 8085:8080 \
+            policyforge-service
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8085/health >/dev/null 2>&1; then
+              break
+            fi
+            sleep 1
+          done
+      - name: Run sync checker
+        env:
+          SERVICE_PUSH_SECRET: ci-secret-32-bytes-padding-hellllo
+        run: |
+          pip install --quiet requests
+          python checker/checker.py http://127.0.0.1:8085
+      - name: Run exploits against unpatched service
+        env:
+          SERVICE_PUSH_SECRET: ci-secret-32-bytes-padding-hellllo
+        run: |
+          set -eux
+          for v in 0 1 2; do
+            FLAG="FLAG{CI_EXP_PFRG_${v}_$(date +%s)}"
+            INFO=$(curl -fsS -H "X-Checker-Secret: $SERVICE_PUSH_SECRET" \
+              -H 'Content-Type: application/json' \
+              -d "{\"method\":\"PUTFLAG\",\"current_round_id\":900,\"variant_id\":${v},\"flag\":\"${FLAG}\"}" \
+              http://127.0.0.1:8085/ | python -c "import sys,json;print(json.load(sys.stdin)['attack_info'])")
+            python "exploits/exp$((v+1)).py" 127.0.0.1:8085 "$INFO" | grep -F "$FLAG"
+          done
+      - name: Stop service
+        if: always()
+        run: docker rm -f pfsvc || true
+
+  sla-after-patch:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        patch:
+          - patches/flagstore-0/vuln-a-cache-key-object-id.patch
+          - patches/flagstore-0/vuln-b-policy-eval-data-leak.patch
+          - patches/flagstore-0/vuln-c-snapshot-tenant-bypass.patch
+          - patches/flagstore-1/vuln-d-share-token-object-binding.patch
+          - patches/flagstore-2/vuln-e-policy-unless-bypass.patch
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply patch
+        run: patch -p1 < "${{ matrix.patch }}"
+      - name: Build patched service
+        working-directory: platform/challenges
+        run: docker build -t policyforge-patched -f svc5-policyforge/service/Dockerfile .
+      - name: Run patched service
+        run: |
+          docker run -d --rm --name pfpatched \
+            -e SERVICE_PUSH_SECRET=ci-secret-32-bytes-padding-hellllo \
+            -e TEAM_NAME=ci \
+            -e SERVICE_NAME=svc5 \
+            -p 8085:8080 \
+            policyforge-patched
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8085/health >/dev/null 2>&1; then
+              break
+            fi
+            sleep 1
+          done
+      - name: SLA must hold under patch
+        env:
+          SERVICE_PUSH_SECRET: ci-secret-32-bytes-padding-hellllo
+        run: |
+          pip install --quiet requests
+          python checker/checker.py http://127.0.0.1:8085
+      - name: Stop service
+        if: always()
+        run: docker rm -f pfpatched || true

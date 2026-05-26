@@ -1,0 +1,20 @@
+func test() { return [1+2, 2+3]; }
+
+func count(data, acc) { return (acc ?: 0) + 1; }
+
+func is_username(entry, username) { return entry["username"] == username; }
+
+func is_public(entry) { return entry["allow_public_queries"]; }
+func is_api(entry) { return entry["allow_public_kv"]; }
+func is_private(entry) { return !entry["allow_public_queries"] && !entry["allow_public_kv"]; }
+func get_username(entry) { return entry["username"]; }
+
+query user_by_username on users
+filter is_username
+limit 1;
+
+query user_count on users reduce count;
+
+query public_users on users filter is_public map get_username;
+query api_users on users filter is_api map get_username;
+query private_users on users filter is_private map get_username;

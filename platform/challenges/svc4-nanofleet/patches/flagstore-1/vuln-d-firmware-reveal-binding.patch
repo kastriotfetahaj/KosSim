@@ -1,0 +1,31 @@
+Subject: bind ?blob= to the signed manifest and remove the reveal override
+
+The firmware-read handler trusted ?blob= and ?reveal=1 even though the
+manifest signature covered only the manifest body (blob + ttl). Reject any
+request whose ?blob= does not match the signed manifest, and stop honoring
+the unsigned reveal flag. Public manifest tokens can no longer be reused
+to read foreign firmware payloads.
+
+--- a/service/internal/routes/routes.go
++++ b/service/internal/routes/routes.go
+@@ -262,16 +262,16 @@
+ 	blob := r.URL.Query().Get("blob")
+ 	if blob == "" {
+ 		blob = manifest.Blob
++	}
++	if blob != manifest.Blob {
++		http.Error(w, `{"error":"manifest_blob_mismatch"}`, http.StatusForbidden)
++		return
+ 	}
+ 	node, ok := store.NodeByBlob(blob)
+ 	if !ok {
+ 		http.NotFound(w, r)
+ 		return
+ 	}
+-	if r.URL.Query().Get("reveal") == "1" {
+-		writeJSON(w, map[string]any{"blob": blob, "ttl": manifest.TTL, "payload": node.Data})
+-		return
+-	}
+ 	writeJSON(w, map[string]any{"blob": blob, "ttl": manifest.TTL, "kind": node.Kind})
+ }
+ 

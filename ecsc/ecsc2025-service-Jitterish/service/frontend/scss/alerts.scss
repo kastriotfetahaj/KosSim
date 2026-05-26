@@ -1,0 +1,50 @@
+@use "aug";
+@use "vars";
+
+.alert {
+  @include aug.aug();
+  @include aug.mid-insert-1(l);
+  @include aug.mid-insert-2(r);
+
+  --aug-border-all: 3px;
+
+  padding: 1rem 2rem;
+  margin: .5rem 0;
+
+
+  &.alert-error {
+    --aug-border-bg: #{vars.$error};
+    --aug-inlay-bg: linear-gradient(90deg, #{rgba(vars.$error, .25)}, #{rgba(vars.$error, .20)});
+  }
+
+  &.alert-success {
+    --aug-border-bg: #{vars.$success};
+    --aug-inlay-bg: linear-gradient(90deg, #{rgba(vars.$success, .20)}, #{rgba(vars.$success, .15)});
+  }
+
+  &.alert-info {
+    --aug-border-bg: #{vars.$secondary};
+    --aug-inlay-bg: linear-gradient(90deg, #{rgba(vars.$secondary, .25)}, #{rgba(vars.$secondary, .20)});
+  }
+
+  > .title {
+    display: block;
+    margin-top: -.75rem;
+    margin-bottom: .5rem;
+    padding: .25rem;
+    text-align: center;
+
+    border-bottom-width: 1px;
+    border-bottom-style: solid;
+    border-image: linear-gradient(
+                    to right,
+                    #{rgba(vars.$secondary, .1)},
+                    #{rgba(vars.$secondary, 1)},
+                    #{rgba(vars.$secondary, .1)},
+    ) 100% 1;
+  }
+
+  p {
+    margin-bottom: .25rem;
+  }
+}

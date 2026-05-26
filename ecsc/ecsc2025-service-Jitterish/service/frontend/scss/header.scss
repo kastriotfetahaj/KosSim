@@ -1,0 +1,94 @@
+@use "sass:color";
+@use "aug";
+@use "vars";
+
+header.main-menu {
+  border: 0;
+  padding: 1rem 2rem;
+  margin-bottom: 2rem;
+
+  font-size: 1rem;
+  font-variant: small-caps;
+
+  --aug-inlay: initial;
+  --aug-inlay-bg: linear-gradient(0deg, #{rgba(vars.$primary, .15)}, #{rgba(vars.$primary, .05)});
+  @include aug.corner-clip(bl, $size: 2rem);
+  @include aug.corner-clip(br, $size: 2rem);
+
+  ul.menu {
+    margin-top: 0;
+  }
+
+  display: flex;
+  flex-direction: row;
+  justify-content: stretch;
+
+  > .center {
+    flex-grow: 1;
+  }
+}
+
+ul.menu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+
+  li {
+    margin: .2rem .1rem;
+    padding: 0;
+    min-width: 8rem;
+    display: block;
+    text-align: center;
+
+    a {
+      padding: 0 1rem;
+      width: 100%;
+      display: block;
+
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+
+      &:focus, &:hover {
+        color: #{color.adjust(vars.$primary, $lightness: 20%)};
+        border-bottom-color: vars.$primary;
+      }
+    }
+
+    &.active {
+      a {
+        color: vars.$secondary;
+        border-bottom-color: vars.$secondary;
+
+        &:focus, &:hover {
+          color: #{color.adjust(vars.$secondary, $lightness: 20%)};
+          border-bottom-color: vars.$secondary;
+        }
+      }
+    }
+
+    a.logo {
+      display: block;
+      height: 150%;
+      margin-top: -15%;
+      margin-bottom: -35%;
+
+      /*! webpackIgnore: true */
+      background-image: url("/static/img/jitterish-transparent.webp");
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: contain;
+    }
+  }
+
+  &.icons li {
+    min-width: 3rem;
+
+    a {
+      padding: 0 .5rem;
+    }
+  }
+}

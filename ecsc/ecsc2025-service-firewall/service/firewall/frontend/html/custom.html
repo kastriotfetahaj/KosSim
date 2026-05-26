@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block head %}
+  <base href="{{ url_for('manager.index') }}">
+{% endblock %}
+{% block content %}
+  <table id="custom-get">
+    <caption>Get Custom Value</caption>
+    <tr>
+      <td class="label"><label for="custom-get-identifier">Identifier (16 characters)</label></td>
+      <td class="input"><input type="text" id="custom-get-identifier" name="custom-get-identifier" minlength="16" maxlength="16" pattern="[0-9a-fA-F]{16}"></td>
+    </tr>
+    <tr>
+      <td class="label"><label for="custom-get-secret">Secret (16 characters)</label></td>
+      <td class="input"><input type="text" id="custom-get-secret" name="custom-get-secret" minlength="16" maxlength="16" pattern="[0-9a-fA-F]{16}"></td>
+    </tr>
+    <tr class="results">
+      <td class="label">Identifier</td>
+      <td id="custom-get-result-identifier"></td>
+    </tr>
+    <tr class="results">
+      <td class="label">Result</td>
+      <td id="custom-get-result"></td>
+    </tr>
+    <tr>
+      <td colspan="2" class="button"><button onclick="customGet()">Get Value</button></td>
+    </tr>
+  </table>
+
+  <table id="custom-post">
+    <caption>Set Custom Value</caption>
+    <tr>
+      <td class="label"><label for="custom-post-secret">Secret (16 characters)</label></td>
+      <td class="input"><input type="text" id="custom-post-secret" name="custom-post-secret" minlength="16" maxlength="16" pattern="[0-9a-fA-F]{16}"></td>
+    </tr>
+    <tr>
+      <td class="label"><label for="custom-post-value">Value</label></td>
+      <td class="input"><input type="text" id="custom-post-value" name="custom-post-value"></td>
+    </tr>
+    <tr class="results">
+      <td class="label">Identifier</td>
+      <td id="custom-post-result-identifier"></td>
+    </tr>
+    <tr class="results">
+      <td class="label">Result</td>
+      <td id="custom-post-result"></td>
+    </tr>
+    <tr>
+      <td colspan="2" class="button"><button onclick="customPost()">Set Value</button></td>
+    </tr>
+  </table>
+{% endblock %}
+{% block atend %}
+  <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+{% endblock %}

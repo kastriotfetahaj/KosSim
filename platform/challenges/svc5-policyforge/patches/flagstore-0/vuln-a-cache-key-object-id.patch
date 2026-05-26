@@ -1,0 +1,18 @@
+Subject: key the policy-decision cache by object id, not just class
+
+The cache key was "user:tenant:class", so reading any public object of
+a given class warmed an allow decision that the next read of any private
+object of the same class reused. Append the object id to the cache key
+so each object's decision stands on its own.
+
+--- a/service/lib/policy_forge/state.ex
++++ b/service/lib/policy_forge/state.ex
+@@ -124,7 +124,7 @@
+   def allowed?(session, object_id) do
+     Agent.get_and_update(__MODULE__, fn state ->
+       obj = Map.fetch!(state.objects, object_id)
+-      key = "#{session["user"]}:#{obj.tenant}:#{obj.class}"
++      key = "#{session["user"]}:#{obj.tenant}:#{obj.class}:#{object_id}"
+ 
+       case Map.fetch(state.cache, key) do
+         {:ok, decision} ->

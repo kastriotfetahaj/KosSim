@@ -1,0 +1,17 @@
+diff --git a/service/firewall/frontend/manager/agent_interface.py b/service/firewall/frontend/manager/agent_interface.py
+index d58626d..1fc2e5f 100644
+--- a/service/firewall/frontend/manager/agent_interface.py
++++ b/service/firewall/frontend/manager/agent_interface.py
+@@ -95,7 +95,11 @@ def parse_message_header(stream: BytesIO) -> (int, int):
+     length = stream.read(1)
+     if len(length) != 1:
+         raise SNMPException("Invalid data", 400)
+-    return tag[0], length[0]
++    if length[0] & 0x80:
++        actual_length = int.from_bytes(stream.read(length[0] & 0x7f), byteorder="big")
++    else:
++        actual_length = length[0]
++    return tag[0], actual_length
+ 
+ 
+ def parse_message_value(stream: BytesIO) -> (int, bytes):

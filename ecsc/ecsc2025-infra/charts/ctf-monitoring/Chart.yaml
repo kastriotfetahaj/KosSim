@@ -1,0 +1,9 @@
+apiVersion: v2
+name: ctf-monitoring
+description: Monitoring resources for one environment
+
+type: application
+version: 0.1.0
+# Doesn't really make sense here because we deploy multiple applications
+appVersion: 0.1.0
+

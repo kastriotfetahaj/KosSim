@@ -1,0 +1,3 @@
+---
+nft_remove_iptables: false
+nft_package_version:

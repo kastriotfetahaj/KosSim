@@ -1,0 +1,33 @@
+name: firewall-demo
+
+services:
+  firewall-demo:
+    image: ecsc2025-service-firewall/demo
+    build: .
+    pull_policy: never
+    container_name: firewall-demo
+    hostname: firewall-demo
+    working_dir: /exploits/
+    devices:
+      - "/dev/net/tun:/dev/net/tun:rwm"
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    sysctls:
+      net.ipv4.conf.default.forwarding: 0
+      net.ipv4.conf.default.src_valid_mark: 1
+      net.ipv6.conf.default.forwarding: 0
+      net.ipv6.conf.default.accept_ra: 0
+      net.ipv6.conf.default.accept_redirects: 0
+    volumes:
+      # The actual exploit scripts
+      - type: bind
+        source: .
+        target: /exploits/
+        read_only: true
+      # Pull in the client from outside of the Docker context
+      - type: bind
+        source: ../../service/client/client.py
+        target: /sbin/vpn-client
+        read_only: true
+    command: 'echo -e "Run \\x1b[31mdocker compose run --build --rm firewall-demo bash\\x1b[0m to get a shell"'

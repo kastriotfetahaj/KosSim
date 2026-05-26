@@ -1,0 +1,113 @@
+{{- if not .Values.analysisMode }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: canary-caddy
+  labels:
+  {{- include "ctf-monitoring.labels" . | nindent 4 }}
+data:
+  Caddyfile: |
+    {
+      admin off
+    }
+    :2113 {
+      respond "You should see this!" 200
+    }
+    :2114 {
+      respond "You probably should not see this!" 200
+    }
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: canary
+  labels:
+    app: canary
+    {{- include "ctf-monitoring.labels" . | nindent 4 }}
+spec:
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 100%
+  selector:
+    matchLabels:
+      app: canary
+      {{- include "ctf-monitoring.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        app: canary
+        {{- include "ctf-monitoring.selectorLabels" . | nindent 8 }}
+    spec:
+      hostNetwork: true
+      tolerations:
+        - key: node.kubernetes.io/not-ready
+          operator: "Exists"
+          effect: NoSchedule
+        - key: ctfr.attacking-lab.com/role
+          operator: Exists
+          effect: NoExecute
+        - key: ctfr.attacking-lab.com/ctf
+          operator: Equal
+          value: {{ .Values.ctf }}
+          effect: NoExecute
+      nodeSelector:
+        ctfr.attacking-lab.com/ctf: {{ .Values.ctf }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range .}}
+        - name: {{ . }}
+        {{- end}}
+      {{- end }}
+      volumes:
+        - name: config
+          configMap:
+            name: canary-caddy
+      containers:
+        - name: canary
+          image: caddy:2.10-alpine
+          imagePullPolicy: IfNotPresent
+          workingDir: /etc/caddy/
+          command:
+            - caddy
+            - run
+            - -c
+            - /etc/caddy/Caddyfile
+          volumeMounts:
+            - name: config
+              mountPath: /etc/caddy/
+          resources:
+            requests:
+              cpu: 5m
+              memory: 20Mi
+            limits:
+              cpu: 5m
+              memory: 20Mi
+          ports:
+            - name: accessible
+              containerPort: 2113
+              protocol: TCP
+            - name: blocked
+              containerPort: 2114
+              protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: canary
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    app: canary
+    {{- include "ctf-monitoring.selectorLabels" . | nindent 4 }}
+{{- end }}

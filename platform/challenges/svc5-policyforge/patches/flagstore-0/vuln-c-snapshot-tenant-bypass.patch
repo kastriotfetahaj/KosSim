@@ -1,0 +1,21 @@
+Subject: ignore the unsigned ?tenant= claim on snapshot reads
+
+Snapshot.read trusted ?tenant=public as a magic-value tenant claim that
+overrode the object's own public flag. Strip the parameter entirely and
+rely on the on-disk public bit, so private objects can never be returned
+via the legacy snapshot endpoint.
+
+--- a/service/lib/policy_forge/snapshot.ex
++++ b/service/lib/policy_forge/snapshot.ex
+@@ -1,9 +1,9 @@
+ defmodule PolicyForge.Snapshot do
+-  def read(snap, id, tenant_claim) do
++  def read(snap, id, _tenant_claim) do
+     with snapshot when not is_nil(snapshot) <- PolicyForge.State.snapshot(snap),
+          true <- id in snapshot.objects,
+          obj when not is_nil(obj) <- PolicyForge.State.object(id) do
+-      if tenant_claim == "public" or obj.public do
++      if obj.public do
+         {:ok, obj}
+       else
+         :denied

@@ -1,0 +1,7 @@
+- name: Set git user.name
+  ansible.builtin.command:
+    argv: ["git", "config", "--global", "user.name", "{{ git_config_name }}"]
+
+- name: Set git user.email
+  ansible.builtin.command:
+    argv: ["git", "config", "--global", "user.email", "{{ git_config_email }}"]

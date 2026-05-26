@@ -1,0 +1,413 @@
+@font-face {
+    font-family: Saiba;
+    src: url(/static/fonts/saiba-45.ttf);
+}
+
+body {
+    min-height: 100vh;
+    position: relative;
+    font-family: "Noto Sans", sans-serif;
+    background-color: #1f1f1f;
+    color: rgba(255, 255, 255, 0.69) !important;
+}
+
+h1, h2, h3, h4 {
+    color: #ddd;
+}
+
+h2,h3,h4 {
+    margin-bottom: 0.7em;
+}
+
+table {
+    color: #ddd !important;
+}
+
+tr:hover {
+    color: #bbb !important;
+}
+
+ul.in-card-row {
+    border: none !important;
+}
+
+ul, .list-group, .dropdown-menu {
+    border: 1px solid #333333 !important;
+}
+ul, .list-group, .dropdown-item, .dropdown-menu {
+    background-color: #14151a !important;
+    color: #ddd !important;
+}
+
+ul > li, .list-group-item {
+    background-color: #14151a !important;
+    color: #ddd !important;
+}
+
+input, textarea, .wg-conf-section, details, button {
+    background-color: #14151a !important;
+    color: #ddd !important;
+    border: 1px solid #555555 !important;
+}
+
+.wg-conf-wrapper button {
+    font-weight: bold;
+    border-color: #bbb !important;
+}
+
+.card {
+    background-color: #14151a !important;
+    color: #ddd !important;
+    border: 1px solid #333333 !important;
+}
+
+.card-header {
+    .btn-link {
+	font-size: 1em !important;
+	font-weight: 700;
+    }
+    border-bottom: 1px solid #333333 !important;
+}
+
+a, code {
+    color: #44dfdf;
+}
+
+span.hltext {
+    color: #eee;
+}
+
+.btn-link {
+    color: #eeed;
+    text-decoration: none !important;
+}
+
+a:hover {
+    color: #2f9c9c;
+}
+
+.btn-link:hover {
+    color: grey;
+}
+
+ul {
+    margin-top: 0.5em;
+    padding: 8px;
+    border-radius: 4px !important;
+    padding-left: calc(1em + 8px);
+}
+
+.flex {
+    display: flex;
+}
+
+.flex-column {
+    flex-direction: column;
+}
+
+.flex-row {
+    flex-direction: row;
+}
+
+.flex-1 {
+    flex: 1;
+}
+
+.flex-2 {
+    flex: 2;
+}
+
+.flex-8 {
+	flex: 8;
+}
+
+.counter-div {
+    padding: 0px 10px;
+}
+
+.counter-main {
+    max-width: 400px;
+}
+
+#title-container {
+    max-width: 800px;
+}
+
+.alert {
+    margin: 5px 0;
+}
+
+button .oi {
+    margin-right: 5px;
+}
+
+.countdown-div {
+    position: relative;
+    display: inline-block;
+    width: 70px;
+    height: 80px;
+    border-radius: 4px;
+    font-size: 12px;
+    text-align: center;
+    border: 1px solid #14151a;
+    background-color: #14151a;
+    color: #ccc;
+    padding: 5px 0px;
+}
+
+.counter-div:nth-child(1) {
+    align-self: left;
+    padding-left: 0px;
+}
+
+.counter-div:nth-child(4) {
+    padding-right: 0px;
+}
+
+
+#countdown-final {
+    margin: 10px 6px 0 6px;
+    position: relative;
+    width: 100%;
+    padding: 2px;
+    display: none;
+    border-radius: 5px;
+    background-color: #14151a;
+    border: 1px solid #14151a;
+    font-family: "Noto Sans Mono", monospace;
+    font-size: 1em;
+    color: #ddd;
+}
+
+.counter-number {
+    font-family: Saiba;
+    font-size: 2.5em;
+    font-weight: bold;
+}
+
+.counter-text {
+    font-family: "Noto Sans Mono", monospace;
+    font-size: 1em;
+    color: #aaa;
+}
+
+.counter {
+    float: none;
+    margin: 0 auto;
+    margin-top: 3em;
+    max-width: 666px;
+}
+
+.downloads {
+    margin-top: 3em;
+}
+
+.downloads .btn {
+    margin-left: 15px;
+    margin-right: 15px;
+}
+
+.masthead-content h1, .masthead-content h2 {
+    color: #fff;
+    margin-left: -15px;
+    margin-right: -15px;
+}
+
+nav {
+    background-color: #14151a !important;
+    border-bottom: 1px solid #333333 !important;
+    padding: 0px !important;
+    ul, .nav-item {
+	border: none !important;
+    }
+    a {
+	text-decoration: none;
+    }
+}
+
+footer {
+    a {
+	text-decoration: none;
+    }
+}
+
+.navbar-brand {
+    font-family: Saiba, monspace;
+    font-size: 1.8em !important;
+    color: #eee !important;
+}
+
+.navbar-custom {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+
+.banner{
+    /*text-shadow: -1px 0 #ffffff70, 0 1px #ffffff70, 1px 0 #ffffff70, 0 -1px #ffffff70;*/
+    /*color: #14151a !important;*/
+}
+
+.banner-cr {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    text-align: right;
+    font-size: 50%;
+    color: #fff;
+    text-shadow: none;
+}
+
+.banner-cr a {
+    color: #fff;
+}
+
+.banner .btn {
+    text-shadow: none;
+    min-width: 150px;
+}
+
+.settings {
+    width: 66%;
+    /*height: 33%;*/
+    float: right;
+}
+
+.btn-primary {
+    color: #fff;
+    background-color: #4c4c4c;
+    border-color: #4c4c4c;
+    float: right;
+    font-weight: bold;
+}
+
+.btn-primary:hover {
+    background-color: #1f6628!important;
+    border-color: #1f6628!important;
+}
+
+.team-logo {
+    width: 100%;
+    /*height: 100%;*/
+    margin-left: 15px;
+    padding-top: 15px;
+    padding-bottom: 15px;
+}
+
+header .masthead-content {
+    position: relative;
+    display: flex;
+}
+
+header .masthead-heading {
+    font-family: Saiba, monospace;
+}
+
+#title-container {
+    flex: 1.4;
+}
+
+#enisa-logo, #ecsc-logo {
+    flex: 1;
+    position: relative;
+}
+
+#enisa-logo > img {
+	position: absolute;
+	right: -20px;
+	height: 100%;
+	min-width: 400px;
+	z-index: 999;
+}
+
+#ecsc-logo > img {
+	position: absolute;
+	left: 50px;
+	height: 80%;
+	bottom: 10px;
+	z-index: 999;
+}
+
+#team_logo {
+    position: relative;
+}
+
+.team-logo-form {
+    opacity: 0;
+    margin-left: 15px;
+    position: absolute;
+    top: 10px;
+    bottom: 15px;
+    left: 15px;
+    right: -5px;
+}
+
+.team-logo-input {
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+}
+
+#logo_edit {
+    z-index: 1000;
+}
+
+#setup-summary dt {
+    padding-left: 2em;
+}
+
+#setup-summary dd {
+    padding-right: 2em;
+}
+
+code, .monospace-input {
+    font-family: "Noto Sans Mono", monospace;
+    white-space: pre;
+}
+
+.input-group.is-invalid~.invalid-feedback {
+	display: block;
+}
+
+.list-group.in-card-row > .list-group-item {
+    border-right: 0;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+.list-group.in-card-row > .list-group-item:first-child {
+    border-top: 0;
+}
+.list-group.in-card-row > .list-group-item:last-child {
+    border-bottom: 0;
+}
+
+.page-footer {
+    position: absolute;
+    color: #777 !important;
+    font-size: 0.9em;
+    font-family: "Noto Sans Mono", "Noto Sans";
+    display: block;
+    width: 100%;
+    bottom: 0;
+}
+.page-footer, .page-footer a {
+    color: #777 !important;
+}
+.page-footer span {
+    font-size: 0.87em;
+    font-family: "Noto Sans";
+}
+
+@media (min-width: 1400px) {
+    #title-container {
+	max-width: 800px;
+    }
+}
+
+@media (max-width: 1400px) {
+	#enisa-logo {
+	    display: none;
+	}
+	#ecsc-logo {
+	    display: none;
+	}
+}

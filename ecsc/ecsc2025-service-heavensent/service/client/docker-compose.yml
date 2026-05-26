@@ -1,0 +1,4 @@
+services:
+  heavensent-client:
+    container_name: heavensent-client
+    build: .

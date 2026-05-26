@@ -1,0 +1,42 @@
+name: heavensent-checker
+
+services:
+  heavensent-checker:
+    container_name: heavensent-checker
+    build:
+      context: .
+      secrets:
+        - github-pat
+    ports:
+      - "8500:8500/tcp"
+    environment:
+      - MONGO_ENABLED=1
+      - MONGO_HOST=heavensent-mongo
+      - MONGO_PORT=1730
+      - MONGO_USER=heavensent_checker
+      - MONGO_PASSWORD=heavensent_checker
+    depends_on:
+      - heavensent-mongo
+    restart: unless-stopped
+
+  heavensent-mongo:
+    container_name: heavensent-mongo
+    image: mongo
+    command: mongod --port 1730
+    volumes:
+      - ./data:/data/db
+    ports:
+      - 1730:1730
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: heavensent_checker
+      MONGO_INITDB_ROOT_PASSWORD: heavensent_checker
+    restart: unless-stopped
+
+networks:
+  default:
+    name: heavensent-checker
+    driver: bridge
+
+secrets:
+  github-pat:
+    environment: GITHUB_PAT

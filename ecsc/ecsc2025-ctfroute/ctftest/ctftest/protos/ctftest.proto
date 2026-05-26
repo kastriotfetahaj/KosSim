@@ -1,0 +1,116 @@
+syntax = "proto3";
+
+package ctftest;
+
+service CtfTestAgent {
+  rpc ping(PingRequest) returns (PingResponse);
+  rpc listen(ListenRequest) returns (stream ListenResponse);
+  rpc sniff(StartSniffRequest) returns (StartSniffResponse);
+  rpc stopSniff(StopSniffRequest) returns (StopSniffResponse);
+  rpc getSniffRecording(SniffRecordingRequest) returns (SniffRecordingResponse);
+  rpc send(SendRequest) returns (SendResponse);
+  rpc iperf(IperfRequest) returns (stream IperfResponse);
+  rpc httpGet(HttpGet) returns (HttpResponse);
+}
+
+message PingRequest {
+  string target = 1;
+  uint32 timeout = 2;
+  uint32 retries = 3;
+}
+
+message PingResponse { bool success = 1; }
+
+message ListenRequest {
+  uint32 port = 1;
+  bool echo = 2;
+  bool collect = 3;
+  optional uint64 amount = 4;
+}
+
+enum ListenStatus {
+  READY = 0;
+  DONE = 1;
+}
+
+message ListenResponse {
+  ListenStatus status = 1;
+  optional string client = 2;
+  optional uint32 src_port = 3;
+  optional float duration = 4;
+  optional uint64 amount = 5;
+  optional bytes message = 6;
+}
+
+message SendRequest {
+  string target = 1;
+  uint32 port = 2;
+  bytes message = 4;
+  optional bool echo_recv = 5;
+  optional bool echo_collect = 6;
+  optional uint32 connect_timeout = 7;
+}
+
+message SendResponse {
+  bool success = 1;
+  float duration = 2;
+  bytes response = 3;
+  optional string status = 4;
+}
+
+message IperfRequest {
+  string address = 1; // Bind address in server mode
+  uint32 port = 2;
+  bool server = 3;
+  uint32 duration = 4;
+}
+
+message IperfResponse {
+  ListenStatus status = 1;
+  optional string json = 2;
+}
+
+message HttpGet {
+  string url = 1;
+  uint32 timeout = 2;
+}
+
+message HttpResponse {
+  uint32 status_code = 1;
+  bytes body = 2;
+}
+
+// Sniffing
+enum SniffStatus {
+  STARTED = 0;
+  STOPPED_BY_LIMIT = 1;
+  STOPPED_MANUALLY = 2;
+  NOT_FOUND = 3; // Used to reply to bad record requests
+}
+
+message StartSniffRequest {
+  string filter = 1;
+  uint32 seconds = 2; // Timeout for recording
+  // Can we somehow limit the size which scapy returns for us?
+}
+
+message StartSniffResponse { string uuid = 2; }
+
+message StopSniffRequest {
+  // Stop recording, finalize writing file to /tmp
+  string uuid = 1;
+}
+
+message StopSniffResponse {
+  SniffStatus status =
+      1; // Did we stop it or was it already stopped through a limit?
+}
+
+// Give me the recording please
+message SniffRecordingRequest { string uuid = 1; }
+
+// Get the recording from /tmp, delete after sending it out
+message SniffRecordingResponse {
+  SniffStatus status = 1;
+  bytes recording = 2;
+}

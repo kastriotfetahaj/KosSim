@@ -1,0 +1,37 @@
+---
+- name: "Add env-secrets to checkers"
+  ansible.builtin.lineinfile:
+    path: "{{ checker_item.path }}/.env"
+    create: true
+    mode: "0644"
+    line: "{{ env_item.key }}={{ env_item.value }}"
+    search_string: "{{ env_item.key }}="
+  loop: "{{ vulnbox_checkers_repo_env_secrets | dict2items }}"
+  loop_control:
+    loop_var: env_item
+
+# https://github.com/docker/compose/issues/13235
+- name: "Add env-secrets to checkers /etc/environment"
+  ansible.builtin.lineinfile:
+    path: "/etc/environment"
+    create: true
+    mode: "0644"
+    line: "{{ env_item.key }}={{ env_item.value }}"
+    search_string: "{{ env_item.key }}="
+  loop: "{{ vulnbox_checkers_repo_env_secrets | dict2items }}"
+  loop_control:
+    loop_var: env_item
+
+- name: "[TEMP] Run build.sh to generate artifacts"
+  ansible.builtin.shell:
+    cmd: |
+      if [ -f build.sh ]; then
+          bash build.sh
+      fi
+    chdir: "{{ checker_item.path }}/.."
+
+- name: "Pull/build service"
+  ansible.builtin.command:
+    argv: ["docker", "compose", "build"]
+    chdir: "{{ checker_item.path }}"
+  environment: "{{ vulnbox_checkers_repo_env_secrets }}"

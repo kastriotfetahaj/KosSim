@@ -1,0 +1,20 @@
+apiVersion: cilium.io/v2
+kind: CiliumEgressGatewayPolicy
+metadata:
+  name: {{ include "ctfroute.fullname" . }}-{{ .Values.ctf }}-overlay-via-worker
+spec:
+  selectors:
+    - podSelector: { }
+      nodeSelector:
+        matchExpressions:
+          - key: ctfr.attacking-lab.com/role
+            operator: In
+            values: [ core, control-plane ]
+  destinationCIDRs:
+    - 10.233.{{ .Values.networkIndex }}.0/24
+  egressGateway:
+    interface: "router_mesh"
+    nodeSelector:
+      matchLabels:
+        ctfr.attacking-lab.com/ctf: {{ .Values.ctf }}
+        ctfr.attacking-lab.com/role: worker

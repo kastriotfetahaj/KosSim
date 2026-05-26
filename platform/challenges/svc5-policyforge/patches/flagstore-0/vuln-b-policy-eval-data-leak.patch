@@ -1,0 +1,19 @@
+Subject: refuse private objects in load/1 and drop data fields from allow-public
+
+The shared load/1 helper returned whatever object id the caller asked
+for, including private incidents. Reject the lookup when the object is
+not marked public, and strip the data field from successful responses
+so the allow-public branch can only ever reveal metadata.
+
+--- a/service/lib/policy_forge/policy_dsl.ex
++++ b/service/lib/policy_forge/policy_dsl.ex
+@@ -55,7 +55,8 @@
+   defp load(id) do
+     case PolicyForge.State.object(id) do
+       nil -> %{error: "missing"}
+-      obj -> %{decision: "allow", object: obj}
++      %{public: true} = obj -> %{decision: "allow", object: Map.drop(obj, [:data])}
++      _ -> %{error: "policy_scope_denied"}
+     end
+   end
+ end

@@ -1,0 +1,7 @@
+---
+- name: 'Provision Docker Image'
+  hosts: default
+  become: true
+  roles:
+    - base
+    - docker

@@ -1,0 +1,31 @@
+[project]
+name = "vulnhost"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "ecs-logging>=2.2.0",
+    "hcloud>=1.25.0",
+    "marshmallow-dataclass>=8.7.1",
+    "marshmallow-enum>=1.5.1",
+    "openstacksdk>=4.7.1",
+    "paramiko>=4.0.0",
+    "passlib>=1.7.4",
+    "pyyaml>=6.0.2",
+    "requests>=2.32.5",
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.18.1",
+    "types-paramiko>=4.0.0.20250822",
+    "types-passlib>=1.7.7.20250602",
+    "types-pyyaml>=6.0.12.20250822",
+    "types-requests>=2.32.4.20250913",
+]
+
+[build-system]
+requires = ["uv_build>=0.8.17,<0.9.0"]
+build-backend = "uv_build"
+
+[project.scripts]
+run_remote = "vulnhost:run_remote"

@@ -1,0 +1,21 @@
+services:
+  dind:
+    image: docker:28.4.0-dind@sha256:831644212c5bdd0b3362b5855c87b980ea39a83c9e9adcef2ce03eced99a737a
+    container_name: firewall-dind
+    hostname: dind
+    privileged: true
+    volumes:
+      - type: bind
+        source: ../../
+        target: /host/
+        read_only: true
+      - type: tmpfs
+        target: /host/service/firewall/snmp/
+      - type: bind
+        target: /host/service/firewall/snmp/mib/
+        source: ../../service/firewall/snmp/mib/
+        read_only: true
+    post_start:
+      - command: sh /host/meta/dind/setup.sh
+        environment:
+          GITHUB_PAT: ${GITHUB_PAT:?Github PAT not configured}

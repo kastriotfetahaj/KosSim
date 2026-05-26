@@ -1,0 +1,33 @@
+PUT _ingest/pipeline/enolog-pipeline
+{
+  "description": "Parse ENO log messages",
+  "processors": [
+    {
+      "grok": {
+        "field": "message",
+        "patterns": ["##ENOLOGMESSAGE %{GREEDYDATA:message}"],
+        "ignore_failure": true
+      }
+    },
+    {
+      "json": {
+        "field": "message",
+        "target_field": "enologs",
+        "ignore_failure": true
+      }
+    },
+    {
+      "set": {
+        "if": "ctx.enologs != null && ctx.enologs.message != null",
+        "field": "message",
+        "copy_from": "enologs.message"
+      }
+    },
+     {
+      "pipeline": {
+        "name": "logs@default-pipeline",
+        "ignore_failure": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LedgerForge</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <main class="ledger-shell">
+    <aside class="rail">
+      <header class="rail-head">
+        <p class="eyebrow">settlement audit desk</p>
+        <h1>LedgerForge</h1>
+        <span id="session" class="session">session: anonymous</span>
+      </header>
+      <nav>
+        <button class="rail-item active" data-view="journal">journal</button>
+        <button class="rail-item" data-view="settlements">settlements</button>
+        <button class="rail-item" data-view="treasury">treasury</button>
+        <button class="rail-item" data-view="audit">audit</button>
+      </nav>
+      <form id="sign-form" class="sign-form" autocomplete="off">
+        <input id="sign-user" placeholder="username">
+        <input id="sign-pass" type="password" placeholder="password">
+        <div class="row">
+          <button data-action="login">login</button>
+          <button data-action="register">register</button>
+          <button data-action="logout" type="button">logout</button>
+        </div>
+        <pre id="sign-out"></pre>
+      </form>
+      <aside class="root-card">
+        <span>merkle root</span>
+        <strong id="root">loading</strong>
+      </aside>
+    </aside>
+    <section class="main">
+      <div id="view-journal" class="view active">
+        <header class="view-head">
+          <h2>Document Journal</h2>
+          <span id="doc-count">0 entries</span>
+        </header>
+        <div id="docs" class="ledger-list"></div>
+        <section class="query-desk">
+          <div class="query-title">
+            <h2>LFQL Console</h2>
+            <span>read window</span>
+          </div>
+          <textarea id="script" spellcheck="false">LIST:public</textarea>
+          <div class="row">
+            <button id="run">execute</button>
+            <button id="refresh">refresh</button>
+          </div>
+          <pre id="output"></pre>
+        </section>
+      </div>
+      <div id="view-settlements" class="view">
+        <header class="view-head">
+          <h2>Settlements</h2>
+          <span>public branch only</span>
+        </header>
+        <pre id="settlements-out" class="detail"></pre>
+      </div>
+      <div id="view-treasury" class="view">
+        <header class="view-head">
+          <h2>Treasury Receipts</h2>
+          <span>scoped viewer required</span>
+        </header>
+        <form id="treasury-form" autocomplete="off">
+          <input id="treasury-key" placeholder="X-Viewer-Key" value="public-viewer">
+          <input id="treasury-id" placeholder="receipt id" type="number">
+          <button>fetch</button>
+        </form>
+        <pre id="treasury-out" class="detail"></pre>
+      </div>
+      <div id="view-audit" class="view">
+        <header class="view-head">
+          <h2>Audit</h2>
+          <button id="audit-refresh">refresh</button>
+        </header>
+        <pre id="audit-out" class="detail"></pre>
+      </div>
+    </section>
+  </main>
+  <script src="/static/app.js" type="module"></script>
+</body>
+</html>

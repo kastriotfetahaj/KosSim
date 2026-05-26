@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block head %}
+  <base href="{{ url_for('manager.index') }}">
+{% endblock %}
+{% block content %}
+  <table id="monitoring-table">
+    <caption>Monitoring Entries</caption>
+    <thead>
+      <tr>
+        <th scope="col">Label</th>
+        <th scope="col">Value</th>
+        <th scope="col">Actions</th>
+      </tr>
+    </thead>
+    <tbody id="monitoring-entries">
+    </tbody>
+  </table>
+{% endblock %}
+{% block atend %}
+  <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+  <script>{{ function_name }}()</script>
+{% endblock %}

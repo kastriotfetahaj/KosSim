@@ -1,0 +1,90 @@
+image:
+  repository: ci.attacking-lab.com/ctf-route/ctfroute
+  pullPolicy: Always
+  tag: "latest"
+
+imagePullSecrets: []
+
+# This is to override the chart name.
+nameOverride: ""
+fullnameOverride: ""
+
+# Set annotations on all pods
+podAnnotations: {}
+# Set labes on all pods
+podLabels: {}
+
+# TODO: Service account for reading gates
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+# Used to target appropriate nodes with the
+# ctfr.attacking-lab.com/ctf taint and label
+ctf: ctfroute-demo
+
+networkIndex: 32
+
+# No default config provided, because Helm always does a deep merge on values,
+#ctfroute: {}
+
+# Use this (.Values._ctfroute) for autocompletion while working on chart templates
+# then fix your template to using .Values.ctfroute
+ctfroute:
+  instance:
+    metrics: /var/ctfroute/metrics/metrics
+    logging:
+      version: 1
+      incremental: true
+      loggers:
+        ctfroute.nft:
+          level: ERROR
+        ctfroute.debug:
+          level: INFO
+
+  defaults:
+    teams:
+      anonymization:
+        driver: netfilter
+
+  initialState:
+    network:
+      nft: ""
+      entities:
+        - id: infra
+          addresses:
+            - 10.0.251.250/24
+
+    routers:
+      - id: router-1
+        host: 10.232.0.12
+        teams: [1]
+        net_entities:
+          - infra
+        connectivity:
+          driver: wireguard
+          address: 10.233.0.12
+          port: 40000
+          privateKey: ...
+          publicKey: ...
+
+    teams:
+      - id: 1
+        network: 10.0.1.0/24
+        gateway: 10.0.1.254
+        vulnbox: 10.0.1.2
+        meta:
+          name: Team A
+        connectivity:
+          driver: wireguard
+          publicKey: ...
+          privateKey: ...
+          port: 50001
+          peers:
+            - allowedIps: 10.0.1.2/32
+              publicKey: ...
+              privateKey: ...

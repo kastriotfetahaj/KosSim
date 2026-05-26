@@ -1,0 +1,49 @@
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: kibana-oauth
+  namespace: elastic
+spec:
+  targetNamespace: elastic
+  repo: https://oauth2-proxy.github.io/manifests
+  chart: oauth2-proxy
+  version: 7.12.18
+  valuesContent: |-
+    config:
+      existingSecret: oauth2-proxy-kibana
+      configFile: |
+        upstreams = [
+          "https://core-kb-http.elastic.svc.cluster.local:5601"
+        ]
+        ssl_upstream_insecure_skip_verify=true
+        provider="keycloak-oidc" 
+        oidc_issuer_url="https://auth.attacking-lab.com/realms/master"
+        redirect_url="https://kibana-cluster.gartenverein-tackenberg.de/oauth2/callback"
+        allowed_groups="admin"
+        code_challenge_method="S256"
+        email_domains="*"
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kibana-via-oauth2-proxy
+  namespace: elastic
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - kibana-cluster.gartenverein-tackenberg.de
+  rules:
+    - host: kibana-cluster.gartenverein-tackenberg.de
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: kibana-oauth-oauth2-proxy
+                port:
+                  name: http

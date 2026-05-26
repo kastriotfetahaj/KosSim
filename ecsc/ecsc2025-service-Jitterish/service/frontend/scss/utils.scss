@@ -1,0 +1,13 @@
+@mixin marker-start() {
+  &::before {
+    content: "〉〉 ";
+    vertical-align: 0.15rem;
+  }
+}
+
+@mixin marker-end() {
+  &::after {
+    content: " 〈〈";
+    vertical-align: 0.15rem;
+  }
+}

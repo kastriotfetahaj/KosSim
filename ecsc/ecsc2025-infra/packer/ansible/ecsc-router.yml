@@ -1,0 +1,41 @@
+---
+- name: "ECSC-Router"
+  hosts: all
+  become: true
+  become_method: ansible.builtin.sudo
+  vars_files:
+    - "static.yml"
+    - "secrets.yml"
+
+  roles:
+    - base
+    - ssh_keys
+    - root_login
+    - infra_root_pw
+    - role: nft
+      nft_remove_iptables: true
+      nft_package_version: "1.0.6-2+deb12u2"
+    - role: "programs"
+      vars:
+        programs_list:
+          - python3-pip
+          - curl
+          - iproute2
+          - tcpdump
+          - iputils-ping
+          - dnsutils
+          - jq
+          - iperf3
+          - iftop
+          - htop
+          - netcat-openbsd
+
+    # - journalbeat
+    # - metricbeat
+    - role: k3s
+      k3s_install_env:
+        INSTALL_K3S_SKIP_ENABLE: true
+        INSTALL_K3S_VERSION: "v1.33.3+k3s1"
+
+    - role: "open_iscsi"
+      open_iscsi_daemon_enabled: false

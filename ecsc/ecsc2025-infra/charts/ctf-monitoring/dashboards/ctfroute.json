@@ -1,0 +1,195 @@
+{
+    "__inputs": [
+        {
+            "name": "DS_CTF-PROMETHEUS",
+            "label": "ctf-prometheus",
+            "description": "",
+            "type": "datasource",
+            "pluginId": "prometheus",
+            "pluginName": "Prometheus"
+        }
+    ],
+    "__elements": {},
+    "__requires": [
+        {
+            "type": "grafana",
+            "id": "grafana",
+            "name": "Grafana",
+            "version": "12.1.0"
+        },
+        {
+            "type": "datasource",
+            "id": "prometheus",
+            "name": "Prometheus",
+            "version": "1.0.0"
+        },
+        {
+            "type": "panel",
+            "id": "state-timeline",
+            "name": "State timeline",
+            "version": ""
+        }
+    ],
+    "annotations": {
+        "list": [
+            {
+                "builtIn": 1,
+                "datasource": {
+                    "type": "grafana",
+                    "uid": "-- Grafana --"
+                },
+                "enable": true,
+                "hide": true,
+                "iconColor": "rgba(0, 211, 255, 1)",
+                "name": "Annotations & Alerts",
+                "type": "dashboard"
+            }
+        ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": null,
+    "links": [],
+    "panels": [
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_CTF-PROMETHEUS}"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "axisPlacement": "auto",
+                        "fillOpacity": 70,
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "insertNulls": false,
+                        "lineWidth": 0,
+                        "spanNulls": false
+                    },
+                    "mappings": [
+                        {
+                            "options": {
+                                "connected": {
+                                    "color": "green",
+                                    "index": 0
+                                },
+                                "degraded": {
+                                    "color": "dark-orange",
+                                    "index": 3
+                                },
+                                "disconnected": {
+                                    "color": "red",
+                                    "index": 2
+                                },
+                                "unknown": {
+                                    "color": "super-light-orange",
+                                    "index": 1
+                                }
+                            },
+                            "type": "value"
+                        }
+                    ],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "transparent",
+                                "value": 0
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 0
+            },
+            "id": 2,
+            "options": {
+                "alignValue": "left",
+                "legend": {
+                    "displayMode": "list",
+                    "placement": "bottom",
+                    "showLegend": true
+                },
+                "mergeValues": true,
+                "rowHeight": 0.9,
+                "showValue": "auto",
+                "tooltip": {
+                    "hideZeros": false,
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "pluginVersion": "12.1.0",
+            "targets": [
+                {
+                    "disableTextWrap": false,
+                    "editorMode": "code",
+                    "expr": "label_replace(label_join(router_connection > 0, \"connection\", \" -> \", \"instance\",\"other_router\"), \"connection\", \"$1->$2\", \"connection\", \"([A-Za-z0-9-]+).* -> ([A-Za-z0-9-]+)\")",
+                    "format": "table",
+                    "fullMetaSearch": false,
+                    "includeNullMetadata": true,
+                    "legendFormat": "__auto",
+                    "range": true,
+                    "refId": "A",
+                    "useBackend": false,
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${DS_CTF-PROMETHEUS}"
+                    }
+                }
+            ],
+            "title": "New panel",
+            "transformations": [
+                {
+                    "id": "groupingToMatrix",
+                    "options": {
+                        "columnField": "connection",
+                        "rowField": "Time",
+                        "valueField": "router_connection"
+                    }
+                },
+                {
+                    "id": "convertFieldType",
+                    "options": {
+                        "conversions": [
+                            {
+                                "destinationType": "time",
+                                "targetField": "Time\\connection"
+                            }
+                        ],
+                        "fields": {}
+                    }
+                }
+            ],
+            "type": "state-timeline"
+        }
+    ],
+    "schemaVersion": 41,
+    "tags": [],
+    "templating": {
+        "list": []
+    },
+    "time": {
+        "from": "now-30m",
+        "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "browser",
+    "title": "Ctfroute",
+    "uid": "67629c06-c426-40a7-841a-cf4fd4e54293",
+    "version": 2,
+    "weekStart": ""
+}

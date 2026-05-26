@@ -1,0 +1,69 @@
+// For my code documentation
+@use 'sass:color';
+@use "vars";
+
+.demo-code {
+  font-size: 1rem;
+
+  .cmd {
+    font-weight: 400;
+    color: var(--code);
+  }
+
+  .collection {
+    color: vars.$secondary;
+  }
+
+  .ident {
+    color: vars.$primary;
+  }
+
+  .keyword {
+    color: var(--code);
+  }
+
+  span.constant {
+    color: mediumseagreen;
+  }
+
+  .op {
+    color: #d8f;
+  }
+
+  .comment {
+    color: color.adjust(vars.$text-light, $lightness: -20%);
+    font-size: 90%;
+  }
+
+  .response {
+    font-style: italic;
+    color: vars.$text-light;
+    &:before {
+      content: "⇒ ";
+      color: vars.$secondary;
+      font-weight: 700;
+    }
+  }
+
+  .hl {
+    background-color: color.adjust(vars.$accent-bg, $lightness: 15%);
+    color: var(--preformatted);
+    padding: .1rem .25rem;
+    border-radius: .1rem;
+  }
+
+  li pre {
+    padding: .1rem 1rem;
+    margin-bottom: .25rem;
+  }
+
+  pre.data {
+    font-size: 90%;
+    margin: .25rem 0 .5rem 0;
+    font-style: italic;
+  }
+
+  code {
+    color: vars.$text-light;
+  }
+}

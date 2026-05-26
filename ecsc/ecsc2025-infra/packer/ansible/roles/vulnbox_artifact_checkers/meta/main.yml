@@ -1,0 +1,7 @@
+---
+dependencies:
+  - role: "programs"
+    vars:
+      programs_list:
+        - git
+        - rsync

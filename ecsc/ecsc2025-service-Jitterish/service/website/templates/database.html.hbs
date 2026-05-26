@@ -1,0 +1,88 @@
+{{#*inline "page"}}
+    <h1>Database &quot;{{database}}&quot;</h1>
+
+    {{#if user_owns_db}}
+        <p>This is your personal database, you have full access.</p>
+    {{else}}
+        <p>This database contains public relations, which you can query.</p>
+    {{/if}}
+    {{#if allow_public_kv }}
+        <p>This database has an <a href="/database/{{database}}/script">API script attached</a>.</p>
+    {{/if}}
+
+    <div data-augmented-ui class="content-card-2">
+        <h3 class="title">Collections</h3>
+        <ul>
+            {{#each collections}}
+                <li data-role="collection">{{this.name}}</li>
+            {{else}}
+                <p class="text-primary">This database is empty.</p>
+            {{/each}}
+        </ul>
+    </div>
+
+    <div data-augmented-ui class="content-card-1">
+        <h3 class="title">Read Database</h3>
+        {{#if err}}
+            <div data-augmented-ui class="alert alert-error">{{err}}</div>
+        {{/if}}
+        {{#if msgs}}
+            <div data-augmented-ui class="alert alert-info">
+                <small class="title">query output</small>
+                {{#each msgs}}
+                    <p data-role="output">{{this}}</p>
+                {{/each}}
+            </div>
+        {{/if}}
+        <p>You can read all public collections.</p>
+        {{#if collections}}
+            <form action="/database/{{database}}/customquery" method="post" accept-charset="utf-8">
+                <select name="query" id="query">
+                    {{#each collections}}
+                        <option value="query q on {{this.name}};">{{this.name}}</option>
+                    {{/each}}
+                </select>
+                <input type="hidden" name="query_name" value="q">
+                <input type="hidden" name="params" value="{{#if form.params}}{{form.params}}{{else}}{}{{/if}}">
+                <p><input data-augmented-ui type="submit" value="run query"></p>
+            </form>
+        {{else}}
+            <p class="text-error">This database is empty.</p>
+        {{/if}}
+    </div>
+
+
+    <div data-augmented-ui class="content-card-2">
+        <h3 class="title">Custom Queries</h3>
+        <form action="/database/{{database}}/customquery" method="post" accept-charset="utf-8">
+            <label for="query">query</label>
+            <textarea name="query" id="query" rows="12">{{form.query}}</textarea>
+            <label for="query_name">query_name</label>
+            <input type="text" name="query_name" id="query_name" value="{{form.query_name}}">
+            <label for="params">params</label>
+            <input type="text" name="params" id="params" value="{{#if form.params}}{{form.params}}{{else}}{}{{/if}}">
+            <p><input data-augmented-ui type="submit" value="run custom query"></p>
+        </form>
+    </div>
+
+
+    <div data-augmented-ui class="content-card-1">
+        <h3 class="title">Write to Collection</h3>
+        <p>You can only write your own database.</p>
+        <form action="/database/{{database}}/append" method="post" accept-charset="utf-8">
+            <label for="collection">collection</label>
+            <input type="text" name="collection" id="collection" list="collections">
+            <datalist id="collections">
+                {{#each collections}}
+                    <option value="{{this.name}}">{{this.name}}</option>
+                {{/each}}
+            </datalist>
+            <label for="entry">entry</label>
+            <textarea name="data" id="entry">{}</textarea>
+            <p><input data-augmented-ui type="submit" value="append"></p>
+        </form>
+    </div>
+
+
+{{/inline}}
+{{> default title="Database" pagename="database"}}

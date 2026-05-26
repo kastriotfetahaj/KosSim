@@ -1,0 +1,156 @@
+name: vaultgrid
+
+on:
+  push:
+    paths:
+      - "platform/challenges/svc2-vaultgrid/**"
+      - ".github/workflows/vaultgrid-ci.yml"
+  pull_request:
+    paths:
+      - "platform/challenges/svc2-vaultgrid/**"
+
+defaults:
+  run:
+    working-directory: platform/challenges/svc2-vaultgrid
+
+jobs:
+  cpp-build-and-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends build-essential libsqlite3-dev libcrypt-dev
+      - working-directory: platform/challenges/svc2-vaultgrid/service
+        run: make
+      - name: Smoke run
+        working-directory: platform/challenges/svc2-vaultgrid/service
+        run: |
+          ./vaultgrid &
+          PID=$!
+          for i in $(seq 1 20); do
+            curl -fsS http://127.0.0.1:8080/health >/dev/null 2>&1 && break
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:8080/health
+          kill $PID
+
+  rust-crypt-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: platform/challenges/svc2-vaultgrid/crypt
+      - working-directory: platform/challenges/svc2-vaultgrid/crypt
+        run: cargo build --release
+
+  go-feed-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+      - working-directory: platform/challenges/svc2-vaultgrid/feed
+        run: go mod tidy && go build -o vaultgrid-feed .
+
+  docker-checker-baseline:
+    runs-on: ubuntu-latest
+    needs: [cpp-build-and-checks, rust-crypt-build, go-feed-build]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build all three images
+        working-directory: platform/challenges
+        run: |
+          docker build -t vaultgrid-service -f svc2-vaultgrid/service/Dockerfile .
+          docker build -t vaultgrid-crypt   -f svc2-vaultgrid/crypt/Dockerfile .
+          docker build -t vaultgrid-feed    -f svc2-vaultgrid/feed/Dockerfile .
+      - name: Start stack
+        run: |
+          docker network create vg-net
+          docker run -d --rm --name vgcrypt --network vg-net --network-alias vaultgrid-crypt \
+            -e SERVICE_PUSH_SECRET=ci-vault-secret-32bytes-padding vaultgrid-crypt
+          docker run -d --rm --name vgfeed --network vg-net --network-alias vaultgrid-feed \
+            -e SERVICE_PUSH_SECRET=ci-vault-secret-32bytes-padding vaultgrid-feed
+          docker run -d --rm --name vgsvc --network vg-net \
+            -e SERVICE_PUSH_SECRET=ci-vault-secret-32bytes-padding \
+            -e TEAM_NAME=ci -e SERVICE_NAME=svc2 -p 18082:8080 vaultgrid-service
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:18082/health >/dev/null 2>&1; then break; fi
+            sleep 1
+          done
+      - name: Sync checker
+        env:
+          SERVICE_PUSH_SECRET: ci-vault-secret-32bytes-padding
+        run: |
+          pip install --quiet requests
+          python3 checker/checker.py http://127.0.0.1:18082
+      - name: Exploits against unpatched stack
+        env:
+          SERVICE_PUSH_SECRET: ci-vault-secret-32bytes-padding
+        run: |
+          set -eux
+          for v in 0 1 2; do
+            FLAG="FLAG{CI_EXP_${v}_$(date +%s)}"
+            INFO=$(curl -fsS -H "X-Checker-Secret: $SERVICE_PUSH_SECRET" \
+              -H 'Content-Type: application/json' \
+              -d "{\"method\":\"PUTFLAG\",\"current_round_id\":901,\"variant_id\":${v},\"flag\":\"${FLAG}\"}" \
+              http://127.0.0.1:18082/ | python3 -c "import sys,json;print(json.load(sys.stdin)['attack_info'])")
+            timeout 90 python3 "exploits/exp$((v+1)).py" 127.0.0.1:18082 "$INFO" | grep -F "$FLAG"
+          done
+      - name: Tear down
+        if: always()
+        run: |
+          docker rm -f vgsvc vgfeed vgcrypt || true
+          docker network rm vg-net || true
+
+  sla-after-patch:
+    runs-on: ubuntu-latest
+    needs: docker-checker-baseline
+    strategy:
+      fail-fast: false
+      matrix:
+        patch:
+          - patches/flagstore-0/vuln-a-repair-ticket-shard.patch
+          - patches/flagstore-0/vuln-b-rebuild-preview.patch
+          - patches/flagstore-0/vuln-c-meta-overflow.patch
+          - patches/flagstore-1/vuln-d-cbc-padding-oracle.patch
+          - patches/flagstore-2/vuln-e-feed-range-auth.patch
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply patch
+        run: patch -p1 < "${{ matrix.patch }}"
+      - name: Build patched stack
+        working-directory: platform/challenges
+        run: |
+          docker build -t vaultgrid-service-p -f svc2-vaultgrid/service/Dockerfile .
+          docker build -t vaultgrid-crypt-p   -f svc2-vaultgrid/crypt/Dockerfile .
+          docker build -t vaultgrid-feed-p    -f svc2-vaultgrid/feed/Dockerfile .
+      - name: Start patched stack
+        run: |
+          docker network create vg-net
+          docker run -d --rm --name vgcrypt --network vg-net --network-alias vaultgrid-crypt \
+            -e SERVICE_PUSH_SECRET=ci-vault-secret-32bytes-padding vaultgrid-crypt-p
+          docker run -d --rm --name vgfeed --network vg-net --network-alias vaultgrid-feed \
+            -e SERVICE_PUSH_SECRET=ci-vault-secret-32bytes-padding vaultgrid-feed-p
+          docker run -d --rm --name vgsvc --network vg-net \
+            -e SERVICE_PUSH_SECRET=ci-vault-secret-32bytes-padding \
+            -e TEAM_NAME=ci -e SERVICE_NAME=svc2 -p 18082:8080 vaultgrid-service-p
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:18082/health >/dev/null 2>&1; then break; fi
+            sleep 1
+          done
+      - name: SLA must hold under patch
+        env:
+          SERVICE_PUSH_SECRET: ci-vault-secret-32bytes-padding
+        run: |
+          pip install --quiet requests
+          python3 checker/checker.py http://127.0.0.1:18082
+      - name: Tear down
+        if: always()
+        run: |
+          docker rm -f vgsvc vgfeed vgcrypt || true
+          docker network rm vg-net || true

@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KosSim Architecture</title>
+  <style>
+    :root {
+      --bg-a: #071328;
+      --bg-b: #0f345f;
+      --card: #0d1e3bd9;
+      --line: #2f4f81;
+      --text: #e9f2ff;
+      --muted: #adc2e6;
+      --accent: #ffd368;
+      --blue: #7fc4ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background:
+        radial-gradient(circle at 10% 8%, #1d4278 0, transparent 30%),
+        radial-gradient(circle at 92% 16%, #284f87 0, transparent 32%),
+        linear-gradient(150deg, var(--bg-a), var(--bg-b));
+      padding: 22px;
+      line-height: 1.58;
+    }
+    main { max-width: 1160px; margin: 0 auto; display: grid; gap: 14px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: 0 14px 34px rgba(0,0,0,0.34);
+      backdrop-filter: blur(8px);
+      padding: 18px;
+    }
+    h1, h2, h3 { margin: 0 0 8px; line-height: 1.23; }
+    h1 { font-size: 32px; }
+    h2 { font-size: 24px; }
+    h3 { font-size: 18px; }
+    p { margin: 0 0 10px; }
+    .muted { color: var(--muted); }
+    a { color: #9fd2ff; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    nav { display: flex; flex-wrap: wrap; gap: 10px; }
+    nav a {
+      border: 1px solid #486ba7;
+      border-radius: 999px;
+      background: #16325e;
+      padding: 6px 11px;
+      color: #dbe9ff;
+      font-size: 13px;
+    }
+    table { width: 100%; border-collapse: collapse; margin-top: 9px; }
+    th, td {
+      border: 1px solid #36598f;
+      padding: 9px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: #17335f; }
+    td { background: #102648; }
+    code {
+      background: #13294d;
+      border: 1px solid #395f97;
+      border-radius: 6px;
+      color: #ffe8ad;
+      padding: 0.12em 0.38em;
+    }
+    ul { margin: 0; padding-left: 20px; }
+    li { margin: 5px 0; }
+    .grid { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .tile {
+      border: 1px solid #355a92;
+      border-radius: 12px;
+      background: #122a4e;
+      padding: 12px;
+    }
+    .tile strong { color: var(--accent); }
+    .mermaid {
+      border: 1px solid #32568f;
+      border-radius: 12px;
+      background: #0a1730;
+      padding: 12px;
+      overflow-x: auto;
+    }
+    .note {
+      border-left: 3px solid var(--blue);
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: #11284b;
+      color: #d8e7ff;
+    }
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+      h1 { font-size: 29px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="card">
+      <h1>KosSim Architecture</h1>
+      <p class="muted">This page describes each major platform element and the reason it exists, so operations and scoring stay predictable during competitions.</p>
+      <nav>
+        <a href="../README.html">Overview</a>
+        <a href="architecture.html">Architecture</a>
+        <a href="challenges.html">Challenges</a>
+        <a href="schema.html">Data Schema</a>
+        <a href="local-runbook.html">Local Runbook</a>
+        <a href="hetzner-runbook.html">Hetzner Runbook</a>
+      </nav>
+    </section>
+
+    <section class="card">
+      <h2>Requirement Mapping: What and Why</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Element</th>
+            <th>What It Does</th>
+            <th>Why It Is Needed</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td>Visible scoring</td>
+            <td><code>control-api</code> exposes <code>/scoreboard</code> (HTML) and <code>/api/v1/scoreboard</code> (JSON).</td>
+            <td>Teams and organizers need one trusted source of score truth.</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>Scriptable flag submit</td>
+            <td><code>/api/v1/flags/submit</code> accepts token-authenticated flag batches.</td>
+            <td>Automation is required for realistic A/D competition speed.</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td>Per-minute flag rotation</td>
+            <td><code>flag-rotator</code> creates one new active flag per team-service every 60s.</td>
+            <td>Stops replay and forces teams to keep exploiting live targets.</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td>5 services per team</td>
+            <td>Each team stack has <code>svc1..svc5</code> with the same vulnerabilities.</td>
+            <td>Fairness: equal attack surface for all teams.</td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td>NOP host</td>
+            <td>Dedicated always-on stack for testing and baseline checks.</td>
+            <td>Lets organizers validate tooling without affecting team scoring.</td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td>Shared network</td>
+            <td>Control plane, team stacks, and NOP run on one private competition network.</td>
+            <td>Required for rotator/checkers reachability and realistic lateral traffic.</td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td>NAT identity</td>
+            <td>Team attacks pass through <code>teamX-nat</code>, targets observe NAT source.</td>
+            <td>Prevents leaking internal attacker container IPs to opponents.</td>
+          </tr>
+          <tr>
+            <td>8</td>
+            <td>Team VPN access</td>
+            <td>WireGuard provides per-team profiles into private subnet.</td>
+            <td>Secure remote access while keeping competition network private.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>High-Level Topology Diagram</h2>
+      <p class="muted">If the diagram does not render, verify outbound internet access to <code>cdn.jsdelivr.net</code>.</p>
+      <div class="mermaid">
+flowchart LR
+    subgraph CP["Control Plane"]
+      API["control-api\nscoreboard + submit"]
+      ROT["flag-rotator\nconfigurable tick"]
+      DB[("PostgreSQL")]
+    end
+
+    subgraph TEAM1["Team 1"]
+      T1NAT["team1-nat"]
+      T1S["svc1..svc5"]
+    end
+
+    subgraph TEAM2["Team 2"]
+      T2NAT["team2-nat"]
+      T2S["svc1..svc5"]
+    end
+
+    subgraph TEAM3["Team 3"]
+      T3NAT["team3-nat"]
+      T3S["svc1..svc5"]
+    end
+
+    subgraph NOP["NOP"]
+      NOPS["nop svc1..svc5"]
+    end
+
+    VPN["WireGuard VPN"]
+
+    API --> DB
+    ROT --> DB
+    ROT --> T1S
+    ROT --> T2S
+    ROT --> T3S
+    ROT --> NOPS
+    VPN --> API
+    VPN --> T1S
+    VPN --> T2S
+    VPN --> T3S
+    T1NAT --> T2S
+    T1NAT --> T3S
+      </div>
+    </section>
+
+    <section class="card grid">
+      <article class="tile">
+        <h3>Round Engine</h3>
+        <p><strong>What:</strong> Rotator computes round IDs and pushes fresh flags to all team services on each configured tick.</p>
+        <p><strong>Why:</strong> Ensures active offense/defense loop and limits stale flag abuse.</p>
+      </article>
+      <article class="tile">
+        <h3>Score Engine</h3>
+        <p><strong>What:</strong> Submit API validates token, freshness, ownership, and duplicate state.</p>
+        <p><strong>Why:</strong> Keeps scoring deterministic and auditable under heavy automation.</p>
+      </article>
+      <article class="tile">
+        <h3>User-Friendly Rounds</h3>
+        <p><strong>What:</strong> Leaderboard displays rounds as <code>1,2,3,...</code> while backend keeps raw round IDs.</p>
+        <p><strong>Why:</strong> Humans read progression clearly; backend still retains exact time mapping.</p>
+      </article>
+      <article class="tile">
+        <h3>Tick Refresh</h3>
+        <p><strong>What:</strong> Dashboard auto-refreshes at tick boundary and runs countdown continuously.</p>
+        <p><strong>Why:</strong> Spectators and players always see current ranking immediately after rotations.</p>
+      </article>
+    </section>
+
+    <section class="card">
+      <h2>Runtime Sequence</h2>
+      <ol>
+        <li>Rotator opens current round and rotates team flags.</li>
+        <li>Teams exploit opponent services and extract flags.</li>
+        <li>Teams submit flags through submit API.</li>
+        <li>API accepts only valid current-tick flags and updates scores.</li>
+        <li>Leaderboard refreshes on tick reset and displays next round counter.</li>
+      </ol>
+      <div class="note">Scoring default: captured flags use ECSC-style jeopardy points starting at <code>10</code> and decaying as more teams submit the same flag; defense and SLA are calculated across the retention window.</div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <script>
+    (() => {
+      const legacyBlocks = document.querySelectorAll("pre code.language-mermaid");
+      legacyBlocks.forEach((code) => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "mermaid";
+        wrapper.textContent = code.textContent;
+        code.parentElement.replaceWith(wrapper);
+      });
+      if (!window.mermaid) return;
+      mermaid.initialize({ startOnLoad: false, securityLevel: "loose", theme: "dark" });
+      mermaid.run({ querySelector: ".mermaid" });
+    })();
+  </script>
+</body>
+</html>

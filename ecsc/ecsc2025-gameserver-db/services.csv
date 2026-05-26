@@ -1,0 +1,6 @@
+id,name,checker_script,checker_timeout,package,checker_script_dir,checker_enabled,checker_subprocess,num_payloads,flag_ids,flags_per_tick,setup_package,checker_route,ports,checker_runner,runner_config
+1,firewall,nono,60,,,t,f,2,"custom,custom",2,,,"",eno:EnoCheckerRunner,"{""url"": ""http://10.42.251.16:8100""}"
+2,gitter,nono,60,,,t,f,2,"custom,custom",2,,,"",eno:EnoCheckerRunner,"{""url"": ""http://10.42.251.17:8200""}"
+3,pillarboxd,nono,60,,,t,f,3,"custom,custom,custom",3,,,"",eno:EnoCheckerRunner,"{""url"": ""http://10.42.251.18:8300""}"
+4,JitterishDB,nono,60,,,t,f,3,"custom,custom,custom",3,,,"",eno:EnoCheckerRunner,"{""url"": ""http://10.42.251.19:8400""}"
+5,heavensent,nono,60,,,t,f,2,"custom,custom",2,,,"",eno:EnoCheckerRunner,"{""url"": ""http://10.42.251.20:8500""}"

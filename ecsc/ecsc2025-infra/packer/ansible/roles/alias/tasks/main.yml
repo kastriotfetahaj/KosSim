@@ -1,0 +1,5 @@
+- name: Set alias
+  ansible.builtin.lineinfile:
+    line: "alias {{ item.key | quote }}={{ item.value | quote }}"
+    path: "/root/.bashrc"
+  loop: "{{ alias_list | dict2items }}"

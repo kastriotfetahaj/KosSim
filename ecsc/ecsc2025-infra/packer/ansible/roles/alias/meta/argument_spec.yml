@@ -1,0 +1,12 @@
+argument_specs:
+  main:
+    short_description: "Setup aliases"
+    author:
+      - "Marc Munier"
+
+    options:
+      alias_list:
+        type: dict
+        required: false
+        default: {}
+        description: "A list of aliases to set"

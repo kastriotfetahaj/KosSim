@@ -1,0 +1,382 @@
+ECSC2025-ATKLAB-FIREWALL-MIB DEFINITIONS ::= BEGIN
+
+
+--
+-- A MIB for the firewall challenge of ecsc 2025,
+-- hosted by Attacking-Lab UG
+--
+
+IMPORTS
+    MODULE-IDENTITY,
+    OBJECT-TYPE,
+    Integer32,
+    Counter64,
+    enterprises
+        FROM SNMPv2-SMI
+;
+
+atklab MODULE-IDENTITY
+    LAST-UPDATED "202508100000Z"
+    ORGANIZATION "https://attacking-lab.com/"
+    CONTACT-INFO "email: info@attacking-lab.com"
+    DESCRIPTION
+    "MIB objects for the agent module of the ECSC 2025
+    firewall challenge"
+    ::= { enterprises 63293 }
+
+--
+-- top level structure
+--
+ecsc        OBJECT IDENTIFIER ::= { atklab 2 }
+ecsc2025    OBJECT IDENTIFIER ::= { ecsc 2025 }
+
+--
+-- monitoring values
+--
+
+monitoring  OBJECT IDENTIFIER ::= { ecsc2025 5 }
+
+dbSocketIPv4 OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+    "Database socket IPv4 address of the database connection
+    "
+    ::= { monitoring 0 }
+
+dbSocketIPv6High OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+    "Database socket IPv6 address of the database connection
+    ( upper 8 bytes )"
+    ::= { monitoring 1 }
+
+dbSocketIPv6Low OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+    "Database socket IPv6 address of the database connection
+    ( lower 8 bytes )"
+    ::= { monitoring 2 }
+
+dbSocketPort OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+    "Database socket port of the database connection"
+    ::= { monitoring 3 }
+
+snmpSocketIPv4 OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+    "SNMP socket IPv4 address of the SNMP connection"
+    ::= { monitoring 4 }
+
+snmpSocketIPv6High OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+    "SNMP socket IPv6 address of the SNMP connection ( upper
+    8 bytes )"
+    ::= { monitoring 5 }
+
+snmpSocketIPv6Low OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+    "SNMP socket IPv6 address of the SNMP connection ( lower
+    8 bytes )"
+    ::= { monitoring 6 }
+
+dbIPv4 OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+    "Database IPv4 address"
+    ::= { monitoring 7 }
+
+dbIPv6High OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+    "Database IPv6 address ( upper 8 bytes )"
+    ::= { monitoring 8 }
+
+dbIPv6Low OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+    "Database IPv6 address ( lower 8 bytes )"
+    ::= { monitoring 9 }
+
+snmpIPv4 OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+    "SNMP IPv4 address"
+    ::= { monitoring 10 }
+
+snmpIPv6High OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+    "SNMP IPv6 address ( upper 8 bytes )"
+    ::= { monitoring 11 }
+
+snmpIPv6Low OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+    "SNMP IPv6 address ( lower 8 bytes )"
+    ::= { monitoring 12 }
+
+dbNameHash OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+    "Hash of the database name"
+    ::= { monitoring 13 }
+
+dbUserHash OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+    "Hash of the name of the database user"
+    ::= { monitoring 14 }
+
+dbSystemUserHash OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+    "Hash of the name of the system database user"
+    ::= { monitoring 15 }
+
+dbActiveUsers OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+    "Number of active database users"
+    ::= { monitoring 16 }
+
+statsFreeIPRanges OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+    "Number of free IP address ranges for VPN connections"
+    ::= { monitoring 17 }
+
+monitoringEnd OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+    "This is the end of the monitoring values"
+    ::= { monitoring 18 }
+
+--
+-- user monitoring values
+--
+
+userMonitoring OBJECT-TYPE
+    SYNTAX      SEQUENCE OF UserMonitoringEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+    "This table contains monitoring values that can be
+    requested from the end user based on its user id"
+    ::= { ecsc2025 6 }
+
+userMonitoringEntry OBJECT-TYPE
+    SYNTAX UserMonitoringStruct
+    MAX-ACCESS read-only
+    STATUS current
+    INDEX   { userIdentifier }
+    ::= { userMonitoring 1 }
+
+UserMonitoringStruct ::= SEQUENCE {
+    userMonitoringEnd       Integer32,
+    userIdentifier          OCTET STRING,
+}
+
+userIdentifier OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(8))
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+    "The identifier of the users,
+    this value is required for some monitoring values"
+    ::= { userMonitoringEntry 100 }
+
+querySocketServerAddr OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(4..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+    "Get the address of the database server from the
+    underlying socket"
+    ::= { userMonitoringEntry 0 }
+
+querySocketClientAddr OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(4..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+    "Get the address of the database client from the
+    underlying socket"
+    ::= { userMonitoringEntry 1 }
+
+queryDbServerAddr OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(4..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+    "Get the address of the database server from the
+    server"
+    ::= { userMonitoringEntry 2 }
+
+queryDbClientAddr OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(4..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+    "Get the address of the database client from the
+    server"
+    ::= { userMonitoringEntry 3 }
+
+queryDbNameHash OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+    "Hash of the database name"
+    ::= { userMonitoringEntry 4 }
+
+queryDbSessionUserHash OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+    "Hash of the name of the database user"
+    ::= { userMonitoringEntry 5 }
+
+queryDbSystemUserHash OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+    "Hash of the name of the system database user"
+    ::= { userMonitoringEntry 6 }
+
+queryDbActiveUsers OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+    "Number of active database users"
+    ::= { userMonitoringEntry 7 }
+
+queryDbFreeIPRanges OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+    "Number of free IP address ranges for VPN connections"
+    ::= { userMonitoringEntry 8 }
+
+queryDbUserDroppedPackets OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+    "Number of packets that where dropped by this users"
+    ::= { userMonitoringEntry 9 }
+
+queryDbUserDroppedBytes OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+    "Number of bytes that where dropped by this users"
+    ::= { userMonitoringEntry 10 }
+
+userMonitoringEnd OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+    "This is the end of the user monitoring values"
+    ::= { userMonitoringEntry 11 }
+
+--
+-- custom values
+--
+
+custom OBJECT-TYPE
+    SYNTAX      SEQUENCE OF CustomEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+    "This table contains entries with custom values that can
+    be set by the end user. Each entry is identified by its
+    name Additionally each entry is secured by secret value.
+    "
+    ::= { ecsc2025 10 }
+
+customEntry OBJECT-TYPE
+    SYNTAX      CustomEntryStruct
+    MAX-ACCESS  read-write
+    STATUS      current
+    INDEX   { customName, customSecret }
+    ::= { custom 1 }
+
+CustomEntryStruct ::= SEQUENCE {
+    customName      OCTET STRING,
+    customSecret    OCTET STRING,
+    customValue     OCTET STRING
+}
+
+customName OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(8))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+	"Name of the custom entry"
+    ::= { customEntry 1 }
+
+customSecret OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(8))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+	"Value that secures this custom entry"
+    ::= { customEntry 2 }
+
+customValue OBJECT-TYPE
+    SYNTAX      OCTET STRING
+    MAX-ACCESS  read-create
+    STATUS      current
+    DESCRIPTION
+	"The actual value"
+    ::= { customEntry 3 }
+
+END

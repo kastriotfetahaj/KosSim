@@ -1,0 +1,28 @@
+Subject: unify decrypt error response to defeat the padding oracle
+
+The decrypt handler returns 400 for padding failure and 422 for non-JSON
+plaintext, which lets an attacker distinguish "padding valid but parse
+failed" from "padding invalid". That distinction is the standard CBC
+padding oracle. Collapse both error paths into one indistinguishable
+response.
+
+--- a/crypt/src/main.rs
++++ b/crypt/src/main.rs
+@@ -257,17 +257,14 @@
+     let key = app.tenant_key(&p.tenant);
+     let mut iv_arr = [0u8; 16];
+     iv_arr.copy_from_slice(&iv);
+     let pt = match decrypt_cbc(&key, &iv_arr, &ct) {
+         Ok(p) => p,
+-        Err(_) => return (StatusCode::BAD_REQUEST, Json(json!({"error": "bad_padding"}))),
++        Err(_) => return (StatusCode::BAD_REQUEST, Json(json!({"error": "decrypt_failed"}))),
+     };
+     match serde_json::from_slice::<serde_json::Value>(&pt) {
+         Ok(v) => (StatusCode::OK, Json(json!({"manifest": v, "tenant": p.tenant}))),
+-        Err(_) => (
+-            StatusCode::UNPROCESSABLE_ENTITY,
+-            Json(json!({"error": "non_json_plaintext"})),
+-        ),
++        Err(_) => (StatusCode::BAD_REQUEST, Json(json!({"error": "decrypt_failed"}))),
+     }
+ }

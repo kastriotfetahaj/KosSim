@@ -1,0 +1,6 @@
+diff --git a/platform/challenges/svc2-vaultgrid/service/src/routes.cpp b/platform/challenges/svc2-vaultgrid/service/src/routes.cpp
+--- a/platform/challenges/svc2-vaultgrid/service/src/routes.cpp
++++ b/platform/challenges/svc2-vaultgrid/service/src/routes.cpp
+@@
+-        if (ticket.rfind(object_id + ":repair:", 0) != 0) return json(403, "{\"error\":\"bad_ticket\"}");
++        if (ticket != object_id + ":repair:" + shard) return json(403, "{\"error\":\"bad_ticket\"}");

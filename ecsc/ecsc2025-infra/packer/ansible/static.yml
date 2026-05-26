@@ -1,0 +1,11 @@
+---
+elk: "ci.attacking-lab.com"
+cluster_dns_server_ip: "10.238.0.10"
+
+orga_ssh_pubkey: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKU51BH2jvBspPbssDRsw32WPTtL2ydYOBltoZRFqWtB"
+github_ssh_keys:
+  - NiklasBeierl
+  - MMunier
+  - sinitax
+  - parafoxx
+  - einCyberSimon

@@ -1,0 +1,27 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: gartenverein-tackenberg-wildcard
+  namespace: cert-manager
+spec:
+  dnsNames:
+    - "gartenverein-tackenberg.de"
+    - "*.gartenverein-tackenberg.de"
+  issuerRef:
+    name: hetzner-dns
+    kind: Issuer
+  secretName: gartenverein-tackenberg-wildcard
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: platform-tls
+spec:
+  dnsNames:
+    - platform.ad.ecsc2025.pl
+    - images.platform.ad.ecsc2025.pl
+    - scoreboard.ad.ecsc2025.pl
+  issuerRef:
+    name: letsencrypt-http
+    kind: ClusterIssuer
+  secretName: platform-tls

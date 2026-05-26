@@ -1,0 +1,27 @@
+Subject: drop the manifest=public override on /api/firmware/blob/<b>
+
+The legacy ?manifest=public shortcut returned the blob payload in cleartext
+regardless of the actual node's kind. Reject the override so the endpoint
+always returns the sealed status.
+
+--- a/service/internal/routes/routes.go
++++ b/service/internal/routes/routes.go
+@@ -212,17 +212,12 @@
+ func firmwareBlob(w http.ResponseWriter, r *http.Request, store *state.Store) {
+ 	blob := strings.TrimPrefix(r.URL.Path, "/api/firmware/blob/")
+ 	store.Lock.Lock()
+-	nodeID, ok := store.BlobToID[blob]
+-	node := store.Nodes[nodeID]
++	_, ok := store.BlobToID[blob]
+ 	store.Lock.Unlock()
+ 	if !ok {
+ 		http.NotFound(w, r)
+ 		return
+ 	}
+-	if r.URL.Query().Get("manifest") == "public" {
+-		writeJSON(w, map[string]any{"blob": blob, "payload": node.Data})
+-		return
+-	}
+ 	writeJSON(w, map[string]any{"blob": blob, "status": "sealed"})
+ }
+ 

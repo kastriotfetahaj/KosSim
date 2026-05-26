@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ctfroute
+  labels:
+    app: ctfroute
+spec:
+  selector:
+    matchLabels:
+      app: ctfroute
+  template:
+    metadata:
+      labels:
+        app: ctfroute
+    spec:
+      nodeSelector:
+        ctfr.attacking-lab.com/role: worker
+        ctfr.attacking-lab.com/ctf: demo-1
+      tolerations:
+        - key: ctfr.attacking-lab.com/role
+          operator: Equal
+          value: worker
+          effect: NoExecute
+        - key: ctfr.attacking-lab.com/ctf
+          operator: Equal
+          value: demo-1
+          effect: NoExecute
+      imagePullSecrets:
+        - name: ci-attacking-lab-cr
+      serviceAccountName: ctfroute-test
+      containers:
+        - name: ctfroute-test
+          image: ci.attacking-lab.com/ctf-route/ctftest:demo-1
+          imagePullPolicy: Always
+          command:
+            - bash
+            - -c
+            - sleep infinity
+          volumeMounts:
+            - name: ctfroute-yml
+              mountPath: /opt/ctfroute/docker/kubernetes.ctfroute.yml
+              subPath: kubernetes.ctfroute.yml
+      volumes:
+        - name: ctfroute-yml
+          configMap:
+            name: ctfroute-yml
+            items:
+              - key: ctfroute.yml
+                path: kubernetes.ctfroute.yml

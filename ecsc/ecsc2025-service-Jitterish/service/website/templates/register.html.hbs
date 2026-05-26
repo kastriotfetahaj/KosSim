@@ -1,0 +1,89 @@
+{{#*inline "page"}}
+    <h1>
+        Register Your Database
+        <span class="subtitle">and get one month free</span>
+    </h1>
+
+    <form action="/session/register" method="post" accept-charset="utf-8">
+        <div data-augmented-ui="" class="main-card">
+            <div class="row">
+                <div class="col">
+                    <label for="username">Username</label>
+                    <input type="text" name="username" id="username" value="" required minlength="3" pattern="\w{3,}"/>
+                </div>
+                <div class="col">
+                    <label for="password">Password</label>
+                    <input type="password" name="password" id="password" value="" required minlength="8"/>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col">
+                    <label for="firstname">First name</label>
+                    <input type="text" name="firstname" id="firstname" value="" required/>
+                </div>
+                <div class="col">
+                    <label for="lastname">Last name</label>
+                    <input type="text" name="lastname" id="lastname" value="" required/>
+                </div>
+                <div class="col">
+                    <label for="status">Status</label>
+                    <input type="text" name="status" id="status" value="" required/>
+                </div>
+            </div>
+
+            <br>
+            <p>Chose your tier:</p>
+
+            <div class="row">
+                <div class="col tier">
+                    <h4>
+                        <label>
+                            <input type="radio" id="community" name="account_type" value="community">
+                            Community
+                        </label>
+                    </h4>
+                    <h5>free</h5>
+                    <ul>
+                        <li class="check">public database</li>
+                        <li class="cross">no API</li>
+                    </ul>
+                    <div class="bottom">free &amp; open</div>
+                </div>
+                <div class="col tier">
+                    <h4>
+                        <label>
+                            <input type="radio" id="business" name="account_type" value="business" checked>
+                            Business
+                        </label>
+                    </h4>
+                    <h5>99$/month</h5>
+                    <ul>
+                        <li class="check">private database</li>
+                        <li class="cross">no API</li>
+                    </ul>
+                    <div class="bottom">1 month free trial</div>
+                </div>
+                <div class="col tier">
+                    <h4>
+                        <label>
+                            <input type="radio" id="enterprise" name="account_type" value="enterprise">
+                            Enterprise
+                        </label>
+                    </h4>
+                    <h5>499$/month</h5>
+                    <ul>
+                        <li class="check">private database</li>
+                        <li class="check">public API</li>
+                        <li class="check"><small class="label">(soon)</small> custom API scripts</li>
+                    </ul>
+                    <div class="bottom">1 month free trial</div>
+                </div>
+            </div>
+
+            <br>
+            <p><input data-augmented-ui type="submit" value="register" class="btn-lg"></p>
+        </div>
+    </form>
+{{/inline}}
+{{> default title="Register" pagename="register"}}

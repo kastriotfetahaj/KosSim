@@ -1,0 +1,11 @@
+- name: "Docker login"
+  ansible.builtin.command:
+    argv:
+      - docker
+      - login
+      - "--username"
+      - "{{ docker_login_username }}"
+      - "--password-stdin"
+      - "{{ docker_login_server }}"
+    stdin: "{{ docker_login_password }}\n"
+  no_log: true

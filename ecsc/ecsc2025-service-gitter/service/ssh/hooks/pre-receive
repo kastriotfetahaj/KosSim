@@ -1,0 +1,31 @@
+#!/bin/sh -eu
+
+MAX_SIZE=$((1024 * 1024))
+MAX_OBJECTS=1000
+MAX_REFS=100
+
+PUSHED_REFS=$(wc -l)
+
+if [ $PUSHED_REFS -gt $MAX_REFS ]; then
+    echo "Hold up, don't push so many refs at once!"
+    exit 1
+fi
+
+REPO_SIZE=$(git cat-file --batch-check --unordered --batch-all-objects | cut -d ' ' -f 3 | paste -sd+ | bc)
+OBJECT_COUNT=$(git cat-file --batch-check --unordered --batch-all-objects | wc -l)
+REF_COUNT=$(git show-ref | wc -l)
+
+if [ $REPO_SIZE -gt $MAX_SIZE ]; then
+   echo "Your repository is too big ($REPO_SIZE)! Maximum size is $MAX_SIZE"
+   exit 1
+fi
+
+if [ $OBJECT_COUNT -gt $MAX_OBJECTS ]; then
+    echo "Too many objects in your repository!"
+    exit 1
+fi
+
+if [ $REF_COUNT -gt $MAX_REFS ]; then
+    echo "Too many refs in your repository!"
+    exit 1
+fi

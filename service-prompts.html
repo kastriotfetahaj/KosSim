@@ -1,0 +1,850 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ECSC-Style Future Challenge Prompt Catalog</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #080b11;
+      --panel: #111824;
+      --panel-2: #172132;
+      --line: #24324a;
+      --text: #eef4ff;
+      --muted: #98a8c0;
+      --soft: #c9d5e8;
+      --accent: #5fd1b8;
+      --accent-2: #78a8ff;
+      --warn: #ffd166;
+      --hot: #ff6b7a;
+      --ok: #55dc89;
+      --shadow: 0 18px 60px rgba(0, 0, 0, 0.32);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(120, 168, 255, 0.18), transparent 30rem),
+        linear-gradient(180deg, #0c111b 0%, var(--bg) 38rem);
+      color: var(--text);
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    .page {
+      max-width: 1480px;
+      margin: 0 auto;
+      padding: 28px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.6fr);
+      gap: 22px;
+      align-items: stretch;
+      margin-bottom: 22px;
+    }
+
+    .hero-main,
+    .control-panel,
+    .card,
+    .empty {
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      background: linear-gradient(180deg, rgba(23, 33, 50, 0.92), rgba(13, 19, 29, 0.96));
+      box-shadow: var(--shadow);
+    }
+
+    .hero-main {
+      min-height: 260px;
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border-radius: 18px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero-main::after {
+      content: "";
+      position: absolute;
+      inset: auto -8% -50% 46%;
+      height: 260px;
+      background:
+        linear-gradient(90deg, transparent 0 7%, rgba(95, 209, 184, 0.34) 7% 9%, transparent 9% 16%, rgba(120, 168, 255, 0.28) 16% 18%, transparent 18%),
+        repeating-linear-gradient(45deg, rgba(255,255,255,0.06) 0 1px, transparent 1px 14px);
+      transform: rotate(-8deg);
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      max-width: 980px;
+      margin: 0;
+      font-size: clamp(34px, 5vw, 70px);
+      line-height: 0.96;
+      letter-spacing: 0;
+    }
+
+    .lead {
+      max-width: 880px;
+      margin: 22px 0 0;
+      color: var(--soft);
+      font-size: 17px;
+      line-height: 1.6;
+    }
+
+    .hero-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 26px;
+    }
+
+    .pill,
+    .tag,
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      background: rgba(8, 12, 18, 0.52);
+      color: var(--soft);
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    .pill {
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .control-panel {
+      border-radius: 18px;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .stat {
+      min-height: 88px;
+      border-radius: 14px;
+      border: 1px solid rgba(148, 163, 184, 0.14);
+      background: rgba(8, 12, 18, 0.42);
+      padding: 14px;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 30px;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+    }
+
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: grid;
+      grid-template-columns: minmax(240px, 1fr) 220px 180px;
+      gap: 12px;
+      margin: 0 0 22px;
+      padding: 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      background: rgba(8, 11, 17, 0.86);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 14px 32px rgba(0,0,0,0.25);
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .field span {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+    }
+
+    input,
+    select {
+      width: 100%;
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      border-radius: 12px;
+      background: rgba(17, 24, 36, 0.95);
+      color: var(--text);
+      padding: 12px 13px;
+      outline: none;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(95, 209, 184, 0.16);
+    }
+
+    .results-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin: 10px 2px 18px;
+      color: var(--muted);
+    }
+
+    .results-head strong {
+      color: var(--text);
+    }
+
+    .catalog {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .card {
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 20px 20px 0;
+    }
+
+    .title-block h2 {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin-top: 7px;
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 14px;
+    }
+
+    .copy {
+      flex: 0 0 auto;
+      border: 1px solid rgba(95, 209, 184, 0.4);
+      background: rgba(95, 209, 184, 0.11);
+      color: var(--text);
+      padding: 9px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 800;
+      font-size: 12px;
+    }
+
+    .copy:hover {
+      background: rgba(95, 209, 184, 0.2);
+    }
+
+    .card-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 16px 20px 0;
+    }
+
+    .tag {
+      padding: 6px 9px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .tag.medium {
+      color: var(--ok);
+      border-color: rgba(85, 220, 137, 0.36);
+    }
+
+    .tag.high {
+      color: var(--warn);
+      border-color: rgba(255, 209, 102, 0.38);
+    }
+
+    .tag.insane {
+      color: var(--hot);
+      border-color: rgba(255, 107, 122, 0.38);
+    }
+
+    .sections {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      padding: 18px 20px 20px;
+    }
+
+    .section {
+      border: 1px solid rgba(148, 163, 184, 0.13);
+      background: rgba(8, 12, 18, 0.34);
+      border-radius: 12px;
+      padding: 13px;
+      min-height: 114px;
+    }
+
+    .section.wide {
+      grid-column: 1 / -1;
+    }
+
+    .section h3 {
+      margin: 0 0 8px;
+      color: var(--accent-2);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+    }
+
+    .section p {
+      margin: 0;
+      color: var(--soft);
+      line-height: 1.48;
+      font-size: 13px;
+    }
+
+    ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--soft);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    li + li {
+      margin-top: 4px;
+    }
+
+    .empty {
+      display: none;
+      border-radius: 16px;
+      padding: 28px;
+      text-align: center;
+      color: var(--soft);
+    }
+
+    .empty.visible {
+      display: block;
+    }
+
+    .toast {
+      position: fixed;
+      right: 22px;
+      bottom: 22px;
+      padding: 12px 15px;
+      border-radius: 12px;
+      border: 1px solid rgba(95, 209, 184, 0.36);
+      background: rgba(12, 18, 27, 0.96);
+      color: var(--text);
+      box-shadow: var(--shadow);
+      opacity: 0;
+      transform: translateY(10px);
+      pointer-events: none;
+      transition: opacity 180ms ease, transform 180ms ease;
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    .toast.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 1080px) {
+      .hero,
+      .catalog {
+        grid-template-columns: 1fr;
+      }
+
+      .toolbar {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .toolbar .field:first-child {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 680px) {
+      .page {
+        padding: 16px;
+      }
+
+      .hero-main {
+        padding: 22px;
+      }
+
+      .toolbar,
+      .sections,
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .toolbar .field:first-child,
+      .section.wide {
+        grid-column: auto;
+      }
+
+      .card-top {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="hero-main">
+        <div>
+          <div class="eyebrow">KosSim future service design catalog</div>
+          <h1>100 ECSC-style attack-defense challenge prompts</h1>
+          <p class="lead">Each idea is a network-accessible, Docker-runnable service package brief with an interactive UI, 2-3 intended bugs, many plausible decoy surfaces, obfuscation, AI-protection notes, and a no-player-clues implementation rule.</p>
+        </div>
+        <div class="hero-tags">
+          <span class="pill">Root standalone HTML</span>
+          <span class="pill">10k+ LOC target per package</span>
+          <span class="pill">Ports 21001-21100</span>
+          <span class="pill">No React or backend dependency</span>
+        </div>
+      </div>
+      <aside class="control-panel">
+        <div class="stats-grid">
+          <div class="stat"><strong id="totalCount">100</strong><span>Total prompts</span></div>
+          <div class="stat"><strong id="visibleCount">100</strong><span>Visible now</span></div>
+          <div class="stat"><strong id="mediumCount">40</strong><span>Medium</span></div>
+          <div class="stat"><strong id="hardCount">60</strong><span>High + insane</span></div>
+        </div>
+        <div class="subtitle">Use this as an organizer-side idea bank. The generated future services should keep vulnerability explanations outside player-facing artifacts.</div>
+      </aside>
+    </section>
+
+    <section class="toolbar" aria-label="Catalog controls">
+      <label class="field">
+        <span>Search</span>
+        <input id="search" type="search" placeholder="Search name, UI, protocol, bug, stack, category">
+      </label>
+      <label class="field">
+        <span>Category</span>
+        <select id="category"></select>
+      </label>
+      <label class="field">
+        <span>Complexity</span>
+        <select id="complexity">
+          <option value="all">All complexity</option>
+          <option value="Medium">Medium</option>
+          <option value="High">High</option>
+          <option value="Insane">Insane</option>
+        </select>
+      </label>
+    </section>
+
+    <div class="results-head">
+      <span><strong id="resultSummary">100</strong> prompts match the current filters</span>
+      <span id="portSummary">Host ports 21001-21100</span>
+    </div>
+
+    <section id="catalog" class="catalog" aria-live="polite"></section>
+    <section id="empty" class="empty">No prompts match the current filters.</section>
+  </main>
+  <div id="toast" class="toast">Copied prompt</div>
+
+  <script>
+    const seeds = [
+      ["HarborPulse", "Industrial logistics", "Rust Axum, WebSocket telemetry, Postgres", "HTTP dashboard plus WebSocket crane bus", "Port authority control wall with live berth map, crane queue editor, and packet replay drawer", "container slot manifests and private customs annotations", "route canonicalization between berth aliases and bonded-zone storage", "manifest replay token accepts stale crane epoch", "AI anomaly labels hide normal-looking forged load plans"],
+      ["ClinicMosaic", "Healthcare workflow", "Go Fiber, gRPC worker, SQLite", "HTTP triage UI plus gRPC imaging broker", "Hospital ward board with drag-and-drop patients, scan previewer, and consent timeline", "diagnostic note bundles linked to patient transfer IDs", "tenant cache key ignores ward isolation", "DICOM-like chunk parser truncates signed study IDs", "AI redaction classifier stores reversible masked findings"],
+      ["OrbitSpindle", "Space operations", "TypeScript Bun, UDP simulator, WebGL UI", "HTTP mission console plus UDP orbital packet stream", "Satellite constellation map with live orbit scrubber and command queue", "private payload telemetry tagged by ground-station call sign", "binary frame length differential between UI and bus", "assisted downlink key schedule collision", "AI flight-plan copilot trusts poisoned ephemeris hints"],
+      ["MintGlass", "Financial operations", "Elixir Phoenix, Redis streams, C NIF", "HTTP trading desk plus TCP quote feed", "Market terminal with order ladder, compliance pane, and replayable candle chart", "sealed audit memos attached to off-book settlement orders", "memoized entitlement omits instrument namespace", "native quote decoder leaks adjacent order metadata", "AI risk score cache can be primed with lookalike assets"],
+      ["SignalOrchard", "Radio and SDR", "C++ DSP core, Python FastAPI, Canvas UI", "HTTP spectrum UI plus TCP IQ sample stream", "Waterfall spectrum workbench with modulation presets and operator notebooks", "encrypted operator notes embedded in burst captures", "symbol clamp accepts out-of-band values after frequency shift", "CRC precheck and packet decoder disagree on escaped bytes", "AI demodulation assistant overfits to crafted calibration frames"],
+      ["VaultTheatre", "Media archive", "Rust Actix, FFmpeg sidecar, S3-compatible storage", "HTTP editing suite plus signed media fetch API", "Stage archive editor with timeline clips, watermark lanes, and access reels", "private rehearsal scripts stored as timed metadata tracks", "range request normalizer crosses project boundary", "thumbnail worker honors untrusted codec side data", "AI scene tagger indexes hidden metadata into shared search"],
+      ["MetroLoom", "Transport control", "Java Quarkus, MQTT, Postgres", "HTTP operations UI plus MQTT vehicle topics", "Transit control board with route heatmap, disruption planner, and depot chat", "maintenance override messages for protected tram units", "topic wildcard authorization checks display route not canonical route", "retained MQTT messages bypass fresh token policy", "AI dispatch advisor learns poisoned normal-delay baselines"],
+      ["GlyphMarket", "Creative marketplace", "Next.js, custom WASM parser, MinIO", "HTTP storefront plus WebSocket live auctions", "Digital asset bazaar with glyph editor, bids, and provenance graph", "private artist license terms inside sealed provenance nodes", "WASM glyph parser sign-extends contour counts", "auction snapshot cursor can be rebound across sellers", "AI similarity guard leaks private embeddings through public previews"],
+      ["ThermoNest", "Smart building", "Go net/http, CoAP bridge, BadgerDB", "HTTP floorplan UI plus UDP CoAP devices", "Building automation panel with room map, sensor traces, and rule composer", "hidden HVAC override recipes for restricted zones", "CoAP option order parser disagrees with HTTP bridge policy", "rule preview executes after prefix-only route approval", "AI comfort optimizer accepts adversarial occupancy signals"],
+      ["CaseTide", "Legal discovery", "Django, Celery, Lucene", "HTTP review UI plus TCP document ingest", "Evidence review board with redaction canvas, timeline, and privilege queue", "privileged notes stored as sealed review layers", "redaction cache keyed by case class not document identity", "ingest parser treats folded headers differently than reviewer", "AI summarizer writes private excerpts into shared vector cache"],
+      ["ForgeGarden", "Devtools supply chain", "Bun, git daemon, container builder", "HTTP build UI plus SSH-like git endpoint", "Package forge with dependency graph, build logs, and release lane", "maintainer signing notes stored in private package metadata", "git path normalization reads across namespace", "build artifact manifest trusts client-provided digest order", "AI dependency reviewer can be prompted through package README payloads"],
+      ["AquaLedger", "Environmental sensors", "Python FastAPI, InfluxDB, TCP sensor bus", "HTTP watershed dashboard plus binary sensor TCP", "River monitoring map with sample stations, flood sliders, and lab queue", "confidential contamination reports bound to station IDs", "sensor frame parser accepts duplicate station fields", "downsampled export token omits basin boundary", "AI outlier filter suppresses crafted toxic readings"],
+      ["MuseumWarden", "Cultural archive", "Ruby Roda, SQLite, WebSocket beacon feed", "HTTP gallery UI plus WebSocket exhibit beacons", "Museum floor map with artifact cards, conservation notes, and visitor traces", "private restoration notes attached to artifact movements", "beacon replay ID is checked before timezone normalization", "image tile path sanitizer runs before percent decoding", "AI docent cache leaks restricted artifact context"],
+      ["CourierQuill", "Courier network", "Rust Hyper, NATS, LMDB", "HTTP routing console plus NATS-like delivery bus", "Parcel operations UI with route board, label designer, and exception feed", "high-value parcel handling notes stored in private route manifests", "manifest capability signs route name before alias expansion", "delivery exception replay crosses depot stream", "AI route optimizer trusts synthetic weather packets"],
+      ["GridCantina", "Energy trading", "Scala Akka, Kafka, React", "HTTP market UI plus Kafka-compatible TCP proxy", "Power market console with bid curves, plant map, and settlement explorer", "private plant outage justifications inside settlement records", "partition key authorization omits market day", "binary bid import accepts negative segment counts", "AI forecast panel stores hidden training exemplars"],
+      ["DroneCarnival", "IoT fleet", "Go, WebRTC data channel, BoltDB", "HTTP fleet UI plus WebRTC command channel", "Drone show choreographer with 3D timeline, geofence editor, and live telemetry", "secret payload coordinates in hidden drone diagnostic channels", "route shadowing executes diagnostic suffix after prefix check", "WebRTC data channel labels bypass command ACL", "AI collision planner can be poisoned by decoy telemetry"],
+      ["LedgerArcade", "Game services", "Node.js, Redis, native addon", "HTTP arcade UI plus TCP match protocol", "Retro tournament hub with live brackets, replay viewer, and asset shop", "private anti-cheat verdicts stored per match replay", "replay cursor can request private match namespace", "native score codec trusts client length prefix", "AI moderation queue exposes private embeddings via similar-match search"],
+      ["BeaconFoundry", "Manufacturing", "C++20 custom HTTP, OPC-UA style TCP", "HTTP plant UI plus custom binary machine bus", "Factory line dashboard with robot cells, job recipes, and maintenance simulator", "protected recipe parameters stored in machine job notes", "binary tag reader reads past array on sparse node IDs", "HTTP preview token validates machine but not job revision", "AI quality inspector accepts adversarial calibration tiles"],
+      ["CivicThread", "Public services", "FastAPI, Postgres, WebSocket forms", "HTTP case portal plus WebSocket notification stream", "City service desk with case map, form builder, and queue triage", "private citizen notes inside restricted case threads", "form schema normalization differs from storage lookup", "notification cursor can subscribe before role finalization", "AI triage assistant leaks restricted tags through explanations"],
+      ["CargoMirage", "Maritime cargo", "Rust Tide, UDP AIS simulator, RocksDB", "HTTP port UI plus UDP vessel beacon feed", "Shipping planner with vessel map, container scanner, and customs queue", "private inspection results linked to container seals", "AIS parser accepts wrapped MMSI values", "seal verification cache omits terminal ID", "AI customs scorer can be trained by forged public manifests"],
+      ["CipherKiosk", "Crypto appliance", "C, Lua UI, SQLite", "HTTP admin UI plus TCP signing appliance protocol", "Self-service cryptographic kiosk with key slots, policy editor, and audit stream", "sealed customer secrets stored behind scoped signing policies", "ASN.1 length parser and policy checker disagree", "policy script sandbox leaks key slot through error timing", "AI policy assistant emits unsafe templates from poisoned examples"],
+      ["PulseCanopy", "Agritech", "Deno, MQTT, TimescaleDB", "HTTP greenhouse UI plus MQTT sensor/control topics", "Greenhouse command center with crop map, irrigation plans, and sensor graph", "private crop treatment notes per greenhouse sector", "MQTT retained control topic bypasses sector membership", "CSV sensor import folds duplicate headers into private fields", "AI disease detector trusts crafted public leaf samples"],
+      ["ArchiveRally", "Forensics platform", "Go, WASM plugins, SQLite FTS", "HTTP evidence UI plus TCP collector protocol", "Incident archive with host graph, packet viewer, and timeline lenses", "private incident annotations stored as hidden timeline overlays", "collector batch checksum excludes overlay references", "WASM plugin loader exposes host path through virtual FS alias", "AI event correlator indexes private overlays into shared clusters"],
+      ["ProxyMasquerade", "Edge security", "Rust, Envoy-like proxy, Redis", "HTTP policy UI plus TLS-terminating reverse proxy", "API gateway dashboard with route graph, certificate vault, and policy simulator", "private upstream tokens in route-scoped secret bags", "SNI and Host canonicalizers choose different tenants", "policy simulator caches allow result without method dimension", "AI WAF ruleset learner overgeneralizes crafted benign probes"],
+      ["NebulaClinic", "Bioinformatics", "Python Starlette, Rust parser, WebSocket jobs", "HTTP lab UI plus TCP sequencer ingest", "Genome lab portal with sample lanes, variant viewer, and approval board", "restricted variant notes attached to sample lineage", "FASTA parser accepts control-line continuation mismatch", "job result capability checks project before lineage merge", "AI variant explainer leaks hidden training cases"],
+      ["TurbineVault", "Wind energy", "Java Spring, UDP telemetry, Cassandra", "HTTP turbine UI plus UDP telemetry frames", "Wind farm console with rotor map, maintenance tickets, and firmware planner", "private technician notes bound to turbine serials", "telemetry sequence rollover reopens old authorization window", "firmware manifest parser trusts duplicate component names", "AI predictive maintenance model can be steered with synthetic vibration"],
+      ["TicketNebula", "Event ticketing", "Kotlin Ktor, WebSocket seats, Postgres", "HTTP venue UI plus WebSocket seat allocator", "Concert ticketing cockpit with seat map, resale board, and fraud queue", "private fraud notes stored on held seat batches", "seat hold token validates section but not seat range", "resale snapshot cursor reads private seller fields", "AI fraud classifier exposes nearest private cases"],
+      ["AetherLedger", "Cloud accounting", "Elixir, RabbitMQ, Postgres", "HTTP billing UI plus AMQP-like invoice bus", "Cloud cost console with budget graph, invoice drilldown, and approval workflows", "private adjustment memos inside tenant invoice streams", "AMQP routing key wildcard leaks sibling tenant stream", "approval cache key omits invoice revision", "AI spend assistant includes private invoice fragments in suggestions"],
+      ["NeonHarvester", "Retail analytics", "TypeScript Fastify, ClickHouse, WebSocket", "HTTP retail UI plus WebSocket sensor stream", "Store intelligence board with shelf heatmap, camera events, and campaign planner", "private supplier discount terms in campaign experiments", "event projector accepts cross-store cursor rebinding", "image metadata parser trusts client-declared crop bounds", "AI demand forecaster can be poisoned by synthetic shopper traces"],
+      ["RescueAtlas", "Emergency response", "Go, gRPC, WebSocket map", "HTTP dispatch UI plus gRPC resource broker", "Rescue coordination map with units, shelters, alerts, and resource allocator", "private medical triage notes on restricted shelter records", "gRPC metadata casing bypasses shelter ACL", "map tile cache normalizes disaster zones late", "AI resource allocator trusts forged availability beacons"],
+      ["EchoBourse", "Messaging exchange", "Rust, custom TCP broker, Web UI", "HTTP broker UI plus custom binary pub-sub protocol", "Private exchange console with channels, contracts, replay inspector, and ACL editor", "sealed trade chat snippets in restricted channels", "subscription filter bytecode jumps across channel boundary", "replay marker verifies topic before UTF-8 normalization", "AI moderation assistant learns from attacker-controlled public channels"],
+      ["FrostRegistry", "Identity registry", "C# ASP.NET, LDAP-like TCP, LiteDB", "HTTP identity UI plus LDAP-style directory protocol", "Identity registry with org chart, credential timeline, and access request board", "private credential recovery hints in protected profile attributes", "distinguished-name normalizer differs between UI and directory", "paged search control leaks hidden attribute blocks", "AI access recommender exposes private relationship embeddings"],
+      ["PacketParlor", "Network observability", "Zig parser, Go UI, DuckDB", "HTTP packet workbench plus TCP sensor collector", "Traffic observatory with packet table, flow graph, and filter DSL editor", "private sensor labels embedded in privileged flow notes", "filter DSL constant folding skips namespace guard", "collector varint parser accepts overlong sensor IDs", "AI flow summarizer indexes restricted packet annotations"],
+      ["SolarScriptorium", "Education platform", "Python Django, Celery, WebSocket notebooks", "HTTP classroom UI plus WebSocket notebook kernel", "Training portal with live notebooks, grading queue, and curriculum graph", "private grading rubrics stored beside submitted notebooks", "notebook attachment resolver crosses course boundary", "kernel message replay bypasses active session binding", "AI tutor recalls hidden rubric examples through public hints"],
+      ["QuarryMesh", "Mining operations", "Rust, MQTT, SQLite", "HTTP mine UI plus MQTT equipment mesh", "Mine operations board with tunnel map, equipment status, and blast schedule", "private geological survey notes attached to restricted zones", "MQTT topic aliasing bypasses tunnel segment ACL", "schedule importer trusts duplicate JSON keys", "AI safety planner overweights crafted sensor reports"],
+      ["RainSpindle", "Weather services", "Haskell API, UDP radar feed, PostGIS", "HTTP radar UI plus UDP weather cell frames", "Weather ops console with radar layers, alert composer, and forecast diff tool", "private alert drafts tied to protected forecast cells", "radar polar coordinate parser wraps cell index", "forecast diff token checks model but not region", "AI forecast explainer leaks internal calibration notes"],
+      ["MedalFoundry", "Tournament ops", "Rust Axum, WebSocket scoring, SQLite", "HTTP event UI plus WebSocket scoring stream", "Sports tournament dashboard with brackets, referee tools, and appeal queue", "private appeal evidence stored in sealed match records", "score replay accepts stale role epoch", "bracket path normalizer crosses event namespace", "AI referee assistant is steerable via public commentary"],
+      ["CanalScope", "Waterway control", "C++ service, Modbus-like TCP, React UI", "HTTP canal UI plus Modbus-style lock controller", "Canal lock control room with water levels, vessel queue, and actuator timeline", "private override codes stored in lock maintenance logs", "register window parser reads beyond logical lock range", "maintenance token signs display ID before numeric canonicalization", "AI flood advisor trusts malformed sensor calibration"],
+      ["NimbusVault", "Cloud storage", "Go, S3-like API, Web UI", "HTTP storage UI plus S3-compatible object API", "Cloud vault with bucket explorer, lifecycle editor, and replication map", "private retention exceptions in hidden object tags", "canonical request uses raw path while object store decodes", "replication grant validates bucket not object prefix", "AI data-loss assistant leaks private tag embeddings"],
+      ["CobaltBeacon", "Threat intel", "TypeScript, Neo4j, WebSocket graph", "HTTP intel UI plus WebSocket indicator stream", "Threat intel graph with campaign map, enrichment queue, and source confidence panel", "private source notes on restricted indicators", "graph traversal budget resets on alias nodes", "indicator import parser merges hidden fields after approval", "AI enrichment agent follows poisoned public report references"],
+      ["PaperLantern", "Publishing workflow", "Rails, Sidekiq, Postgres", "HTTP editorial UI plus TCP print queue protocol", "Magazine production desk with article kanban, layout preview, and print scheduler", "private editor notes on embargoed articles", "layout asset resolver normalizes after authorization", "print queue binary job header can select another tenant", "AI copy editor persists hidden draft snippets into shared suggestions"],
+      ["PlasmaLedger", "Medical devices", "Rust, BLE-over-TCP simulator, Svelte UI", "HTTP device UI plus BLE-like TCP tunnel", "Infusion device console with patient schedule, dose graph, and firmware lane", "private dosage override notes in protected patient plans", "BLE attribute handle wraps into privileged characteristic", "firmware lane token omits device generation", "AI dosage checker trusts crafted public trend data"],
+      ["SaffronRelay", "Food delivery", "Node.js, Redis streams, WebSocket", "HTTP operations UI plus WebSocket rider relay", "Delivery dispatch UI with kitchen board, rider map, and refund console", "private refund fraud notes on protected orders", "stream consumer group name collision crosses restaurants", "receipt renderer follows unsigned attachment redirect", "AI ETA assistant can be trained by bogus rider pings"],
+      ["RuneWorkshop", "Game economy", "Elixir LiveView, custom TCP game bus, ETS", "HTTP crafting UI plus TCP game economy protocol", "Fantasy crafting market with item forge, guild vault, and auction board", "private guild vault notes attached to rare recipes", "binary item codec trusts rune-count nibble", "auction visibility cache omits guild realm", "AI price oracle leaks private comparable trades"],
+      ["HelioCourier", "Drone logistics", "Go, WebSocket, protobuf TCP", "HTTP command UI plus protobuf fleet channel", "Autonomous delivery console with route mesh, package scanner, and weather overlay", "private recipient notes inside encrypted package manifests", "protobuf unknown fields survive into route executor", "package grant binds drone but not recipient manifest", "AI route assistant prioritizes attacker-injected weather cells"],
+      ["MarbleClinic", "Dental imaging", "Kotlin, gRPC, Web UI", "HTTP imaging UI plus gRPC scanner broker", "Dental imaging suite with scan carousel, treatment board, and insurance workflow", "private treatment notes inside scan attachments", "gRPC deadline fallback skips patient scope lookup", "scan archive chunk index wraps across patient folder", "AI image quality model caches private scan features"],
+      ["VelvetProxy", "Privacy gateway", "Rust, SOCKS-like TCP, Vue UI", "HTTP admin UI plus SOCKS-like proxy protocol", "Privacy gateway with circuit map, policy rules, and session recorder", "private destination labels in protected session records", "SOCKS address parser accepts mixed IPv4/domain payload", "session replay token validates circuit not owner", "AI policy builder suggests unsafe bypass routes from poisoned logs"],
+      ["BasiliskIndex", "Search platform", "Java Lucene, WASM ranker, React", "HTTP search UI plus TCP indexing feed", "Enterprise search console with corpus browser, rank tuning, and relevance lab", "private document snippets in restricted index shards", "index feed delimiter injection crosses shard boundary", "WASM ranker import table can read adjacent scoring state", "AI semantic search leaks private nearest-neighbor summaries"],
+      ["AmberRail", "Rail maintenance", "C# Blazor, OPC-like TCP, SQL Server", "HTTP maintenance UI plus TCP rail sensor bus", "Rail network board with switch map, work orders, and fault replay", "private switch override notes attached to maintenance windows", "sensor bus frame checksum excludes extension fields", "work order cache ignores track subdivision", "AI fault classifier learns from forged vibration bursts"],
+      ["OnyxHarbor", "Customs inspection", "Python Quart, RabbitMQ, WebSocket", "HTTP customs UI plus AMQP inspection bus", "Cargo inspection UI with X-ray viewer, manifest queue, and risk lane", "private inspection rationales in sealed risk records", "AMQP binding key wildcard exposes adjacent inspection queues", "X-ray tile cache signs manifest not tile index", "AI risk assessor leaks private rationale through feature explanations"],
+      ["TangoArchive", "Music rights", "Rust, WebAudio UI, SQLite", "HTTP rights UI plus TCP audio fingerprint service", "Music catalog with waveform editor, royalty graph, and dispute queue", "private royalty contract clauses attached to fingerprint records", "fingerprint frame parser accepts negative hop size", "royalty export token omits territory dimension", "AI similarity model leaks restricted fingerprints through nearest matches"],
+      ["CopperNest", "Home automation", "Deno, Matter-like TCP, IndexedDB sync", "HTTP home UI plus custom TCP device fabric", "Smart home designer with room canvas, automation recipes, and device timeline", "private unlock scenes in restricted household profiles", "fabric node ID canonicalization mismatch", "automation preview executes hidden branch after policy check", "AI recipe helper trusts malicious device descriptions"],
+      ["IvoryDock", "Container registry", "Go, OCI API, Web UI", "HTTP registry UI plus OCI-compatible blob API", "Container registry dashboard with image graph, vulnerability queue, and promotion lanes", "private attestation notes on protected image tags", "blob mount checks repository before digest canonicalization", "manifest list parser trusts duplicate platform entries", "AI vuln summarizer indexes private attestations"],
+      ["ZincTheatre", "Streaming control", "Node.js, WebRTC, Redis", "HTTP production UI plus WebRTC media/session channel", "Live streaming control room with scene mixer, chat ops, and ad marker timeline", "private sponsor notes embedded in restricted scene metadata", "WebRTC SDP parser accepts duplicate media sections", "ad marker capability signs program not scene", "AI highlight generator leaks hidden metadata captions"],
+      ["ObsidianFarm", "Animal telemetry", "Rust, MQTT, TimescaleDB", "HTTP ranch UI plus MQTT collar telemetry", "Ranch dashboard with pasture map, collar traces, and feed planner", "private veterinary notes attached to protected animals", "MQTT shared subscription crosses herd namespace", "telemetry import accepts overlong collar IDs", "AI health predictor can be poisoned by synthetic movement"],
+      ["SlateExchange", "Document signing", "Go, Web UI, HSM TCP shim", "HTTP signing UI plus TCP signing module protocol", "Signing room with document diff, signer graph, and policy board", "private signer exceptions stored in sealed policy records", "PDF object resolver authorizes before xref repair", "HSM command parser truncates policy IDs", "AI clause reviewer stores private examples in public recommendations"],
+      ["BluebellRadar", "Aviation ops", "C++ radar parser, Python UI, UDP", "HTTP radar UI plus UDP ADS-B-like feed", "Airfield operations console with flight strips, radar sweep, and gate planner", "private security notes on restricted flight strips", "altitude field sign-extension changes strip ownership", "gate planner snapshot cursor crosses airport tenant", "AI delay predictor trusts crafted ADS-B tracks"],
+      ["CrimsonQuorum", "Voting operations", "Elixir, append-only log, WebSocket", "HTTP election UI plus WebSocket precinct feed", "Election operations board with precinct map, ballot batches, and audit log viewer", "private adjudication notes on protected ballot batches", "append-only log verifier canonicalizes precinct late", "batch export cursor can be rebound between contests", "AI anomaly detector suppresses crafted ballot drift"],
+      ["GlassReactor", "Lab automation", "Rust, TCP instrument bus, SolidJS UI", "HTTP lab UI plus binary instrument bus", "Chemistry lab console with reactor controls, sample ledger, and spectrum viewer", "private experiment notes in protected reaction runs", "instrument TLV parser trusts nested length fields", "sample ledger capability signs run name before Unicode normalization", "AI safety advisor can be steered by poisoned calibration data"],
+      ["MicaFleet", "Vehicle telematics", "Java Micronaut, Kafka, Web UI", "HTTP fleet UI plus Kafka-compatible telemetry socket", "Fleet analytics board with trip replay, maintenance graph, and driver inbox", "private incident notes on restricted vehicles", "telemetry partition key ignores fleet tenant", "trip replay token validates vehicle but not time shard", "AI driver scorer leaks private incident vectors"],
+      ["LumenCourt", "Court scheduling", "Django Channels, Postgres", "HTTP court UI plus WebSocket hearing updates", "Court docket planner with room calendar, evidence queue, and party graph", "sealed evidence notes attached to protected hearings", "calendar recurrence expansion crosses courthouse namespace", "evidence preview path decodes after permission check", "AI scheduling assistant learns private conflict reasons"],
+      ["GrainOracle", "Commodities", "Rust, UDP market feed, Web UI", "HTTP commodity UI plus UDP quote feed", "Commodity desk with silo map, futures ladder, and shipment planner", "private hedge memos attached to restricted shipments", "UDP feed sequence reset replays stale entitlement", "shipment planner HMAC binds silo not route", "AI price oracle trusts forged public harvest reports"],
+      ["PearlStation", "Radio station", "Phoenix LiveView, TCP automation bus", "HTTP studio UI plus TCP playout protocol", "Broadcast studio board with playlist, ad carts, and transmitter status", "private sponsor rate notes on protected ad carts", "playout command parser accepts embedded newline frames", "playlist snapshot token omits station region", "AI voiceover assistant leaks hidden campaign copy"],
+      ["IronNursery", "Robotics training", "Go, WebSocket, WASM simulator", "HTTP training UI plus WebSocket robot command bus", "Robot nursery dashboard with simulation arena, behavior trees, and telemetry traces", "private behavior scoring notes in restricted robot profiles", "behavior tree node IDs collide after minification", "command bus authorizes scene but not robot handle", "AI behavior coach overfits to crafted public runs"],
+      ["SilverBasin", "Dam management", "C, Rust wrapper, Web UI", "HTTP dam UI plus custom TCP gate controller", "Dam control room with reservoir model, gate controls, and inspection log", "private emergency override notes in protected gate records", "controller frame parser uses signed gate count", "inspection log export validates dam before spillway alias resolution", "AI flood model trusts malformed upstream sensor bursts"],
+      ["JadeCourier", "Postal sorting", "Java, AMQP, Angular", "HTTP sorter UI plus AMQP-like parcel event bus", "Postal sorting center with conveyor map, route bins, and exception inspector", "private security flags in protected parcel events", "event bus routing key normalizes after subscription", "barcode parser accepts invisible separators", "AI route classifier memorizes private exception notes"],
+      ["TopazSignal", "Telecom core", "Erlang, SCTP-like TCP shim, Web UI", "HTTP telecom UI plus custom signaling channel", "Telecom operations center with subscriber graph, cell map, and signaling trace", "private subscriber support notes in protected profile fields", "signaling parameter order changes subscriber lookup", "trace replay token checks cell not subscriber", "AI fraud model leaks private subscriber embeddings"],
+      ["CinderVault", "Backup platform", "Rust, WebDAV-like API, Web UI", "HTTP backup UI plus WebDAV-compatible object endpoint", "Backup console with snapshot timeline, restore wizard, and policy map", "private restore keys stored in protected snapshot metadata", "WebDAV path resolver checks raw path before normalization", "snapshot diff cursor can be rebound across tenants", "AI restore assistant indexes hidden metadata summaries"],
+      ["QuartzArena", "Esports arena", "Bun, WebSocket, native replay addon", "HTTP arena UI plus WebSocket match bus", "Esports ops panel with live lobby, replay scrubber, and referee tools", "private referee notes in restricted replay segments", "native replay parser trusts compressed block count", "match bus channel join checks event not team", "AI highlight scorer leaks private referee context"],
+      ["VioletMatrix", "Graph database", "Scala, custom TCP query protocol, Web UI", "HTTP graph UI plus binary graph query protocol", "Graph workbench with node explorer, path lab, and ACL visualizer", "private node annotations in protected graph partitions", "query planner folds ACL predicate after path expansion", "binary query frame accepts duplicate partition fields", "AI graph assistant reveals private neighbors through explanations"],
+      ["CoralTriage", "SOC operations", "Python FastAPI, WebSocket, ClickHouse", "HTTP SOC UI plus WebSocket alert stream", "Security operations console with alert queue, case graph, and packet pivots", "private analyst notes on restricted incidents", "alert stream cursor validates organization before case merge", "packet pivot cache omits analyst role", "AI analyst copilot follows poisoned indicator references"],
+      ["GranitePass", "Access control", "Rust, NFC-over-TCP simulator, SQLite", "HTTP access UI plus TCP badge reader protocol", "Facility access panel with door map, badge timeline, and visitor queue", "private escort notes in protected visitor records", "badge protocol parser accepts duplicate facility IDs", "door policy cache omits time window", "AI visitor recommender can be primed with forged appointments"],
+      ["HazelForge", "3D printing", "Go, gcode parser, Web UI", "HTTP print UI plus TCP printer spool protocol", "Print farm dashboard with model slicer, printer grid, and material inventory", "private prototype notes embedded in restricted print jobs", "G-code include resolver checks path before macro expansion", "spool protocol length truncation exposes prior job tail", "AI slicer assistant stores hidden prototype features"],
+      ["IndigoVault", "Secrets manager", "Rust, HTTP API, CLI-like Web UI", "HTTP vault UI plus TCP agent protocol", "Secret manager with policy graph, rotation board, and audit stream", "private recovery fragments in protected secret versions", "agent protocol canonicalizes paths differently than UI", "rotation approval cache omits version number", "AI policy assistant suggests unsafe inherited grants"],
+      ["JuniperLens", "Insurance claims", "Rails, WebSocket, object storage", "HTTP claims UI plus WebSocket adjuster feed", "Insurance claim desk with photo timeline, estimate editor, and fraud review", "private fraud rationale notes in protected claim records", "photo derivative path escapes claim namespace after EXIF rotation", "adjuster feed cursor crosses branch tenant", "AI estimate model leaks private comparable claims"],
+      ["KryptonDock", "Shipyard planning", "C# ASP.NET, gRPC, Postgres", "HTTP shipyard UI plus gRPC work-order broker", "Shipyard board with dry-dock calendar, parts map, and task dependencies", "private defect notes attached to restricted hull sections", "gRPC field mask can select hidden defect attributes", "calendar token signs dock not hull section", "AI scheduler trusts crafted parts availability"],
+      ["LilacRelay", "Chat operations", "Elixir, WebSocket, SQLite", "HTTP chat UI plus WebSocket federation link", "Federated team chat with room graph, moderation queue, and bot marketplace", "private moderation notes in protected room records", "federation event signature excludes redaction body", "bot install cache omits workspace ID", "AI bot reviewer follows poisoned marketplace descriptions"],
+      ["MagnetLedger", "Research grants", "Django, Celery, Postgres", "HTTP grants UI plus TCP batch import", "Research grant portal with proposal board, reviewer matrix, and budget editor", "private reviewer notes on protected proposals", "batch import parser merges folded budget rows into hidden fields", "reviewer matrix cache omits funding round", "AI review summarizer leaks hidden reviewer rationale"],
+      ["NickelMesh", "Service mesh", "Go, mTLS proxy, Web UI", "HTTP mesh UI plus mTLS sidecar proxy", "Service mesh console with topology map, route policy, and certificate lane", "private upstream credentials in protected route secrets", "certificate SAN canonicalization differs from route matcher", "policy dry-run cache omits request body hash", "AI policy generator learns unsafe examples from public traces"],
+      ["OpalCircuit", "Electronics lab", "Rust, WASM simulator, WebSocket", "HTTP circuit UI plus WebSocket simulation bus", "Circuit design lab with schematic editor, waveform viewer, and component vault", "private component specs in restricted schematic layers", "schematic layer resolver checks visible ID before alias expansion", "simulation bus accepts stale project token", "AI layout assistant leaks private component embeddings"],
+      ["PineObservatory", "Astronomy archive", "Python, FITS parser, Web UI", "HTTP observatory UI plus TCP telescope ingest", "Observatory portal with sky map, observation queue, and FITS viewer", "private observation notes in protected target records", "FITS header continuation parser crosses target boundary", "queue capability checks telescope not observation owner", "AI target recommender leaks hidden observation vectors"],
+      ["RubyLedger", "Charity donations", "Laravel, Redis, WebSocket", "HTTP donations UI plus WebSocket pledge stream", "Charity operations board with pledge wall, donor graph, and campaign editor", "private donor notes in protected pledge records", "campaign slug canonicalization mismatch", "pledge stream replay bypasses donor privacy epoch", "AI donor matcher memorizes private giving patterns"],
+      ["SiennaForge", "CAD collaboration", "C++ backend, WebGL UI, object store", "HTTP CAD UI plus TCP model diff protocol", "Collaborative CAD workspace with part tree, version slider, and simulation panel", "private design notes in restricted part branches", "model diff opcode parser reads sibling branch metadata", "version token validates project but not branch", "AI design assistant leaks hidden part geometry features"],
+      ["TitanBloom", "Pharma trials", "Java Spring, gRPC, Web UI", "HTTP trial UI plus gRPC data capture service", "Clinical trial console with cohort board, adverse event timeline, and consent tracker", "private adverse event notes in protected subject records", "gRPC enum fallback maps unknown cohort to default tenant", "consent attachment resolver decodes path after access check", "AI cohort selector can be biased by crafted public data"],
+      ["UmberSwitch", "Datacenter power", "Rust, SNMP-like UDP, Web UI", "HTTP power UI plus UDP SNMP-like PDU agent", "Datacenter power console with rack map, PDU controls, and incident log", "private rack recovery notes in protected incident records", "OID parser permits out-of-range table walks", "incident export token validates row not rack tenant", "AI capacity planner trusts forged public load"],
+      ["ViridianPort", "Airport baggage", "Go, MQTT, React", "HTTP baggage UI plus MQTT scanner topics", "Baggage operations board with belt map, scanner stream, and exception queue", "private security notes in protected bag records", "MQTT wildcard subscription crosses terminal namespace", "scanner barcode parser accepts mixed normalized forms", "AI routing assistant learns from crafted public scans"],
+      ["WhitecapFeed", "Newsroom syndication", "Node.js, RSS parser, WebSocket", "HTTP newsroom UI plus WebSocket syndication feed", "News syndication desk with feed map, embargo queue, and story diff viewer", "private embargo notes in protected story metadata", "RSS entity expansion changes story ownership after approval", "diff viewer range token omits publication channel", "AI headline assistant leaks private embargo snippets"],
+      ["XenonLedger", "Tax preparation", "Clojure, EDN parser, Web UI", "HTTP tax UI plus TCP filing gateway", "Tax preparation suite with form canvas, audit risk meter, and document vault", "private audit notes in protected filing records", "EDN tagged literal reader bypasses form namespace guard", "filing gateway cursor validates taxpayer before amended return merge", "AI deduction assistant learns hidden audit notes"],
+      ["YarrowHive", "Beehive monitoring", "Python, MQTT, Web UI", "HTTP apiary UI plus MQTT hive telemetry", "Apiary dashboard with hive map, sound spectrograms, and treatment scheduler", "private treatment notes in protected hive records", "MQTT retained telemetry can overwrite fresh hive context", "audio spectrogram parser trusts client-declared bin count", "AI swarm health model overfits to forged hum samples"],
+      ["ZephyrMirror", "CDN control", "Rust, HTTP proxy, Web UI", "HTTP CDN UI plus reverse-proxy edge service", "CDN control plane with cache map, purge queue, and edge rule editor", "private origin tokens in protected edge rules", "cache key canonicalizer ignores header order used by origin auth", "purge token signs zone but not surrogate key", "AI edge-rule assistant suggests unsafe rewrite chains"],
+      ["AlderQuanta", "Quantum lab", "Python, WebSocket, custom binary job protocol", "HTTP quantum UI plus TCP quantum job scheduler", "Quantum experiment console with circuit composer, calibration lanes, and result heatmaps", "private calibration notes in protected qubit runs", "binary job serializer truncates circuit namespace", "result cursor can be rebound across experiment owners", "AI circuit optimizer leaks hidden calibration vectors"],
+      ["BerylDepot", "Military surplus", "Rust, gRPC, Web UI", "HTTP depot UI plus gRPC inventory broker", "Depot inventory board with crate scanner, chain-of-custody graph, and transfer planner", "private crate condition notes in restricted inventory records", "gRPC repeated field merge skips depot ACL", "crate barcode canonicalization mismatch", "AI transfer planner trusts forged availability reports"],
+      ["CedarVault", "Memory archive", "Go, WebAssembly codec, Web UI", "HTTP memory UI plus TCP archival ingest", "Personal memory archive with timeline wall, face clusters, and consent controls", "private consent notes in protected album records", "WASM codec import table exposes neighboring album state", "ingest token validates album before face-cluster merge", "AI face clustering leaks private relationship embeddings"],
+      ["DahliaGrid", "Microgrid control", "Elixir, MQTT, Web UI", "HTTP microgrid UI plus MQTT inverter topics", "Neighborhood microgrid console with battery map, price curves, and islanding simulator", "private demand-response notes in protected household records", "MQTT topic alias normalizes household IDs late", "price curve import accepts duplicate tariff keys", "AI load balancer trusts crafted household forecasts"],
+      ["ElmCircuit", "PCB manufacturing", "C++, TCP Gerber parser, Web UI", "HTTP fab UI plus TCP Gerber upload protocol", "PCB fab portal with layer preview, quote board, and drill map", "private manufacturing notes in protected board jobs", "Gerber aperture macro parser overreads layer table", "quote token signs project not fabrication revision", "AI manufacturability advisor leaks private board features"],
+      ["FlintCompass", "Travel operations", "Kotlin, WebSocket, Postgres", "HTTP travel UI plus WebSocket itinerary feed", "Travel ops suite with itinerary map, disruption queue, and loyalty desk", "private VIP handling notes in protected traveler records", "itinerary feed cursor crosses agency tenant", "loyalty export normalizes names after access check", "AI disruption assistant memorizes private traveler preferences"],
+      ["GarnetBeacon", "Search and rescue radio", "C, SDR-over-TCP, Web UI", "HTTP rescue UI plus TCP IQ radio stream", "Search-and-rescue radio panel with waterfall, beacon triangulation, and field notes", "private victim notes in protected beacon sessions", "symbol decoder accepts aliased tones after frequency offset", "triangulation export token omits operation ID", "AI signal classifier can be trained by forged beacon bursts"],
+      ["HollowMint", "Digital collectibles", "Rust, WebSocket auction bus, SQLite", "HTTP collectibles UI plus WebSocket minting bus", "Collectible minting desk with trait editor, rarity graph, and auction stream", "private reserve traits in protected mint batches", "trait hash canonicalization differs between mint and auction", "auction bus replay can target another collection epoch", "AI rarity estimator leaks private trait embeddings"],
+      ["IrisBridge", "Translation service", "FastAPI, gRPC workers, Web UI", "HTTP translation UI plus gRPC model worker pool", "Translation workbench with document panes, glossary graph, and review queue", "private glossary notes in protected client projects", "gRPC metadata fallback maps unknown locale to shared tenant", "document segment token validates file not glossary namespace", "AI translation memory leaks private examples"],
+      ["JetstreamVault", "Aviation maintenance", "Go, protobuf TCP, Web UI", "HTTP maintenance UI plus protobuf aircraft bus", "Aircraft maintenance console with component tree, fault timeline, and parts planner", "private maintenance deferral notes in protected aircraft records", "protobuf unknown fields alter component lookup after ACL", "fault timeline cursor validates aircraft but not component owner", "AI maintenance recommender trusts crafted sensor history"],
+      ["KestrelForge", "Compiler service", "Rust, LLVM sidecar, Web UI", "HTTP compiler UI plus TCP build worker protocol", "Online compiler lab with project tree, optimization graph, and binary inspector", "private benchmark secrets in protected build artifacts", "build worker protocol accepts duplicate artifact IDs", "optimization cache key omits project namespace", "AI code advisor can be poisoned by public benchmark comments"],
+      ["LotusRelay", "Banking integration", "Java, ISO8583-like TCP, Web UI", "HTTP banking UI plus ISO8583-style transaction switch", "Payment switch console with transaction stream, dispute board, and terminal map", "private dispute notes in protected transaction records", "bitmap parser and field validator disagree on secondary bitmap", "terminal capability validates merchant but not settlement batch", "AI fraud analyst leaks private dispute embeddings"],
+      ["MangoIndex", "Real estate listings", "Rails, Elasticsearch, WebSocket", "HTTP property UI plus WebSocket listing feed", "Property marketplace with map search, offer room, and appraisal board", "private seller notes in protected listing records", "geo-tile cache normalizes listing IDs after ACL", "listing feed replay crosses brokerage namespace", "AI appraisal model memorizes private comps"],
+      ["NovaTeller", "Call center", "C# ASP.NET, SIP-like UDP, Web UI", "HTTP call UI plus SIP-like UDP signaling", "Call center console with agent wall, transcript viewer, and escalation board", "private escalation notes in protected call records", "SIP header folding bypasses queue ACL", "transcript export token validates call but not attachment lane", "AI transcript summarizer leaks hidden supervisor notes"],
+      ["OliveSpindle", "Textile factory", "Rust, OPC-like TCP, Web UI", "HTTP textile UI plus TCP loom controller", "Textile plant panel with loom map, pattern editor, and quality queue", "private pattern formulas in protected job records", "loom register parser wraps pattern bank index", "pattern preview token signs design not customer tenant", "AI defect detector trusts forged camera samples"],
+      ["PrismLedger", "Art provenance", "Python, graph DB, Web UI", "HTTP provenance UI plus TCP gallery import", "Art provenance system with ownership graph, scan viewer, and loan calendar", "private authenticity notes in protected artwork records", "graph import edge aliases bypass collection ACL", "scan tile resolver decodes after authorization", "AI authenticity assistant leaks hidden provenance embeddings"],
+      ["QuiverMesh", "Military simulation", "Go, WebSocket, UDP telemetry", "HTTP simulation UI plus UDP unit telemetry", "Training simulation board with unit map, scenario editor, and after-action timeline", "private scenario notes in protected unit records", "UDP unit ID wraps into protected scenario range", "after-action replay token validates exercise not unit side", "AI tactical advisor trusts synthetic telemetry"],
+      ["RavenClinic", "Mental health platform", "Django, WebSocket, Postgres", "HTTP care UI plus WebSocket session updates", "Care coordination portal with patient timeline, mood charts, and therapist queue", "private therapist notes in protected care episodes", "timeline filter cache omits clinician role", "session attachment path normalizes after consent check", "AI care assistant leaks private therapy context"],
+      ["SableTower", "Hotel operations", "Laravel, MQTT, Web UI", "HTTP hotel UI plus MQTT room device topics", "Hotel operations board with room map, housekeeping queue, and guest services", "private VIP guest notes in protected stay records", "MQTT topic wildcard crosses property namespace", "folio export token validates room not guest", "AI upsell assistant memorizes private guest preferences"],
+      ["ThistleVault", "Password recovery", "Rust, TCP agent, Web UI", "HTTP recovery UI plus TCP desktop agent protocol", "Enterprise recovery portal with escrow graph, request workflow, and audit timeline", "private recovery shards in protected escrow records", "agent protocol canonicalizes account IDs differently", "request approval cache omits requester device", "AI policy explainer suggests unsafe quorum reductions"],
+      ["UltramarineDock", "Cold-chain shipping", "Java, MQTT, Web UI", "HTTP cold-chain UI plus MQTT sensor topics", "Cold-chain dashboard with container map, temperature graph, and exception queue", "private spoilage notes in protected shipment records", "MQTT retained exception overwrites fresh container state", "temperature CSV parser accepts duplicate shipment columns", "AI spoilage predictor trusts forged sensor windows"],
+      ["VerdantArena", "Theme park ops", "Node.js, WebSocket, Redis", "HTTP park UI plus WebSocket ride control stream", "Theme park operations center with ride map, queue planner, and incident board", "private incident notes in protected ride records", "ride control stream authorizes park not ride cluster", "queue planner snapshot cursor crosses event tenant", "AI crowd optimizer trusts crafted guest flows"],
+      ["WillowLedger", "University records", "Phoenix, Postgres, WebSocket", "HTTP registrar UI plus WebSocket enrollment feed", "University registrar with course graph, transcript viewer, and advising queue", "private advising notes in protected student records", "course alias normalization bypasses department ACL", "enrollment feed replay crosses campus namespace", "AI advisor leaks private transcript embeddings"],
+      ["XylophoneGrid", "Music festival ops", "Go, WebSocket, SQLite", "HTTP festival UI plus WebSocket stage bus", "Festival control board with stage schedules, artist routing, and vendor map", "private artist contract notes in protected schedule records", "stage bus channel checks festival but not stage tenant", "vendor map tile cache signs layer not vendor", "AI schedule assistant memorizes private contract constraints"],
+      ["YellowstoneRelay", "Wildlife tracking", "Python, LoRa-over-TCP, Web UI", "HTTP wildlife UI plus TCP LoRa telemetry", "Wildlife tracking map with collar routes, habitat zones, and ranger notes", "private ranger notes in protected animal records", "LoRa frame parser accepts duplicate collar fields", "habitat export token omits conservation zone", "AI migration predictor trusts forged collar bursts"],
+      ["ZirconSwitch", "Interbank settlement", "Rust, custom TCP, Web UI", "HTTP settlement UI plus binary settlement switch", "Settlement console with queue ladder, participant graph, and reconciliation diff", "private reconciliation notes in protected settlement batches", "binary amount codec truncates participant namespace", "reconciliation cursor validates day not participant", "AI liquidity assistant leaks private batch embeddings"]
+    ];
+
+    const selectedSeeds = seeds.slice(0, 100);
+    const categories = [...new Set(selectedSeeds.map((seed) => seed[1]))].sort();
+    const complexityFor = (index) => index < 40 ? "Medium" : index < 80 ? "High" : "Insane";
+    const containerPorts = [8080, 9000, 1337, 50051, 1883, 5353, 2323, 8443, 7000, 9100];
+
+    const prompts = selectedSeeds.map((seed, index) => {
+      const complexity = complexityFor(index);
+      const vulnCount = complexity === "Medium" ? 2 : (index % 3 === 0 ? 2 : 3);
+      const vulnerabilities = [seed[6], seed[7], seed[8]].slice(0, vulnCount);
+      const rabbitHoles = [
+        `full ${seed[4].split(" with ")[0].toLowerCase()} audit export path that is noisy but correctly scoped`,
+        "legacy import wizard with strict schema validation and realistic error states",
+        "debug-looking metrics stream that contains only synthetic operational counters",
+        "admin settings panels backed by signed, read-only configuration snapshots",
+        "bulk search endpoint with rate limits, pagination traps, and harmless timing variance",
+        "sample fixture loader that resembles production data but never touches flagstores",
+        "health-check protocol branch with nested encodings and no secret-bearing state",
+        "UI preview renderer with complex state transitions but no cross-tenant access"
+      ];
+      return {
+        id: index + 1,
+        name: seed[0],
+        category: seed[1],
+        stack: seed[2],
+        interface: seed[3],
+        ui: seed[4],
+        flagstore: seed[5],
+        vulnerabilities,
+        rabbitHoles,
+        complexity,
+        hostPort: 21001 + index,
+        containerPort: containerPorts[index % containerPorts.length],
+        overview: `${seed[0]} is an ECSC-style attack-defense service package in the ${seed[1].toLowerCase()} space. The future implementation should include a realistic multi-component product, a polished interactive GUI, service/checker/exploit/patch folders, organizer-only docs, fixtures, tests, and at least 10k lines across the complete package.`,
+        architecture: `Frontend UI, public network service, internal worker or broker, persistent storage, checker-compatible flag placement, reference exploit tooling, and patch notes kept outside player-facing artifacts.`,
+        obfuscation: `Use generated state-machine names, compact binary or protocol codecs, bundled/minified UI state, schema variants per subsystem, and production-looking noise. Do not place comments or source text that describes the intended bug paths.`,
+        ai: `Add AI protection through adversarial automation friction: realistic decoy workflows, generated telemetry, poisoned-but-benign examples, semantic search or classifier behavior where suitable, and prompts that keep generic exploit agents from distinguishing intended surfaces from valid product complexity.`,
+        patch: `Patch by aligning canonicalization across layers, binding tokens to every security dimension, validating parsers before dispatch, separating tenant state, and removing unsafe cache keys without changing normal product behavior.`,
+        buildPrompt: `Create ${seed[0]} as a large ECSC-style A/D challenge. It must run in Docker, expose host port ${21001 + index} to container port ${containerPorts[index % containerPorts.length]}, provide ${seed[3]}, and include the interactive UI: ${seed[4]}. Target at least 10k LOC across service, UI, checker, exploit, tests, fixtures, and organizer-only patch notes. Include exactly ${vulnCount} intended vulnerabilities: ${vulnerabilities.join("; ")}. Include many plausible rabbit holes that look like normal product complexity. Player-facing source, UI, config, and logs must not contain comments, labels, or clue text revealing the vulnerabilities.`
+      };
+    });
+
+    const state = {
+      query: "",
+      category: "all",
+      complexity: "all"
+    };
+
+    const els = {
+      catalog: document.getElementById("catalog"),
+      empty: document.getElementById("empty"),
+      search: document.getElementById("search"),
+      category: document.getElementById("category"),
+      complexity: document.getElementById("complexity"),
+      visibleCount: document.getElementById("visibleCount"),
+      resultSummary: document.getElementById("resultSummary"),
+      toast: document.getElementById("toast")
+    };
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function promptText(prompt) {
+      return [
+        `${prompt.id}. ${prompt.name}`,
+        `Category: ${prompt.category}`,
+        `Complexity: ${prompt.complexity}`,
+        `Stack: ${prompt.stack}`,
+        `Docker: expose host ${prompt.hostPort} -> container ${prompt.containerPort}`,
+        `Network interface: ${prompt.interface}`,
+        `GUI/UI: ${prompt.ui}`,
+        `Overview: ${prompt.overview}`,
+        `Architecture: ${prompt.architecture}`,
+        `Flagstores: ${prompt.flagstore}`,
+        `Intended vulnerabilities: ${prompt.vulnerabilities.join(" | ")}`,
+        `Rabbit holes: ${prompt.rabbitHoles.join(" | ")}`,
+        `Obfuscation: ${prompt.obfuscation}`,
+        `AI protection: ${prompt.ai}`,
+        `Patch direction: ${prompt.patch}`,
+        `Reusable build prompt: ${prompt.buildPrompt}`
+      ].join("\n");
+    }
+
+    function searchable(prompt) {
+      return [
+        prompt.name,
+        prompt.category,
+        prompt.complexity,
+        prompt.stack,
+        prompt.interface,
+        prompt.ui,
+        prompt.overview,
+        prompt.flagstore,
+        prompt.vulnerabilities.join(" "),
+        prompt.rabbitHoles.join(" "),
+        prompt.obfuscation,
+        prompt.ai,
+        prompt.buildPrompt
+      ].join(" ").toLowerCase();
+    }
+
+    function matches(prompt) {
+      const queryOk = !state.query || searchable(prompt).includes(state.query);
+      const categoryOk = state.category === "all" || prompt.category === state.category;
+      const complexityOk = state.complexity === "all" || prompt.complexity === state.complexity;
+      return queryOk && categoryOk && complexityOk;
+    }
+
+    function renderCard(prompt) {
+      const complexityClass = prompt.complexity.toLowerCase();
+      return `
+        <article class="card" data-id="${prompt.id}">
+          <div class="card-top">
+            <div class="title-block">
+              <h2>${String(prompt.id).padStart(2, "0")}. ${escapeHtml(prompt.name)}</h2>
+              <div class="subtitle">${escapeHtml(prompt.overview)}</div>
+            </div>
+            <button class="copy" type="button" data-copy="${prompt.id}">Copy</button>
+          </div>
+          <div class="card-meta">
+            <span class="tag ${complexityClass}">${escapeHtml(prompt.complexity)}</span>
+            <span class="tag">${escapeHtml(prompt.category)}</span>
+            <span class="tag">host ${prompt.hostPort} -> ${prompt.containerPort}</span>
+            <span class="tag">${prompt.vulnerabilities.length} vulns</span>
+            <span class="tag">8 rabbit holes</span>
+          </div>
+          <div class="sections">
+            <div class="section">
+              <h3>Interface and UI</h3>
+              <p>${escapeHtml(prompt.interface)}. ${escapeHtml(prompt.ui)}.</p>
+            </div>
+            <div class="section">
+              <h3>Stack and Docker</h3>
+              <p>${escapeHtml(prompt.stack)}. Docker-runnable package with host port ${prompt.hostPort} mapped to container port ${prompt.containerPort}.</p>
+            </div>
+            <div class="section">
+              <h3>Flagstores</h3>
+              <p>${escapeHtml(prompt.flagstore)}.</p>
+            </div>
+            <div class="section">
+              <h3>Architecture</h3>
+              <p>${escapeHtml(prompt.architecture)}</p>
+            </div>
+            <div class="section wide">
+              <h3>Intended vulnerabilities</h3>
+              <ul>${prompt.vulnerabilities.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
+            </div>
+            <div class="section wide">
+              <h3>Rabbit-hole design</h3>
+              <ul>${prompt.rabbitHoles.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
+            </div>
+            <div class="section">
+              <h3>Obfuscation</h3>
+              <p>${escapeHtml(prompt.obfuscation)}</p>
+            </div>
+            <div class="section">
+              <h3>AI protection</h3>
+              <p>${escapeHtml(prompt.ai)}</p>
+            </div>
+            <div class="section wide">
+              <h3>Reusable build prompt</h3>
+              <p>${escapeHtml(prompt.buildPrompt)}</p>
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
+    function render() {
+      const filtered = prompts.filter(matches);
+      els.catalog.innerHTML = filtered.map(renderCard).join("");
+      els.visibleCount.textContent = String(filtered.length);
+      els.resultSummary.textContent = String(filtered.length);
+      els.empty.classList.toggle("visible", filtered.length === 0);
+    }
+
+    function showToast(message) {
+      els.toast.textContent = message;
+      els.toast.classList.add("visible");
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => els.toast.classList.remove("visible"), 1400);
+    }
+
+    function copyPrompt(id) {
+      const prompt = prompts.find((item) => item.id === id);
+      if (!prompt) return;
+      const text = promptText(prompt);
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => showToast(`Copied ${prompt.name}`)).catch(() => fallbackCopy(text, prompt.name));
+      } else {
+        fallbackCopy(text, prompt.name);
+      }
+    }
+
+    function fallbackCopy(text, name) {
+      const area = document.createElement("textarea");
+      area.value = text;
+      area.setAttribute("readonly", "");
+      area.style.position = "fixed";
+      area.style.left = "-9999px";
+      document.body.appendChild(area);
+      area.select();
+      document.execCommand("copy");
+      area.remove();
+      showToast(`Copied ${name}`);
+    }
+
+    function init() {
+      els.category.innerHTML = `<option value="all">All categories</option>${categories.map((category) => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`).join("")}`;
+      els.search.addEventListener("input", (event) => {
+        state.query = event.target.value.trim().toLowerCase();
+        render();
+      });
+      els.category.addEventListener("change", (event) => {
+        state.category = event.target.value;
+        render();
+      });
+      els.complexity.addEventListener("change", (event) => {
+        state.complexity = event.target.value;
+        render();
+      });
+      els.catalog.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-copy]");
+        if (button) copyPrompt(Number(button.dataset.copy));
+      });
+      render();
+    }
+
+    init();
+  </script>
+</body>
+</html>

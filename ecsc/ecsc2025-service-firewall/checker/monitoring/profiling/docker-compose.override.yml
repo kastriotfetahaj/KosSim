@@ -1,0 +1,9 @@
+services:
+  firewall-checker:
+    environment:
+      CHECKER_MODULE: profiling
+    volumes:
+      - type: bind
+        source: ./monitoring/profiling
+        target: /profiling/
+    entrypoint: /profiling/entrypoint.override.sh

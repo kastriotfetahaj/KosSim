@@ -1,0 +1,10 @@
+[project]
+name = "ftpd"
+version = "1.0.0"
+requires-python = ">=3.12"
+dependencies = [
+    "argon2-cffi>=25.1.0",
+    "psycopg[binary]>=3.2.10",
+    "pyftpdlib>=2.0.1",
+    "pyopenssl>=25.3.0",
+]

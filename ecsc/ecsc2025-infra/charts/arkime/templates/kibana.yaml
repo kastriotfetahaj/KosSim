@@ -1,0 +1,21 @@
+apiVersion: kibana.k8s.elastic.co/v1
+kind: Kibana
+metadata:
+  name: kibana-arkime
+  labels:
+    {{- include "arkime.labels" . | nindent 4 }}
+spec:
+  version: "9.1.3"
+  count: 1
+  elasticsearchRef:
+    name: elasticsearch-arkime
+  podTemplate:
+    spec:
+      {{- with .Values.kibana.nodeSelector }}
+      nodeSelector:
+        {{ toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.kibana.tolerations }}
+      tolerations:
+        {{ toYaml . | nindent 8 }}
+      {{- end }}

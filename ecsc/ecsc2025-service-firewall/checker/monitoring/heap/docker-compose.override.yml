@@ -1,0 +1,9 @@
+services:
+  firewall-checker:
+    environment:
+      CHECKER_MODULE: heap
+    volumes:
+      - type: bind
+        source: ./monitoring/heap
+        target: /heap/
+    entrypoint: /heap/entrypoint.override.sh

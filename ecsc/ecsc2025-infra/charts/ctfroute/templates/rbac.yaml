@@ -1,0 +1,32 @@
+{{- if .Values.serviceAccount.create }}
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: ctfroute-router
+  labels:
+  {{- include "ctfroute.labels" . | nindent 4 }}
+rules:
+  - verbs:
+      - watch
+      - get
+      - list
+    resources:
+      - gates
+    apiGroups:
+      - ctfroute.attacking-lab.com
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: ctfroute-router
+  labels:
+  {{- include "ctfroute.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ctfroute-router
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "ctfroute.serviceAccountName" . }}
+{{- end }}
+---

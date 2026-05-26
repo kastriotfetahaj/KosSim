@@ -1,0 +1,20 @@
+imagePullSecrets:
+  - name: ci-attacking-lab-cr
+
+ctf: ecsc
+
+publicIngress:
+  host: platform.ad.ecsc2025.pl
+  certificate: true
+  teapot: false
+
+privateTeapot: true
+
+platform:
+  image: ci.attacking-lab.com/ad-platform/django
+  settingsModule: mainpage.deployment_settings
+
+mailWorker:
+  mailHost: todo
+  mailUser: todo
+  mailPassword: todo

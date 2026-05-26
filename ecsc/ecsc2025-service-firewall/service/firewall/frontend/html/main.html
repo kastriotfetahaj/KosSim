@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block customization %}
+  h2:first-child {
+    margin-top: 0;
+  }
+  .green {
+    color: #482;
+  }
+  a[href^="https://"]:after {
+    content: '⎋';
+    display: inline-block;
+    transform: rotate(90deg) translate(2pt, -4pt);
+    margin-right: 2pt;
+  }
+{% endblock %}
+{% block content %}
+  <h2>Welcome</h2>
+
+  <p>Welcome to Electric Catfish Systems.</p>
+
+  <p>
+  This system is for use by authorized personnel only. All activities may be monitored and logged.
+  Unauthorized access or misuse is strictly prohibited and may result in disciplinary or legal action.
+  </p>
+
+
+  <h2>VPN Access</h2>
+
+  <p>
+  To access company-internal resources, you must first connect to the Guppy
+  <abbr title="Virtual Private Network">VPN</abbr>. Your corporate device should already have the necessary
+  client software installed. You may need to run the <abbr title="Virtual Private Network">VPN</abbr>
+  software as a privileged user.
+  </p>
+
+  <p>
+  During the connection process, the client software will ask you to specify your
+  <abbr title="Virtual Private Network">VPN</abbr> credentials. Use the same username and password that you
+  used to log into this page.
+  </p>
+
+  <p>
+  Once you are connected to the Guppy <abbr title="Virtual Private Network">VPN</abbr>, you should be able
+  to reach internal systems via their <abbr title="Internet Protocol">IP</abbr> addresses.
+  </p>
+
+<pre>
+# client.py {{ host | quote }}
+enter username: {{ user }}
+enter password:
+connected successfully
+assigned <b class="green">{{ ipv4 }}</b> and <b class="green">{{ ipv6 }}</b> to interface <b class="green">ecsc0</b>
+</pre>
+
+
+  <h2>File Storage</h2>
+
+  <p>
+  Corporate IT provides the <abbr title="File Transfer Protocol">FTP</abbr> server for business use only.
+  Your <abbr title="Virtual Private Network">VPN</abbr> credentials can be used to authenticate to the
+  <abbr title="File Transfer Protocol">FTP</abbr> server at <a href="ftp://10.0.0.2/">10.0.0.2</a> or
+  <a href="ftp://[fd00:ec5c::2]/">fd00:ec5c::2</a>.
+  </p>
+
+
+  <h2>Frequently Asked Questions</h2>
+
+  <h4>How do I upload files to the FTP server</h4>
+
+  Follow <a href="https://www.hawaii.edu/itsdocs/win/win95/#:~:text=USING%20WS_FTP%20TO%20TRANSFER%20FILES"
+  target="_blank" rel="noopener noreferrer">
+  this guide</a> to get started with using <abbr title="File Transfer Protocol">FTP</abbr> software to copy
+  files between your machine and the <abbr title="File Transfer Protocol">FTP</abbr> server.
+
+  <h4>I cannot connect to the VPN</h4>
+
+  Verify that your credentials are correct and that you are connecting to the correct server ({{ host }}, on
+  port 9100). If you are still facing issues, contact IT support. Please note that IT support will never ask
+  you for your password; do not share it with anyone.
+
+
+  <h4>Where can I get help</h4>
+
+  If you encounter issues with this network device, please <a href="#">open a ticket</a> with corporate IT.
+  Remember to follow the <a href="https://ecsc2025.pl/media/2025/08/Handbook_ECSC-2025.pdf" target="_blank"
+  rel="noopener noreferrer">company-wide information disclosure policies</a> at all times.
+
+
+  <h2>Administration</h2>
+
+  <p>
+  To diagnose networking issues, you are able to see all dropped network packets sent by your
+  <abbr title="Virtual Private Network">VPN</abbr> connection on the <a href="/traffic/">Dropped Traffic</a>
+  page. Note that some traffic may not be allowed by firewall rules.
+  </p>
+
+  <p>
+  This Guppy Networks firewall device also exposes an <abbr title="Simple Network Management Protocol">SNMP</abbr>
+  endpoint. You can monitor the status of the device using the <a href="/manager/monitoring/">Monitoring</a>
+  interface, and monitor user specific values using the <a href="/manager/monitoring_user/">User Monitoring</a>
+  overview. Configuration of organization-specific <abbr title="Simple Network Management Protocol">SNMP</abbr>
+  fields is possible on the <a href="/manager/custom/">Custom Values</a> page.
+  </p>
+
+  <p>
+  The <a href="/manager/advanced/">Advanced</a> interface is intended for use by trained and authorized
+  personnel only. <b>Use of this interface requires prior approval from corporate IT</b>.
+  </p>
+
+  <hr>
+
+  This page is &copy; Electrict Catfish Systems Corp. 1995 &ndash; 2025. Information on this page is TLP:AMBER and must not be
+  disclosed to third parties without prior approval from legal.
+{% endblock %}

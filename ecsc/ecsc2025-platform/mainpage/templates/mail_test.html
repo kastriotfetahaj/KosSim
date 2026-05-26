@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+    <br>
+    <section>
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-12 order-lg-1">
+                    <div class="page-header">
+                        <h1>Send test email</h1>
+                    </div>
+                    <hr>
+                    <div class="flatpage-content col-xs-12">
+                        <p>Use this page to check if your server is correctly configured and can send emails.</p>
+                        <form method="post" action="{% url 'mail_test' %}">
+                            {% csrf_token %}
+                            <input type="submit" value="Send testmail" class="btn btn-primary btn-lg">
+                        </form>
+                        <p>Email will be sent to: <code>{{ user.email }}</code></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <br><br>
+{% endblock %}

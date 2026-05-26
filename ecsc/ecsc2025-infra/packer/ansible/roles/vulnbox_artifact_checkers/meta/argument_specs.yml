@@ -1,0 +1,35 @@
+---
+argument_specs:
+  main:
+    short_description: "Install services into /service via artifacts meta repository"
+    author:
+      - "Marc Munier"
+    options:
+      vulnbox_artifact_checkers_repo_url:
+        type: str
+        required: true
+        description: "URL to clone the vulnbox-meta-repository from"
+
+      vulnbox_artifact_checkers_env_secrets:
+        type: dict
+        required: false
+        default: {}
+        description: "A dictionary of env secrets to add to the checker-containers"
+
+      vulnbox_artifact_checkers_registry:
+        type: dict
+        required: false
+        description: "Artifact Registry Login to pull artifacts"
+
+        options:
+          server:
+            required: true
+            type: str
+
+          username:
+            required: true
+            type: str
+
+          password:
+            required: true
+            type: str

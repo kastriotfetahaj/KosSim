@@ -1,0 +1,144 @@
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: router
+  labels:
+    app: router
+    {{- include "ctfroute.labels" . | nindent 4 }}
+spec:
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 100%
+  selector:
+    matchLabels:
+      app: router
+      {{- include "ctfroute.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        app: router
+        {{- include "ctfroute.selectorLabels" . | nindent 8 }}
+    spec:
+      hostNetwork: true
+      tolerations:
+        - key: node.kubernetes.io/not-ready
+          operator: "Exists"
+          effect: NoSchedule
+        - key: ctfr.attacking-lab.com/role
+          operator: Equal
+          value: router
+          effect: NoExecute
+        - key: ctfr.attacking-lab.com/role
+          operator: Equal
+          value: worker
+          effect: NoExecute
+        - key: ctfr.attacking-lab.com/ctf
+          operator: Equal
+          value: {{ .Values.ctf }}
+          effect: NoExecute
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: ctfr.attacking-lab.com/ctf
+                    operator: In
+                    values:
+                      - {{ .Values.ctf }}
+                  - key: ctfr.attacking-lab.com/role
+                    operator: In
+                    values:
+                      - worker
+                      - router
+      serviceAccountName: {{ include "ctfroute.serviceAccountName" . }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range .}}
+        - name: {{ . }}
+        {{- end}}
+      {{- end }}
+      volumes:
+        - name: ctfroute-yml
+          configMap:
+            name: ctfroute-yml
+        - name: metrics
+          emptyDir: { }
+      terminationGracePeriodSeconds: 10
+      containers:
+        - name: router
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: PYTHONUNBUFFERED
+              value: "yes"
+            - name: KUBERNETES_SERVICE_HOST
+              value: "gartenverein-tackenberg.de"
+            - name: KUBERNETES_SERVICE_PORT
+              value: "6443"
+            - name: CTF_ROUTE_RID
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          command:
+            - ctfroute
+            - /etc/ctfroute/ctfroute.yml
+          volumeMounts:
+            - name: ctfroute-yml
+              mountPath: /etc/ctfroute/
+            - name: metrics
+              mountPath: /var/ctfroute/metrics/
+          securityContext:
+            capabilities:
+              add:
+                - "NET_ADMIN"
+        - name: metrics
+          image: caddy:2.10-alpine
+          imagePullPolicy: IfNotPresent
+          workingDir: /var/ctfroute/metrics/
+          command:
+            - caddy
+            - file-server
+            - --root
+            - .
+            - -l
+            - 0.0.0.0:9000
+          volumeMounts:
+            - name: metrics
+              mountPath: /var/ctfroute/metrics/
+          ports:
+            - name: metrics
+              containerPort: 9000
+              protocol: TCP
+      initContainers:
+        - name: set-sysctls
+          image: busybox:1.36
+          securityContext:
+            privileged: true
+          command: ["/bin/sh","-c"]
+          args:
+            - |
+              set -e
+              apply() { sysctl -w "$1=$2" ; echo "$1=$2"; }
+              apply net.ipv4.ip_forward 1
+              apply net.core.bpf_jit_enable 1 || true
+              apply net.netfilter.nf_conntrack_max 33554432
+              apply net.netfilter.nf_conntrack_expect_max 8192
+              apply net.netfilter.nf_conntrack_tcp_timeout_established 1200
+              apply net.core.rmem_max 671088640
+              apply net.core.rmem_default 671088640
+              apply net.core.wmem_max 671088640
+              apply net.core.wmem_default 671088640
+              # module parameter (takes effect immediately, but not persistent)
+              if [ -w /sys/module/nf_conntrack/parameters/hashsize ]; then
+                echo 65536 > /sys/module/nf_conntrack/parameters/hashsize
+              fi

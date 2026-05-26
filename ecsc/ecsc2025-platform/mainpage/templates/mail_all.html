@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+    <br>
+    <section>
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-12 order-lg-1">
+                    <div class="page-header">
+                        <h1>Mail teams:</h1>
+                    </div>
+                    <hr>
+                    <div class="flatpage-content col-xs-12">
+                        <form action="{% url 'mail_all' %}" method="POST" class="clearfix">
+                            <div class="form-group">
+                                <label for="inputSubject">Subject:</label>
+                                <input type="text" class="form-control" id="inputSubject" name="inputSubject">
+                            </div>
+                            <div class="form-group">
+                                <label for="inputText">Text:</label>
+                                <textarea class="form-control" id="inputText" name="inputText" rows="10"></textarea>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="inputTechnicians" name="inputTechnicians" value="true" checked>
+                                <label for="inputTechnicians">Send mails to technicians</label>
+                            </div>
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-primary">Send</button>
+                        </form>
+
+                    </div>
+
+
+                    {% if tasks %}
+                        <h2 class="mt-5">Pending Mass Mails</h2>
+                        {% for task in tasks %}
+                        	<div class="mb-2">
+                                {{ task.size }} mails from {{ task.ts | timesince:now }} ago:
+                                {% if task.success > 0 %}<span class="badge bg-success text-light">{{ task.success }} successful</span>{% endif %}
+                                {% if task.failed > 0 %}<span class="badge bg-danger text-light">{{ task.failed }} failed</span>{% endif %}
+                                {% if task.queued > 0 %}<span class="badge bg-secondary text-light">{{ task.queued }} queued</span>{% endif %}
+                                {% if task.failed_mails %}<small class="text-muted">could not deliver to: {{ task.failed_mails }}</small>{% endif %}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </section>
+    <br><br>
+{% endblock %}

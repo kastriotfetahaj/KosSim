@@ -1,0 +1,23 @@
+Subject: bind repair ticket to the specific shard
+
+The repair handler verifies that the ticket starts with "<object>:repair:"
+but ignores the shard suffix. A ticket minted for s0 (the only one the
+lease endpoint issues) therefore unlocks s1 and s2 as well, and the
+attacker can XOR all three shards to recover the flag. Require an exact
+match against the per-shard ticket.
+
+--- a/service/src/routes.cpp
++++ b/service/src/routes.cpp
+@@ -149,11 +149,12 @@
+     if (parts.size() == 4 && parts[0] == "api" && parts[1] == "repair") {
+         std::lock_guard<std::mutex> guard(state.db.mu);
+         std::string object_id = parts[2], shard = parts[3], ticket = query_param(req, "ticket");
+         auto it = state.objects.find(object_id);
+         if (it == state.objects.end()) return json(404, "{\"error\":\"missing\"}");
+-        if (ticket.rfind(object_id + ":repair:", 0) != 0) return json(403, "{\"error\":\"bad_ticket\"}");
++        std::string expected = object_id + ":repair:" + shard;
++        if (ticket != expected) return json(403, "{\"error\":\"bad_ticket\"}");
+         int idx = shard == "s0" ? 0 : (shard == "s1" ? 1 : (shard == "s2" ? 2 : -1));
+         if (idx < 0) return json(404, "{\"error\":\"missing_shard\"}");
+         return json(200, "{\"shard\":\"" + shard + "\",\"hex\":\"" + it->second.shards[static_cast<size_t>(idx)] + "\"}");
+     }

@@ -1,0 +1,30 @@
+Subject: stop treating "public||private" as an ACL grant in /api/search
+
+The filter parameter is interpreted with String.includes, so the literal
+substring "public||private" enables private-row return. Parse against an
+allowlist of stream names and restrict the body projection to events the
+requester is allowed to see (here: public only, since /api/search is
+unauthenticated).
+
+--- a/service/src/routes.ts
++++ b/service/src/routes.ts
+@@ -152,15 +152,16 @@
+   app.get("/api/search", async (req) => {
+     const q = req.query as Record<string, string>;
+-    const filter = q.filter ?? "public";
++    const requested = (q.filter ?? "public").toLowerCase().split(",").map((s) => s.trim());
++    const allowed = new Set(["public"]);
++    const streams = requested.filter((s) => allowed.has(s));
+     const project = q.project ?? "meta";
+-    const allowPrivate = filter.toLowerCase().includes("public||private");
+     return {
+       rows: store.events
+-        .filter((ev) => ev.public || allowPrivate)
++        .filter((ev) => ev.public && streams.includes(ev.stream))
+         .map((ev) =>
+           project === "body"
+             ? { id: ev.id, body: ev.body }
+             : { id: ev.id, stream: ev.stream, public: ev.public },
+         ),
+     };
+   });

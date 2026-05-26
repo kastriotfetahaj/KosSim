@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: platform-configs
+  labels:
+    {{ include "platform.labels" . | nindent 4 }}
+data:
+  vm_templates.json: |-{{ .Files.Get "vm_templates.json" | nindent 4 }}
+  Caddyfile: |-{{ .Files.Get "Caddyfile" | nindent 4 }}

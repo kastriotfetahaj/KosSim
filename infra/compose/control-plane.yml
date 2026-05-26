@@ -1,0 +1,119 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-kossim}
+      POSTGRES_USER: ${POSTGRES_USER:-kossim}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-kossim} -d ${POSTGRES_DB:-kossim}"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    mem_limit: 512m
+    cpus: 1.0
+
+  control-api:
+    build:
+      context: ../../platform/control
+    restart: unless-stopped
+    volumes:
+      - ../../platform/challenges:/challenges:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-kossim}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-kossim}
+      TEAMS: ${TEAMS}
+      SERVICE_NAMES: ${SERVICE_NAMES:-svc1,svc2,svc3,svc4,svc5}
+      NOP_TEAM_NAME: ${NOP_TEAM_NAME:-nop}
+      TEAM_TOKEN_PREFIX: ${TEAM_TOKEN_PREFIX:-submit-}
+      INITIAL_DEFENSE_POINTS: ${INITIAL_DEFENSE_POINTS:-1000}
+      SUBMISSION_POINTS: ${SUBMISSION_POINTS:-1}
+      MAX_ACCEPTED_PER_TEAM_PER_ROUND: ${MAX_ACCEPTED_PER_TEAM_PER_ROUND:-0}
+      ROTATION_SECONDS: ${ROTATION_SECONDS:-120}
+      FLAG_RETENTION_TICKS: ${FLAG_RETENTION_TICKS:-5}
+      GAME_AUTO_START: ${GAME_AUTO_START:-1}
+      FLAG_TCP_ENABLED: ${FLAG_TCP_ENABLED:-1}
+      FLAG_TCP_PORT: ${FLAG_TCP_PORT:-1337}
+      SCOREBOARD_FREEZE_TICK: ${SCOREBOARD_FREEZE_TICK:-0}
+      SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+      SECRET_FLAG_KEY: ${SECRET_FLAG_KEY:?set SECRET_FLAG_KEY}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD}
+      ADMIN_SESSION_SECRET: ${ADMIN_SESSION_SECRET:?set ADMIN_SESSION_SECRET}
+      GAME_ADMIN_TOKEN: ${GAME_ADMIN_TOKEN:?set GAME_ADMIN_TOKEN}
+      CHECKER_CONCURRENCY: ${CHECKER_CONCURRENCY:-8}
+      SERVICE_HTTP_TIMEOUT: ${SERVICE_HTTP_TIMEOUT:-3.0}
+      SERVICE_CHECK_BUDGET_SECONDS: ${SERVICE_CHECK_BUDGET_SECONDS:-25}
+      TEAM_HOST_MAP: ${TEAM_HOST_MAP}
+      NOP_HOST: ${NOP_HOST}
+      SERVICE_PORT_MAP: ${SERVICE_PORT_MAP}
+      DEFAULT_REMOTE_SERVICE_PORT: ${DEFAULT_REMOTE_SERVICE_PORT:-22001}
+      AUTOINIT_DB: "1"
+    ports:
+      - "${CONTROL_API_PORT:-8088}:8000"
+      - "${FLAG_TCP_PORT:-1337}:1337"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2).read()"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 20s
+    mem_limit: 512m
+    cpus: 1.0
+
+  flag-rotator:
+    build:
+      context: ../../platform/control
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      control-api:
+        condition: service_healthy
+    command: ["python", "-m", "app.rotator"]
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-kossim}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-kossim}
+      TEAMS: ${TEAMS}
+      SERVICE_NAMES: ${SERVICE_NAMES:-svc1,svc2,svc3,svc4,svc5}
+      NOP_TEAM_NAME: ${NOP_TEAM_NAME:-nop}
+      TEAM_TOKEN_PREFIX: ${TEAM_TOKEN_PREFIX:-submit-}
+      INITIAL_DEFENSE_POINTS: ${INITIAL_DEFENSE_POINTS:-1000}
+      SUBMISSION_POINTS: ${SUBMISSION_POINTS:-1}
+      MAX_ACCEPTED_PER_TEAM_PER_ROUND: ${MAX_ACCEPTED_PER_TEAM_PER_ROUND:-0}
+      ROTATION_SECONDS: ${ROTATION_SECONDS:-120}
+      FLAG_RETENTION_TICKS: ${FLAG_RETENTION_TICKS:-5}
+      GAME_AUTO_START: ${GAME_AUTO_START:-1}
+      FLAG_TCP_ENABLED: ${FLAG_TCP_ENABLED:-1}
+      FLAG_TCP_PORT: ${FLAG_TCP_PORT:-1337}
+      SCOREBOARD_FREEZE_TICK: ${SCOREBOARD_FREEZE_TICK:-0}
+      SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+      SECRET_FLAG_KEY: ${SECRET_FLAG_KEY:?set SECRET_FLAG_KEY}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD}
+      ADMIN_SESSION_SECRET: ${ADMIN_SESSION_SECRET:?set ADMIN_SESSION_SECRET}
+      GAME_ADMIN_TOKEN: ${GAME_ADMIN_TOKEN:?set GAME_ADMIN_TOKEN}
+      CHECKER_CONCURRENCY: ${CHECKER_CONCURRENCY:-8}
+      SERVICE_HTTP_TIMEOUT: ${SERVICE_HTTP_TIMEOUT:-3.0}
+      SERVICE_CHECK_BUDGET_SECONDS: ${SERVICE_CHECK_BUDGET_SECONDS:-25}
+      TEAM_HOST_MAP: ${TEAM_HOST_MAP}
+      NOP_HOST: ${NOP_HOST}
+      SERVICE_PORT_MAP: ${SERVICE_PORT_MAP}
+      DEFAULT_REMOTE_SERVICE_PORT: ${DEFAULT_REMOTE_SERVICE_PORT:-22001}
+      AUTOINIT_DB: "1"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os, psycopg2; conn = psycopg2.connect(os.environ['DATABASE_URL']); conn.close()"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+    mem_limit: 512m
+    cpus: 1.0
+
+volumes:
+  postgres_data:

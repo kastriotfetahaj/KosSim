@@ -1,0 +1,188 @@
+instance:
+  # https://docs.python.org/3/library/logging.config.html#dictionary-schema-details
+  metrics: /var/ctfroute/metrics/
+  logging:
+    version: 1
+    incremental: true
+    loggers:
+      ctfroute.nft:
+        level: INFO
+      ctfroute.__main__:
+        level: INFO
+      ctfroute.adapters.kubernetes:
+        level: INFO
+      ctfroute.controllers.metrologist:
+        level: INFO
+      ctfroute.debug:
+        level: INFO
+
+defaults:
+  teams:
+    anonymization:
+      driver: netfilter
+
+adapters:
+  - type: "kubernetes"
+    namespace: "local-docker-test"
+
+initialState:
+  network:
+    entities:
+      - id: checkers
+        interface: eth1
+        addresses:
+          - 10.32.251.128/26
+      - id: gameservers
+        interface: eth1
+        addresses:
+          - 10.32.251.2/31
+    teamTrafficControl:
+      default:
+        params: rate 1000mbit prio 0
+      internal:
+        params: rate 1000mbit prio 1
+        qdisc: sfq
+      team:
+        params: rate 20mbit prio 1
+        qdisc: netem delay 10ms 2ms distribution paretonormal
+      netEntities:
+        checkers:
+        gameservers:
+          params: rate 50mbit prio 0
+          qdisc: sfq
+    nft: |
+      add rule ctfr-gates gates ip daddr 10.32.251.2 meta l4proto icmp accept; 
+      add rule ctfr-gates gates ip daddr 10.32.251.2 tcp dport { 80, 1337 } accept; 
+      add chain ctfr-gates static-forward;
+      delete chain ctfr-gates static-forward;
+      add chain ctfr-gates static-forward {
+        type filter hook forward priority 1; policy drop;
+        ip saddr @g-checkers accept;
+        ip daddr @g-checkers ct direction reply accept; 
+        ip saddr @g-gameservers accept;
+        ip daddr @g-gameservers ct direction reply accept; 
+        ip saddr . ip daddr @same-team accept;
+        ip daddr 10.32.251.2 meta l4proto icmp accept;
+        ip daddr 10.32.251.2 tcp dport { 80, 1337 } accept; 
+        ip saddr . ip daddr != @same-team ip daddr @any-vulnbox accept;
+        ip saddr @any-vulnbox ct direction reply accept;
+        counter;
+      }
+
+  gates:
+    # Doesn't exist in kubernetes (if you use the default gates)
+    - id: gate-that-will-be-deleted
+      type: connection
+      connSrc: any-team
+      connDst: team-1
+      expression: "tcp dport 2000"
+
+  teams:
+    - id: 1
+      network: 10.32.1.0/24
+      gateway: 10.32.1.254
+      vulnbox: 10.32.1.2
+      meta:
+        name: NOP
+        ctftest/endpoint: 10.43.2.21:50051
+      connectivity:
+        driver: wireguard
+        publicKey: 04imYC7Ed2zEKZiiED5PT7mTkf2gMJXF9HO2hdcvp2U=
+        privateKey: qHp4n/BedZ74okmRrkUD88av/uAUiPuRuNbX0b7J1Vo=
+        port: 50001
+        peers:
+          - allowedIps: 10.32.1.2/32
+            publicKey: Bk3wiHED8fuJ8u4h7/FZUBPOrLqwsKpijQfdtEHduHs=
+          - allowedIps: 10.32.1.3/32
+            publicKey: QJdLoj9x6mOYR2GAvX3n856CvbJ3nam7HVHMHjFIzQM=
+
+    - id: 2
+      network: 10.32.2.0/24
+      gateway: 10.32.2.254
+      vulnbox: 10.32.2.2
+      meta:
+        name: enoflag
+        ctftest/endpoint: 10.43.2.22:50051
+      connectivity:
+        driver: wireguard
+        publicKey: 04imYC7Ed2zEKZiiED5PT7mTkf2gMJXF9HO2hdcvp2U=
+        privateKey: qHp4n/BedZ74okmRrkUD88av/uAUiPuRuNbX0b7J1Vo=
+        port: 50002
+        peers:
+          - allowedIps: 10.32.2.2/32
+            publicKey: LjyWLQSDY/DABNcITYfqC/vlx6/0GzIw5Eym+u4ATCk=
+
+    - id: 3
+      network: 10.32.3.0/24
+      gateway: 10.32.3.254
+      vulnbox: 10.32.3.2
+      meta:
+        name: saarsec
+        ctftest/endpoint: 10.43.2.23:50051
+      connectivity:
+        driver: wireguard
+        publicKey: 04imYC7Ed2zEKZiiED5PT7mTkf2gMJXF9HO2hdcvp2U=
+        privateKey: qHp4n/BedZ74okmRrkUD88av/uAUiPuRuNbX0b7J1Vo=
+        port: 50003
+        peers:
+          - allowedIps: 10.32.3.2/32
+            publicKey: DeruoVQ/xsHhCsSw3rm434cSkGpEIKYBgvlTRFRbHRc=
+
+    - id: 4
+      network: 10.32.4.0/24
+      gateway: 10.32.4.254
+      vulnbox: 10.32.4.2
+      meta:
+        name: saarsec
+        ctftest/endpoint: 10.43.2.24:50051
+      connectivity:
+        driver: wireguard
+        privateKey: CEL7u2Cz6uemx/iEvlKf/wW050JVoYar9foRb0uPfnc=
+        publicKey: QBVE5EJD0nMgh1MJfD4ZUJ+rXB8+AifjadRLoTCgBko=
+        port: 50004
+        peers:
+          - allowedIps: 10.32.4.2/32
+            privateKey: yDrrbuOExuLz3je/XWlLD1+4od6iTonnI2GbGxjAx0g=
+            publicKey: V5yGr3Zptqv9Z1S8APJzs0MzqCOldhADY7lw/q5LHTo=
+
+  routers:
+    - id: 1
+      host: router1.mesh.local
+      teams: [ 1 ]
+      connectivity:
+        driver: wireguard
+        address: 10.233.32.101
+        port: 40000
+        privateKey: QDFL+IGY2ROgX9Pj+sZ0IdccOpJdeJBwOPDmtCQGsmk=
+        publicKey: AoHGD5N6Tk4bipYdLmV88PKdd38esPS/Oln/PV3A8Ws=
+
+    - id: 2
+      host: router2.mesh.local
+      teams: [ 2 ]
+      connectivity:
+        driver: wireguard
+        address: 10.233.32.102
+        port: 40000
+        privateKey: aOpWz4NoZGbKFF2mnoK56tPMb5cpOPv97gbn2CXBn1I=
+        publicKey: Kf+iWMitCCMyYAVVng/0F8aR5EQCcvsD+eVry2fgBwM=
+
+    - id: 3
+      host: router3.mesh.local
+      teams: [ 3, 4 ]
+      connectivity:
+        driver: wireguard
+        address: 10.233.32.103
+        port: 40000
+        privateKey: AItR2eNZ/azgGRnAN/cf3M8SlU3jnyrREyBxdTuxxms=
+        publicKey: JHlRtRJQ1unOCBLH+YpRP2P9lQfInwXdx3Bd22hazGw=
+
+    - id: infra
+      host: router-infra.mesh.local
+      net_entities: [ gameservers, checkers ]
+      connectivity:
+        driver: wireguard
+        address: 10.233.32.110
+        ifname: docker-ctf
+        port: 40000
+        privateKey: OBQ0DcaaCddq3MA0hGYdysHVVwWETFddFYGZW+JCaEM=
+        publicKey: 6ziGye0Jh5bPx5UH9qy4wa2P8twg0K01yTTYkUcJeDY=

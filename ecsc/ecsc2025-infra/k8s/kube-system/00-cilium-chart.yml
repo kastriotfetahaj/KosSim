@@ -1,0 +1,161 @@
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: cilium
+  namespace: kube-system
+spec:
+  # This flag causes helm controller to select control plane nodes for the
+  # "helm-install-" Job. They won't be scheduled there since we are also using our own
+  # taint for these nodes, so it get's stuck.
+  # bootstrap: true
+  failurePolicy: abort
+  targetNamespace: kube-system
+  repo: https://helm.cilium.io/
+  chart: cilium
+  version: 1.18.1
+  valuesContent: |-
+    k8sServiceHost: "gartenverein-tackenberg.de"
+    k8sServicePort: 6443
+    tolerations:
+      - key: node.kubernetes.io/not-ready
+        operator: Exists
+        effect: NoSchedule  
+      - key: node.cilium.io/agent-not-ready
+        operator: Exists
+        effect: NoSchedule
+    
+      - key: ctfr.attacking-lab.com/role
+        operator: Equal
+        value: control-plane
+        effect: NoSchedule
+      - key: ctfr.attacking-lab.com/role
+        operator: Equal
+        value: core
+        effect: NoExecute 
+      - key: ctfr.attacking-lab.com/role
+        operator: Equal
+        value: infra
+        effect: NoExecute
+      - key: ctfr.attacking-lab.com/role
+        operator: Equal
+        value: worker
+        effect: NoExecute
+      - key: ctfr.attacking-lab.com/role
+        operator: Equal
+        value: vulnbox
+        effect: NoExecute
+      - key: ctfr.attacking-lab.com/role
+        operator: Equal
+        value: gameserver
+        effect: NoExecute
+    
+      # Regardless of CTF
+      - key: ctfr.attacking-lab.com/ctf
+        operator: Exists
+        effect: NoExecute
+
+    envoy:
+      enabled: true
+      replicas: 2
+      tolerations:
+        - key: ctfr.attacking-lab.com/role
+          operator: Equal
+          value: control-plane
+          effect: NoSchedule
+        - key: ctfr.attacking-lab.com/role
+          operator: Equal
+          value: core
+          effect: NoExecute 
+        - key: ctfr.attacking-lab.com/role
+          operator: Equal
+          value: worker
+          effect: NoExecute
+        - key: ctfr.attacking-lab.com/role
+          operator: Equal
+          value: infra
+          effect: NoExecute 
+        - key: ctfr.attacking-lab.com/role
+          operator: Equal
+          value: vulnbox
+          effect: NoExecute
+        - key: ctfr.attacking-lab.com/role
+          operator: Equal
+          value: gameserver
+          effect: NoExecute
+    
+        # Regardless of CTF
+        - key: ctfr.attacking-lab.com/ctf
+          operator: Exists
+          effect: NoExecute
+
+    hubble: 
+      relay:
+        enabled: true 
+        nodeSelector:
+          node-role.kubernetes.io/control-plane: "true"
+        tolerations:
+          - key: ctfr.attacking-lab.com/role
+            operator: Equal
+            value: control-plane
+            effect: NoSchedule
+    
+      ui:
+        enabled: true
+        nodeSelector:
+          node-role.kubernetes.io/control-plane: "true"
+        tolerations:
+          - key: ctfr.attacking-lab.com/role
+            operator: Equal
+            value: control-plane
+            effect: NoSchedule
+
+    operator:
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: "true"
+      tolerations:
+        - key: ctfr.attacking-lab.com/role
+          operator: Equal
+          value: control-plane
+          effect: NoSchedule
+
+    encryption:
+      # -- Enable transparent network encryption.
+      enabled: true
+      # -- Encryption method. Can be either ipsec or wireguard.
+      type: wireguard
+      # -- Enable encryption for pure node to node traffic.
+      # This option is only effective when encryption.type is set to "wireguard".
+      nodeEncryption: true
+      # -- Configure the WireGuard Pod2Pod strict mode.
+      strictMode:
+        # -- Enable WireGuard Pod2Pod strict mode.
+        enabled: true
+        # -- CIDR for the WireGuard Pod2Pod strict mode.
+        cidr: 10.237.0.0/16
+        # -- Allow dynamic lookup of remote node identities.
+        # This is required when tunneling is used or direct routing is used and the node CIDR and pod CIDR overlap.
+        allowRemoteNodeIdentities: false
+    
+    hostFirewall:
+      enabled: true
+    
+    bpf:
+      masquerade: true
+    
+    egressGateway: 
+      enabled: true
+    
+    socketLB:
+      enabled: true
+
+    relay:
+      enabled: true
+
+    ui:
+      enabled: true
+
+    ipam:
+      operator:
+        clusterPoolIPv4PodCIDRList: [ "10.237.0.0/16" ]
+
+    kubeProxyReplacement: true

@@ -1,0 +1,150 @@
+{# Variables: tmpl (template dict), vm (VM object), vulnbox_ip (str, its internal ip) #}
+{# admin: bool, control: bool #}
+
+<div class="card mb-4">
+    <div class="card-header">
+        {% if vm_name %}{{ vm_name }}{% else %}{{ tmpl.name }}{% endif %}
+        {% if not vm %}
+            <span class="badge badge-pill badge-dark float-right">disabled</span>
+        {% elif vm.config.status == 'MISSING' %}
+            <span class="badge badge-pill badge-dark float-right">removing ...</span>
+        {% elif vm.config.action_counters and vm.config.action_counters.reset > vm.status.action_counters.reset %}
+            <span class="badge badge-pill badge-warning float-right">recreating ...</span>
+        {% elif vm.config.action_counters and vm.config.action_counters.reboot > vm.status.action_counters.reboot %}
+            <span class="badge badge-pill badge-dark float-right">rebooting ...</span>
+        {% elif vm.status.status == 'RUNNING' %}
+            <span class="badge badge-pill badge-success float-right">up & running</span>
+        {% elif vm.config.status == 'STOPPED' %}
+            <span class="badge badge-pill badge-dark float-right">offline</span>
+        {% elif vm.status.status == 'CREATING' or vm.status.status == 'BOOTING' %}
+            <span class="badge badge-pill badge-info float-right">booting ...</span>
+        {% elif vm.status.status == 'BUSY' %}
+            <span class="badge badge-pill badge-warning float-right">busy ...</span>
+        {% else %}
+            <span class="badge badge-pill badge-warning float-right">{{ vm.status.status }}</span>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        {% if tmpl.description %}
+            <p class="card-text">{{ tmpl.description }}</p>
+        {% endif %}
+        {% if not vm %}
+            {% if not admin and not tmpl.control_available %}
+                <div class="card-text text-muted">VM is locked.</div>
+            {% else %}
+                <p class="card-text">VM is currently disabled but unlocked.</p>
+                {% if control %}
+                    <form method="post" action="{% url 'vm_action' %}" class="form-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="vm_kind" value="{{ tmpl.template.kind }}">
+                        <input type="hidden" name="team_id" value="{{ team_id }}">
+                        <input type="hidden" name="action" value="create">
+                        <button type="submit" class="btn btn-primary float-none">Create VM</button>
+                    </form>
+                {% else %}
+                    <p class="card-text text-muted">Your captain/technicians can create this VM.</p>
+                {% endif %}
+            {% endif %}
+        {% else %}
+            {% if vm.metadata.vpn_ip %}
+                <p class="card-text"><strong>IP (via VPN):</strong> <code>{{ vm.metadata.vpn_ip }}</code></p>
+            {% endif %}
+            {% if vm.status.ip %}
+                <p class="card-text"><strong>IP (public):</strong> <code>{{ vm.status.ip }}</code></p>
+            {% endif %}
+            {% if vm.status.root_password %}
+                <p class="card-text"><strong>root password:</strong> <code>{{ vm.status.root_password }}</code></p>
+            {% endif %}
+
+            {% if vm.config.status == 'MISSING' %}
+                <p class="card-text font-italic">VM is being removed, please be patient...</p>
+            {% elif vm.config.action_counters and vm.config.action_counters.reset > vm.status.action_counters.reset %}
+                <p class="card-text font-italic">VM is being reset, please be patient...</p>
+            {% elif vm.config.action_counters and vm.config.action_counters.reboot > vm.status.action_counters.reboot %}
+                <p class="card-text font-italic">VM is rebooting, please be patient...</p>
+            {% elif vm.status.status == 'RUNNING' %}
+                {% if not admin and not tmpl.control_available %}
+                    <div class="card-text text-muted">VM is locked.</div>
+                {% elif control %}
+                <div class="card-text">
+                    <form method="post" action="{% url 'vm_action' %}" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="vm_kind" value="{{ tmpl.template.kind }}">
+                        <input type="hidden" name="team_id" value="{{ team_id }}">
+                        <input type="hidden" name="action" value="reboot">
+                        <button type="submit" class="btn btn-outline-dark float-none">Reboot</button>
+                    </form>
+                    {% comment %}
+                    <form method="post" action="{% url 'vm_action' %}" class="d-inline require-confirmation"
+                        data-confirmation="Do you really want to request a new root password?">
+                        {% csrf_token %}
+                        <input type="hidden" name="vm_kind" value="{{ tmpl.template.kind }}">
+                        <input type="hidden" name="team_id" value="{{ team_id }}">
+                        <input type="hidden" name="action" value="reset_root_password">
+                        <button type="submit" class="btn btn-outline-dark float-none">New Password</button>
+                    </form>
+                    {% endcomment %}
+                    <form method="post" action="{% url 'vm_action' %}" class="d-inline require-confirmation"
+                        data-confirmation="Do you really want to reset this VM to its initial state? All your changes will be lost!">
+                        {% csrf_token %}
+                        <input type="hidden" name="vm_kind" value="{{ tmpl.template.kind }}">
+                        <input type="hidden" name="team_id" value="{{ team_id }}">
+                        <input type="hidden" name="action" value="reset">
+                        <button type="submit" class="btn btn-outline-warning float-none">Reset</button>
+                    </form>
+
+                    {% if admin %}
+                    <form method="post" action="{% url 'vm_action' %}" class="d-inline require-confirmation"
+                        data-confirmation="Do you really want to shutdown this VM?">
+                        {% csrf_token %}
+                        <input type="hidden" name="vm_kind" value="{{ tmpl.template.kind }}">
+                        <input type="hidden" name="team_id" value="{{ team_id }}">
+                        <input type="hidden" name="action" value="shutdown">
+                        <button type="submit" class="btn btn-outline-danger float-none">
+                            <span class="oi oi-media-stop"></span> Stop</button>
+                    </form>
+                    {% endif %}
+
+                    <form method="post" action="{% url 'vm_action' %}" class="d-inline require-confirmation"
+                        data-confirmation="Do you really want to remove this VM? It can not be recovered!">
+                        {% csrf_token %}
+                        <input type="hidden" name="vm_kind" value="{{ tmpl.template.kind }}">
+                        <input type="hidden" name="team_id" value="{{ team_id }}">
+                        <input type="hidden" name="action" value="destroy">
+                        <button type="submit" class="btn btn-outline-danger float-none">Destroy</button>
+                    </form>
+                </div>
+                {% endif %}
+            {% elif vm.config.status == 'STOPPED' %}
+                <div class="card-text">
+                    <p class="font-italic">VM has been shut down.</p>
+                    {% if admin %}
+                    <form method="post" action="{% url 'vm_action' %}" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="vm_kind" value="{{ tmpl.template.kind }}">
+                        <input type="hidden" name="team_id" value="{{ team_id }}">
+                        <input type="hidden" name="action" value="start">
+                        <button type="submit" class="btn btn-success float-none">
+                            <span class="oi oi-media-play"></span> Start VM</button>
+                    </form>
+
+                    <form method="post" action="{% url 'vm_action' %}" class="d-inline require-confirmation"
+                        data-confirmation="Do you really want to remove this VM? It can not be recovered!">
+                        {% csrf_token %}
+                        <input type="hidden" name="vm_kind" value="{{ tmpl.template.kind }}">
+                        <input type="hidden" name="team_id" value="{{ team_id }}">
+                        <input type="hidden" name="action" value="destroy">
+                        <button type="submit" class="btn btn-outline-danger float-none">Destroy</button>
+                    </form>
+                    {% endif %}
+                </div>
+            {% elif vm.status.status == 'CREATING' %}
+                <p class="card-text font-italic">VM is being created, please be patient...</p>
+            {% elif vm.status.status == 'BOOTING' %}
+                <p class="card-text font-italic">VM is booting, please be patient...</p>
+            {% elif vm.status.status == 'BUSY' %}
+                <p class="card-text font-italic">VM is busy, please be patient...</p>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>

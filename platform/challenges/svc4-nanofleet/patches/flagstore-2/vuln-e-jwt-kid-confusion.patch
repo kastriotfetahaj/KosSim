@@ -1,0 +1,29 @@
+Subject: drop the KID algorithm path from the diagnostic-token verifier
+
+The diagnostic-job token verifier accepted alg=KID and used the kid'd
+agent's blob as the HMAC key. Since /api/v2/agent/register hands the
+registering caller their own blob, anyone could mint a KID-signed token
+for any payload.node. Remove the KID branch so only HS256 (the operator's
+shared secret) is accepted.
+
+--- a/service/internal/jobs/jobs.go
++++ b/service/internal/jobs/jobs.go
+@@ -58,17 +58,12 @@
+ 	if err != nil {
+ 		return Header{}, Payload{}, errors.New("token: bad sig b64")
+ 	}
++	_ = lookup
+ 	signed := parts[0] + "." + parts[1]
+ 	var key []byte
+ 	switch header.Alg {
+ 	case "HS256":
+ 		key = []byte(secret)
+-	case "KID":
+-		k, ok := lookup(header.Kid)
+-		if !ok {
+-			return Header{}, Payload{}, errors.New("token: unknown kid")
+-		}
+-		key = []byte(k)
+ 	default:
+ 		return Header{}, Payload{}, errors.New("token: unsupported alg")
+ 	}

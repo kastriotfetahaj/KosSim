@@ -1,0 +1,18 @@
+argument_specs:
+  main:
+    short_description: "Run docker login"
+    author:
+      - "Marc Munier"
+
+    options:
+      docker_login_server:
+        required: true
+        type: str
+
+      docker_login_username:
+        required: true
+        type: str
+
+      docker_login_password:
+        required: true
+        type: str

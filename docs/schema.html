@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KosSim Data Schema</title>
+  <style>
+    :root {
+      --bg-a: #081328;
+      --bg-b: #11355f;
+      --card: #0d203ddb;
+      --line: #2f5184;
+      --text: #e9f2ff;
+      --muted: #aec2e6;
+      --accent: #ffd367;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background:
+        radial-gradient(circle at 10% 8%, #1d4379 0, transparent 30%),
+        radial-gradient(circle at 92% 16%, #285088 0, transparent 32%),
+        linear-gradient(155deg, var(--bg-a), var(--bg-b));
+      padding: 22px;
+      line-height: 1.58;
+    }
+    main { max-width: 1160px; margin: 0 auto; display: grid; gap: 14px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: 0 14px 34px rgba(0,0,0,0.34);
+      backdrop-filter: blur(8px);
+      padding: 18px;
+    }
+    h1, h2, h3 { margin: 0 0 8px; line-height: 1.23; }
+    h1 { font-size: 32px; }
+    h2 { font-size: 24px; }
+    p { margin: 0 0 10px; }
+    .muted { color: var(--muted); }
+    nav { display: flex; flex-wrap: wrap; gap: 10px; }
+    nav a {
+      border: 1px solid #496ca8;
+      border-radius: 999px;
+      background: #16325e;
+      padding: 6px 11px;
+      color: #dbe9ff;
+      text-decoration: none;
+      font-size: 13px;
+    }
+    nav a:hover { text-decoration: underline; }
+    table { width: 100%; border-collapse: collapse; margin-top: 9px; }
+    th, td {
+      border: 1px solid #365a90;
+      padding: 9px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: #173360; }
+    td { background: #102649; }
+    code {
+      background: #13294d;
+      border: 1px solid #3a5f98;
+      border-radius: 6px;
+      color: #ffe8ad;
+      padding: 0.12em 0.38em;
+    }
+    ul { margin: 0; padding-left: 20px; }
+    li { margin: 5px 0; }
+    .mermaid {
+      border: 1px solid #335790;
+      border-radius: 12px;
+      background: #0a1730;
+      padding: 12px;
+      overflow-x: auto;
+    }
+    .grid { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .tile {
+      border: 1px solid #365a90;
+      border-radius: 12px;
+      background: #122a4e;
+      padding: 12px;
+    }
+    .tile strong { color: var(--accent); }
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+      h1 { font-size: 29px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="card">
+      <h1>Data Schema</h1>
+      <p class="muted">Schema source: <code>platform/control/app/schema.sql</code>. This section explains what each table stores and why it exists in the scoring pipeline.</p>
+      <nav>
+        <a href="../README.html">Overview</a>
+        <a href="architecture.html">Architecture</a>
+        <a href="challenges.html">Challenges</a>
+        <a href="schema.html">Data Schema</a>
+        <a href="local-runbook.html">Local Runbook</a>
+        <a href="hetzner-runbook.html">Hetzner Runbook</a>
+      </nav>
+    </section>
+
+    <section class="card">
+      <h2>Entity Purpose Matrix</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Table</th>
+            <th>What It Stores</th>
+            <th>Why It Is Needed</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>teams</code></td>
+            <td>Team identity, submit token, NAT alias, NOP flag.</td>
+            <td>Defines who can submit and how teams appear in topology/scoreboard.</td>
+          </tr>
+          <tr>
+            <td><code>services</code></td>
+            <td>Canonical service names (<code>svc1..svc5</code>).</td>
+            <td>Single source for service catalog consistency.</td>
+          </tr>
+          <tr>
+            <td><code>team_services</code></td>
+            <td>Team-to-service instance mapping with host/port and enabled state.</td>
+            <td>Lets rotator/checkers find exact targets per team.</td>
+          </tr>
+          <tr>
+            <td><code>flag_rounds</code></td>
+            <td>Round timing metadata and rotation interval.</td>
+            <td>Creates auditable round boundaries for fairness.</td>
+          </tr>
+          <tr>
+            <td><code>flags</code></td>
+            <td>Generated flags, round relation, active/inactive state, expiry.</td>
+            <td>Tracks current flag truth and prevents collisions/replays.</td>
+          </tr>
+          <tr>
+            <td><code>submissions</code></td>
+            <td>Every submitted flag with result and source IP.</td>
+            <td>Primary audit trail for scoring decisions and disputes.</td>
+          </tr>
+          <tr>
+            <td><code>scores</code></td>
+            <td>Attack, defense, SLA, total per team.</td>
+            <td>Optimizes leaderboard reads and preserves score history semantics.</td>
+          </tr>
+          <tr>
+            <td><code>service_health</code></td>
+            <td>Per-round up/down status for each team-service.</td>
+            <td>Supports uptime points and reliability analysis.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>Scoring and Round Rules</h2>
+      <div class="grid">
+        <article class="tile">
+          <h3>Score Formula</h3>
+          <p><code>team_total = sum(service_total)</code></p>
+          <p><code>service_total = sla_ratio * (attack + defense + uptime - hacked_penalty)</code></p>
+          <ul>
+            <li>Successful attack: attacker receives ECSC-style jeopardy points, starting at <code>10</code> and decaying as more teams submit the same flag.</li>
+            <li>Successful defense: service owners are rewarded for retained, retrievable flags across the retention window.</li>
+            <li>Uptime: service owners receive SLA points from checker health and retained flag availability.</li>
+            <li>SLA is calculated from service health and flag availability over the retention window.</li>
+          </ul>
+        </article>
+        <article class="tile">
+          <h3>Round Semantics</h3>
+          <ul>
+            <li>Raw backend rounds are derived from UNIX time windows.</li>
+            <li>Leaderboard displays human round counter <code>1,2,3,...</code>.</li>
+            <li>Only current-tick flags are accepted for scoring.</li>
+            <li>Local default tick length is <code>120s</code>; production deployments can set <code>ROTATION_SECONDS</code>.</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>ER Overview</h2>
+      <div class="mermaid">
+flowchart LR
+    T["teams"] --> TS["team_services"]
+    S["services"] --> TS
+    T --> F["flags"]
+    S --> F
+    FR["flag_rounds"] --> F
+    T --> SUB1["submissions submitter_team_id"]
+    T --> SUB2["submissions target_team_id"]
+    S --> SUB1
+    T --> SC["scores"]
+    T --> SH["service_health"]
+    S --> SH
+    FR --> SH
+      </div>
+      <p class="muted">Diagram should render automatically. If not, check connectivity to the Mermaid CDN.</p>
+    </section>
+
+    <section class="card">
+      <h2>Submission Result States</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Result</th>
+            <th>What It Means</th>
+            <th>Why It Matters</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>accepted</code></td>
+            <td>Valid current-tick opponent flag.</td>
+            <td>Scores points and drives rank changes.</td>
+          </tr>
+          <tr>
+            <td><code>duplicate</code></td>
+            <td>Flag already submitted by same team.</td>
+            <td>Blocks replay inflation.</td>
+          </tr>
+          <tr>
+            <td><code>stale_round</code></td>
+            <td>Flag from previous tick.</td>
+            <td>Enforces time-bounded exploitation.</td>
+          </tr>
+          <tr>
+            <td><code>own_flag</code></td>
+            <td>Team submitted its own service flag.</td>
+            <td>Prevents self-farming.</td>
+          </tr>
+          <tr>
+            <td><code>nop_target</code></td>
+            <td>Flag belongs to NOP stack.</td>
+            <td>Keeps test systems out of competition scoring.</td>
+          </tr>
+          <tr>
+            <td><code>invalid</code></td>
+            <td>No active matching flag found.</td>
+            <td>Catches malformed or random submissions.</td>
+          </tr>
+          <tr>
+            <td><code>round_limit</code></td>
+            <td>Accepted cap exceeded when configured.</td>
+            <td>Supports rule variations for event formats.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <script>
+    (() => {
+      const legacyBlocks = document.querySelectorAll("pre code.language-mermaid");
+      legacyBlocks.forEach((code) => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "mermaid";
+        wrapper.textContent = code.textContent;
+        code.parentElement.replaceWith(wrapper);
+      });
+      if (!window.mermaid) return;
+      mermaid.initialize({ startOnLoad: false, securityLevel: "loose", theme: "dark" });
+      mermaid.run({ querySelector: ".mermaid" });
+    })();
+  </script>
+</body>
+</html>

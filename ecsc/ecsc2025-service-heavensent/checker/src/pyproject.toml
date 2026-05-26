@@ -1,0 +1,20 @@
+[project]
+name = "checker"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "construct>=2.10.70",
+    "enochecker3",
+    "faker>=37.8.0",
+    "gunicorn>=23.0.0",
+    "httpx>=0.28.1",
+    "numpy>=2.3.3",
+    "pycryptodome>=3.23.0",
+    "requests>=2.32.5",
+    "uvicorn>=0.34.3",
+    "websocket-client>=1.8.0",
+]
+
+[tool.uv.sources]
+enochecker3 = { git = "https://github.com/attacking-lab/enochecker3", rev = "v0.13.4" }
+enochecker-core = { git = "https://github.com/attacking-lab/enochecker-core", rev = "v0.13.0" }

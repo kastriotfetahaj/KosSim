@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load mainpage %}
+{% block content %}
+    <style>
+    .team-list-logo {
+        max-width: 96px;
+        max-height: 96px;
+    }
+    .table td.col-logo {
+        padding-top: 0.25rem;
+        padding-bottom: 0.25rem;
+    }
+    .nowrap {
+        white-space: nowrap;
+    }
+    </style>
+    <br>
+    <section>
+        <div class="container-fluid">
+            <div class="align-items-center">
+                <div class="page-header">
+                    <h1>All Teams:</h1>
+                    <p>
+                        {{ count_cloud_active }} / {{ count_active }} activated teams use cloud hosting.
+                        {{ count_inactive }} inactive teams.
+                    </p>
+                </div>
+                <div class="row">
+                {% for team_bucket in team_buckets %}
+                    <div class="col-xl-6 col-lg-12">
+                    <table class="table table-hover">
+                        <thead class="thead-dark">
+                        <tr>
+                            <th scope="col">Logo</th>
+                            <th scope="col">#</th>
+                            <th scope="col">Team /<br/>Email</th>
+                            <th scope="col">IRC name /<br/>Ident Code</th>
+                            <th scope="col">Affiliation /<br/>
+                                Website</th>
+                            <th scope="col">Joined /<br/>Last login</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for t in team_bucket %}
+                            {% with captain=t.captain %}
+                            <tr>
+                                <td class="col-logo">
+                                    <img class="team-list-logo img-thumbnail" src="{% team_logo t %}">
+                                </td>
+                                <th scope="row">
+                                    {% if t.team_id %}
+                                        {{ t.team_id }}
+                                    {% else %}-{% endif %}
+                                </th>
+                                <td>{{ t.name }}
+                                    {% if t.use_cloudhosting %}
+                                        <span class="badge badge-info" title="Selected Cloud-Hosting"><span class="oi oi-cloud"></span></span>
+                                    {% endif %}
+                                    <br/>
+                                    <small><a href="mailto:{{ captain.email }}">{{ captain.email }}</a></small>
+                                    {% if t.is_active %}
+                                        <span class="badge badge-success" title="confirmed">&#x2713;</span>
+                                    {% else %}
+                                        <span class="badge badge-danger" title="not confirmed">&#x2715;</span>
+                                    {% endif %}
+                                    {% if request.user.is_superuser and t.is_active %}
+                                        <br/>
+                                        <a href="{% url 'team_impersonate' t.id %}" class="btn btn-sm py-0 btn-outline-secondary">(impersonate)</a>
+                                    {% endif %}
+                                </td>
+                                <td>{% if t.irc_name %}{{ t.irc_name }}{% else %}-{% endif %}<br/>{{ t.ident_code }}</td>
+                                <td>{% if t.affiliation %}{{ t.affiliation }}{% endif %}<br/>
+                                    {% if t.website %}{{ t.website }}{% endif %}</td>
+                                <td class="nowrap">{{ captain.date_joined | date:'d.m.Y H:i' }}<br/>
+                                    {{ captain.last_login | date:'d.m.Y H:i' }}</td>
+                            </tr>
+                            {% endwith %}
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                    </div>
+                {% endfor %}
+                </div>
+            </div>
+        </div>
+    </section>
+    <br><br>
+{% endblock %}

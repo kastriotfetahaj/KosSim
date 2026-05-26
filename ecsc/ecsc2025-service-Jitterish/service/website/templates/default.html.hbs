@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width"/>
+    <title>{{ title }} | JitterishDB</title>
+    <link rel="stylesheet" href="/static/main.css">
+</head>
+<body>
+
+<header data-augmented-ui class="main-menu">
+    <ul class="menu icons">
+        <li><a href="/" class="logo"></a></li>
+        <li><a></a></li>
+    </ul>
+    <ul class="menu center">
+        <li {{#if (eq pagename "home") }}class="active"{{/if}}><a href="/">Home</a></li>
+        {{#if username}}
+            <li {{#if (eq pagename "profile") }}class="active"{{/if}}><a href="/session/profile">Profile</a></li>
+            <li {{#if (eq pagename "database") }}class="active"{{/if}}><a href="/database/{{username}}">My Database</a></li>
+        {{else}}
+            <li {{#if (eq pagename "login") }}class="active"{{/if}}><a href="/session/login">Login</a></li>
+            <li {{#if (eq pagename "register") }}class="active"{{/if}}><a href="/session/register">Register</a></li>
+        {{/if}}
+    </ul>
+    <ul class="menu icons">
+        <li {{#if (eq pagename "customers") }}class="active"{{/if}}><a href="/customers">&#x13020;</a></li>
+        <li {{#if (eq pagename "support") }}class="active"{{/if}}><a href="/support">&#x26A0;</a></li>
+        <li {{#if (eq pagename "docs") }}class="active"{{/if}}><a href="/docs">&#x1F56E;</a></li>
+    </ul>
+</header>
+
+{{#if message}}
+    <p data-augmented-ui class="alert {{#if kind}}alert-{{kind}}{{/if}}">{{#if kind}}{{kind}}: {{/if}}{{ message }}</p>
+{{/if}}
+{{#if flash}}
+    {{#with flash}}
+        <p data-augmented-ui class="alert {{#if kind}}alert-{{kind}}{{/if}}">{{#if kind}}{{kind}}: {{/if}}{{ message }}</p>
+    {{/with}}
+{{/if}}
+
+{{> page}}
+
+</body>
+</html>

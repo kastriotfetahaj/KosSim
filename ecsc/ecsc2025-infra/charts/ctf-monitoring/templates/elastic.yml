@@ -1,0 +1,62 @@
+{{- if not .Values.analysisMode }}
+apiVersion: elasticsearch.k8s.elastic.co/v1
+kind: Elasticsearch
+metadata:
+  name: ctf
+  labels:
+    name: ctf
+spec:
+  version: "9.1.3"
+  secureSettings:
+    - secretName: s3-hetzner-elastic
+      entries:
+        - key: access_key
+          path: s3.client.hetzner.access_key
+        - key: secret_key
+          path: s3.client.hetzner.secret_key
+  http:
+    service:
+      spec:
+        type: NodePort
+        ports:
+          - name: https
+            port: 9200
+            targetPort: 9200
+            nodePort: {{ add 32200 .Values.networkIndex }}
+    tls:
+      selfSignedCertificate:
+        subjectAltNames:
+          - ip: "10.233.{{ .Values.networkIndex }}.101"
+  nodeSets:
+    - name: default
+      count: {{ .Values.replicaCounts.elastic }}
+      config:
+        node.store.allow_mmap: false
+        s3.client.hetzner:
+          # provisioned with secret (see above)
+          # access_key
+          # secret_key
+          endpoint: "hel1.your-objectstorage.com"
+          protocol: https
+      volumeClaimTemplates:
+        - metadata:
+            name: elasticsearch-data
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: {{ .Values.elastic.storage.request }}
+            storageClassName: {{ .Values.elastic.storage.className }}
+      podTemplate:
+        spec:
+          containers:
+            - name: elasticsearch
+              {{- with .Values.elastic.resources }}
+              {{- toYaml . | nindent 14 }}
+              {{- end }}
+          nodeSelector:
+            {{- include "ctf-monitoring.workerNodeSelector" . | nindent 12 }}
+          tolerations:
+            {{- include "ctf-monitoring.workerTolerations" . | nindent 12 }}
+{{- end }}

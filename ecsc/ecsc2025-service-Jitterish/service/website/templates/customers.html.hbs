@@ -1,0 +1,24 @@
+{{#*inline "page"}}
+    <h1>Our Customers</h1>
+
+    <div data-augmented-ui="" class="content-card-1">
+        <h2 class="title">Public Databases</h2>
+        <ul class="database-list condensed-list">
+            {{#each public_users}}
+                <li><a href="/database/{{this}}">{{this}}</a></li>
+            {{/each}}
+        </ul>
+    </div>
+
+    <div data-augmented-ui="" class="content-card-2">
+        <h2 class="title">Public APIs</h2>
+        <ul class="condensed-list">
+            {{#each api_users}}
+                <li><a href="/api/{{this}}/keys/all">{{this}}</a></li>
+            {{/each}}
+        </ul>
+    </div>
+
+    <p class="text-error text-center"><small>please use the usernames from attack info!</small></p>
+{{/inline}}
+{{> default title="Our Customers" pagename="customers"}}

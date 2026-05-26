@@ -1,0 +1,102 @@
+services:
+  svc1:
+    build:
+      context: ../../platform/challenges
+      dockerfile: svc1-ledgerforge/service/Dockerfile
+    restart: unless-stopped
+    environment:
+      TEAM_NAME: ${NOP_TEAM_NAME:-nop}
+      SERVICE_NAME: svc1
+      SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+      BOOT_FLAG: FLAG{NOP_svc1}
+    ports:
+      - "${NOP_SERVICE_1_PORT:-23001}:8080"
+    volumes:
+      - nop_svc1_data:/var/lib/ledgerforge
+    healthcheck: &service-healthcheck
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/health >/dev/null"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 10s
+    mem_limit: 384m
+    cpus: 0.75
+
+  svc2:
+    build:
+      context: ../../platform/challenges
+      dockerfile: svc2-vaultgrid/service/Dockerfile
+    restart: unless-stopped
+    environment:
+      TEAM_NAME: ${NOP_TEAM_NAME:-nop}
+      SERVICE_NAME: svc2
+      SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+      BOOT_FLAG: FLAG{NOP_svc2}
+    ports:
+      - "${NOP_SERVICE_2_PORT:-23002}:8080"
+    volumes:
+      - nop_svc2_data:/var/lib/vaultgrid
+    healthcheck: *service-healthcheck
+    mem_limit: 384m
+    cpus: 0.75
+
+  svc3:
+    build:
+      context: ../../platform/challenges
+      dockerfile: svc3-specterlog/service/Dockerfile
+    restart: unless-stopped
+    environment:
+      TEAM_NAME: ${NOP_TEAM_NAME:-nop}
+      SERVICE_NAME: svc3
+      SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+      BOOT_FLAG: FLAG{NOP_svc3}
+    ports:
+      - "${NOP_SERVICE_3_PORT:-23003}:8080"
+    volumes:
+      - nop_svc3_data:/var/lib/specterlog
+    healthcheck: *service-healthcheck
+    mem_limit: 384m
+    cpus: 0.75
+
+  svc4:
+    build:
+      context: ../../platform/challenges
+      dockerfile: svc4-nanofleet/service/Dockerfile
+    restart: unless-stopped
+    environment:
+      TEAM_NAME: ${NOP_TEAM_NAME:-nop}
+      SERVICE_NAME: svc4
+      SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+      BOOT_FLAG: FLAG{NOP_svc4}
+    ports:
+      - "${NOP_SERVICE_4_PORT:-23004}:8080"
+    volumes:
+      - nop_svc4_data:/var/lib/nanofleet
+    healthcheck: *service-healthcheck
+    mem_limit: 384m
+    cpus: 0.75
+
+  svc5:
+    build:
+      context: ../../platform/challenges
+      dockerfile: svc5-policyforge/service/Dockerfile
+    restart: unless-stopped
+    environment:
+      TEAM_NAME: ${NOP_TEAM_NAME:-nop}
+      SERVICE_NAME: svc5
+      SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+      BOOT_FLAG: FLAG{NOP_svc5}
+    ports:
+      - "${NOP_SERVICE_5_PORT:-23005}:8080"
+    volumes:
+      - nop_svc5_data:/var/lib/policyforge
+    healthcheck: *service-healthcheck
+    mem_limit: 384m
+    cpus: 0.75
+
+volumes:
+  nop_svc1_data:
+  nop_svc2_data:
+  nop_svc3_data:
+  nop_svc4_data:
+  nop_svc5_data:

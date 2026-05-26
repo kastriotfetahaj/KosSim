@@ -1,0 +1,50 @@
+#cloud-config
+package_update: true
+package_upgrade: false
+
+runcmd:
+  - apt-get update
+  - apt-get install -y ca-certificates curl git
+  - install -m 0755 -d /etc/apt/keyrings
+  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+  - chmod a+r /etc/apt/keyrings/docker.asc
+  - echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo $VERSION_CODENAME) stable" > /etc/apt/sources.list.d/docker.list
+  - apt-get update
+  - apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+  - systemctl enable --now docker
+  - mkdir -p /opt/${competition_name}
+  - git clone ${repo_url} /opt/${competition_name}
+  - cd /opt/${competition_name} && git checkout ${repo_ref}
+  - |
+    cat > /opt/${competition_name}/infra/compose/.env.control << 'EOF'
+    POSTGRES_DB=kossim
+    POSTGRES_USER=kossim
+    POSTGRES_PASSWORD=${postgres_password}
+    SERVICE_PUSH_SECRET=${service_push_secret}
+    SECRET_FLAG_KEY=${secret_flag_key}
+    ADMIN_USERNAME=admin
+    ADMIN_PASSWORD=${admin_password}
+    ADMIN_SESSION_SECRET=${admin_session_secret}
+    GAME_ADMIN_TOKEN=${game_admin_token}
+    TEAMS=${teams_string}
+    SERVICE_NAMES=${service_names}
+    TEAM_TOKEN_PREFIX=submit-
+    INITIAL_DEFENSE_POINTS=1000
+    SUBMISSION_POINTS=1
+    MAX_ACCEPTED_PER_TEAM_PER_ROUND=0
+    ROTATION_SECONDS=60
+    FLAG_RETENTION_TICKS=5
+    GAME_AUTO_START=1
+    FLAG_TCP_ENABLED=1
+    FLAG_TCP_PORT=1337
+    CHECKER_CONCURRENCY=8
+    SERVICE_HTTP_TIMEOUT=3.0
+    SERVICE_CHECK_BUDGET_SECONDS=25
+    CONTROL_API_PORT=${control_api_port}
+    TEAM_HOST_MAP=${team_host_map_string}
+    SERVICE_PORT_MAP=${service_port_map}
+    NOP_HOST=${nop_host}
+    DEFAULT_REMOTE_SERVICE_PORT=${default_service_port}
+    NOP_TEAM_NAME=nop
+    EOF
+  - cd /opt/${competition_name} && docker compose -f infra/compose/control-plane.yml --env-file infra/compose/.env.control up -d --build

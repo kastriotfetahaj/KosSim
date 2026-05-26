@@ -1,0 +1,6 @@
+diff --git a/platform/challenges/svc5-policyforge/service/lib/policy_forge/state.ex b/platform/challenges/svc5-policyforge/service/lib/policy_forge/state.ex
+--- a/platform/challenges/svc5-policyforge/service/lib/policy_forge/state.ex
++++ b/platform/challenges/svc5-policyforge/service/lib/policy_forge/state.ex
+@@
+-      key = "#{session["user"]}:#{obj.tenant}:#{obj.class}"
++      key = "#{session["user"]}:#{obj.tenant}:#{obj.class}:#{object_id}:#{obj.owner}"

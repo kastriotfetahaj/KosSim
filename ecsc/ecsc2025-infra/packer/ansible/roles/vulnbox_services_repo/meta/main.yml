@@ -1,0 +1,8 @@
+---
+dependencies:
+  - role: "docker"
+  - role: "programs"
+    vars:
+      programs_list:
+        - git
+  - role: "ssh_keys"

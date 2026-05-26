@@ -1,0 +1,71 @@
+### CTF SSH CONFIG BEGIN
+%{for mod in router_team}
+Host ${mod.instance.name}
+  HostName ${ipv4_access ? mod.instance.access_ip_v4 : mod.instance.access_ip_v4}
+%{endfor}
+%{for mod in router_infra}
+Host ${mod.instance.name}
+  HostName ${ipv4_access ? mod.instance.access_ip_v4 : mod.instance.access_ip_v4}
+%{endfor}
+%{for mod in worker}
+Host ${mod.instance.name}
+  HostName ${ipv4_access ? mod.instance.access_ip_v4 : mod.instance.access_ip_v4}
+%{endfor}
+%{for mod in checker}
+Host ${mod.instance.name}
+  HostName ${ipv4_access ? mod.instance.access_ip_v4 : mod.instance.access_ip_v4}
+%{endfor}
+%{for mod in gameserver}
+Host ${mod.instance.name}
+  HostName ${ipv4_access ? mod.instance.access_ip_v4 : mod.instance.access_ip_v4}
+  # Control Panel
+  LocalForward 5000 127.0.0.1:5000
+%{endfor}
+%{for mod in observer}
+Host ${mod.instance.name}
+  HostName ${ipv4_access ? mod.instance.access_ip_v4 : mod.instance.access_ip_v4}
+  # Control Panel
+  LocalForward 5000 127.0.0.1:5000
+%{endfor}
+
+Host "${ctf_name}-*"
+  # User debian
+  User root
+  CheckHostIP no
+  gLOBALkNOWNhOSTSfILE /dev/null
+  UsErKnOwNHoStSFiLe /dev/null
+  sTRICThOSTkEYcHECKING no
+
+# Vulnboxes
+Host "10.${network_index}.*.2"
+  User root
+  CheckHostIP no
+  gLOBALkNOWNhOSTSfILE /dev/null
+  UsErKnOwNHoStSFiLe /dev/null
+  sTRICThOSTkEYcHECKING no
+
+# Vulnboxes (via cloud net)
+Host "10.${network_index + 1}.*.2"
+  User root
+  CheckHostIP no
+  gLOBALkNOWNhOSTSfILE /dev/null
+  UsErKnOwNHoStSFiLe /dev/null
+  sTRICThOSTkEYcHECKING no
+
+# Exploiters
+Host "10.${network_index}.*.3"
+  User root
+  CheckHostIP no
+  gLOBALkNOWNhOSTSfILE /dev/null
+  UsErKnOwNHoStSFiLe /dev/null
+  sTRICThOSTkEYcHECKING no
+
+# Exploiters (via cloud net)
+Host "10.${network_index + 1}.*.3"
+  User root
+  CheckHostIP no
+  gLOBALkNOWNhOSTSfILE /dev/null
+  UsErKnOwNHoStSFiLe /dev/null
+  sTRICThOSTkEYcHECKING no
+
+### CTF SSH CONFIG END

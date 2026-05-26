@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    {% load static %}
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <title>{{ ctf.name_short }}</title>
+    <link rel="shortcut icon" href="{% static 'img/favicon.png' %}" type="image/x-icon"/>
+    <link href="{% static 'vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/open-iconic/1.1.1/font/css/open-iconic-bootstrap.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Mono:wght@100..500&family=Noto+Sans:ital,wght@0,100..500;1,100..900&display=swap" rel="stylesheet">
+    <link href="{% static 'css/one-page-wonder.css' %}" rel="stylesheet">
+    <link href="{% static 'css/main.css' %}" rel="stylesheet">
+    {% if site_environment %}
+        <link href="{% static 'css/env-'|add:site_environment|add:'.css' %}" rel="stylesheet">
+    {% endif %}
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark navbar-custom fixed-top">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'index' %}">{{ ctf.name_brand }}</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive"
+                aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarResponsive">
+            <ul class="navbar-nav ml-auto">
+                {% if show_scoreboard %}
+                <li class="nav-item">
+                    <a class="nav-link" target="_blank" rel="noopener noreferrer" href="{{ config.SCOREBOARD_URL }}">Scoreboard</a>
+                </li>
+                {% endif %}
+                <li class="nav-item">
+                    <a class="nav-link" href="https://scoreboard.ad.ecsc2025.pl">Scoreboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="https://wiki.ad.ecsc2025.pl">Wiki</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'setup' %}">Setup</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'teams' %}">Teams</a>
+                </li>
+                {% if user.is_authenticated %}
+                    {% if user.is_superuser %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownIntern" role="button"
+                               data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Intern
+                            </a>
+                            <div class="dropdown-menu" aria-labelledby="navbarDropdownIntern">
+                                <a class="dropdown-item" href="{% url 'team_list' %}">Team List</a>
+                                <a class="dropdown-item" href="{% url 'vm_list' %}">VM List</a>
+                                <a class="dropdown-item" href="{% url 'news_add' %}">Write News</a>
+                                <a class="dropdown-item" href="{% url 'mail_all' %}">Send Team Emails</a>
+                                <a class="dropdown-item" href="{% url 'mail_test' %}">Test Emails</a>
+                                <a class="dropdown-item" href="{% url 'scoreboard_upload' %}">Upload Scoreboard</a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="/admin/">Admin Area</a>
+                            </div>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'team' %}">Profile</a>
+                        </li>
+                    {% endif %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'logout' %}">Log Out</a>
+                </li>
+                {% else %}
+                {% if config.ENABLE_SIGNUP %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'signup' %}">Sign Up</a>
+                </li>
+                {% endif %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'login' %}">Log In</a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>
+<br><br><br>
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert{% if message.tags %} {{ message.tags }}{% endif %}" role="alert">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
+{% if is_impersonated_session %}
+    <div class="alert alert-warning d-flex justify-content-between align-items-center">
+        You're currently impersonating another user
+        <a class="btn btn-warning" href="{% url 'logout' %}">back to my user</a>
+    </div>
+{% endif %}
+{% block content %}{% endblock %}
+
+<br/><br/><br/>
+<footer class="page-footer font-small text-light">
+    <div class="text-center py-2">
+        <span>©&nbsp; </span><a href="https://attacking-lab.com" target="_blank">Attacking-Lab</a> 2025
+    </div>
+</footer>
+<script src="{% static 'vendor/jquery/jquery.min.js' %}"></script>
+<script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

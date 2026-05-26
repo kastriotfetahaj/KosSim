@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: gameserver
+  labels:
+    {{- include "gameserver.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: scoreboard
+      protocol: TCP
+      name: scoreboard
+---
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: gameserver-manual
+  labels:
+    {{- include "gameserver.labels" . | nindent 4 }}
+    kubernetes.io/service-name: gameserver
+    service.kubernetes.io/headless:
+    managed-by: helm
+addressType: IPv4
+ports:
+  - name: scoreboard
+    port: 80
+endpoints:
+  - addresses:
+      - 10.{{ .Values.networkIndex }}.251.2
+    hostname: primary
+    conditions:
+      ready: true
+  - addresses:
+      - 10.{{ .Values.networkIndex }}.251.3
+    hostname: secondary
+    conditions:
+      ready: false
+---

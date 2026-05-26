@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KosSim Documentation Hub</title>
+  <style>
+    :root {
+      --bg-a: #081428;
+      --bg-b: #103462;
+      --card: #0d1f3ddb;
+      --line: #2d4d81;
+      --text: #e8f1ff;
+      --muted: #aec2e6;
+      --accent: #ffc94a;
+      --ok: #68d59f;
+      --warn: #ffd166;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background:
+        radial-gradient(circle at 12% 6%, #1a4276 0, transparent 26%),
+        radial-gradient(circle at 92% 14%, #264782 0, transparent 30%),
+        linear-gradient(145deg, var(--bg-a), var(--bg-b));
+      padding: 22px;
+      line-height: 1.58;
+    }
+    main { max-width: 1140px; margin: 0 auto; display: grid; gap: 14px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: 0 14px 32px rgba(0, 0, 0, 0.32);
+      backdrop-filter: blur(8px);
+      padding: 18px;
+    }
+    .hero { display: grid; gap: 10px; }
+    .badge {
+      display: inline-block;
+      border: 1px solid #4a6da8;
+      border-radius: 999px;
+      background: #1a2f54;
+      color: #d9e6ff;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      padding: 6px 11px;
+      text-transform: uppercase;
+    }
+    h1, h2, h3 { margin: 0 0 8px; line-height: 1.22; }
+    h1 { font-size: 33px; }
+    h2 { font-size: 24px; margin-top: 4px; }
+    h3 { font-size: 18px; }
+    p { margin: 0 0 9px; color: var(--text); }
+    .muted { color: var(--muted); }
+    .grid { display: grid; gap: 12px; }
+    .grid.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .metric {
+      border: 1px solid #35588f;
+      border-radius: 12px;
+      background: #13294d;
+      padding: 12px;
+    }
+    .metric strong { display: block; font-size: 21px; color: #fff4cc; }
+    .metric span { font-size: 13px; color: var(--muted); }
+    ul { margin: 0; padding-left: 20px; }
+    li { margin: 5px 0; }
+    a { color: #9bd0ff; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th, td {
+      border: 1px solid #35598f;
+      padding: 9px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: #16315c; color: #e2eeff; }
+    td { background: #102649; }
+    code {
+      background: #12294d;
+      border: 1px solid #365b93;
+      border-radius: 6px;
+      color: #ffe39a;
+      padding: 0.12em 0.38em;
+    }
+    pre {
+      background: #071226;
+      border: 1px solid #2f4f84;
+      color: #e6f2ff;
+      border-radius: 10px;
+      padding: 13px;
+      overflow-x: auto;
+      margin: 8px 0;
+    }
+    .tag {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 12px;
+      border: 1px solid #4869a5;
+      background: #18345d;
+      color: #d5e7ff;
+      margin-right: 6px;
+      margin-bottom: 6px;
+    }
+    .ok { color: var(--ok); }
+    .warn { color: var(--warn); }
+    nav { display: flex; flex-wrap: wrap; gap: 10px; }
+    nav a {
+      border: 1px solid #486aa4;
+      background: #18345d;
+      border-radius: 999px;
+      padding: 6px 11px;
+      color: #ddeaff;
+      font-size: 13px;
+    }
+    @media (max-width: 900px) {
+      .grid.cols-2, .grid.cols-3 { grid-template-columns: 1fr; }
+      h1 { font-size: 29px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="card hero">
+      <span class="badge">KosSim Documentation</span>
+      <h1>KosSim Attack/Defense Platform</h1>
+      <p class="muted">This documentation explains both <strong>what</strong> each platform element does and <strong>why</strong> it exists for a fair, repeatable attack/defense competition.</p>
+      <div>
+        <span class="tag">Round-based game</span>
+        <span class="tag">Docker local test</span>
+        <span class="tag">Hetzner IaC</span>
+        <span class="tag">VPN access</span>
+        <span class="tag">NAT source masking</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Quick Navigation</h2>
+      <nav>
+        <a href="README.html">Overview</a>
+        <a href="docs/architecture.html">Architecture</a>
+        <a href="docs/challenges.html">Challenges</a>
+        <a href="docs/schema.html">Data Schema</a>
+        <a href="docs/local-runbook.html">Local Runbook</a>
+        <a href="docs/hetzner-runbook.html">Hetzner Runbook</a>
+      </nav>
+    </section>
+
+    <section class="card grid cols-3">
+      <article class="metric">
+        <strong>5 Services / Team</strong>
+        <span>Balanced attack surface across all teams</span>
+      </article>
+      <article class="metric">
+        <strong>Configurable Tick</strong>
+        <span>Local default is 120s; deployments can set ROTATION_SECONDS</span>
+      </article>
+      <article class="metric">
+        <strong>Attack/Defense Scoring</strong>
+        <span>Service score is attack plus defense, multiplied by SLA</span>
+      </article>
+    </section>
+
+    <section class="card">
+      <h2>Core Elements: What and Why</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Element</th>
+            <th>What It Does</th>
+            <th>Why It Is Needed</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Scoring API + Leaderboard</td>
+            <td>Shows attack, defense, uptime, and total points in real time.</td>
+            <td>Gives teams immediate feedback and removes ambiguity about match state.</td>
+          </tr>
+          <tr>
+            <td>Flag Submit API</td>
+            <td>Accepts scripted submissions with team tokens.</td>
+            <td>Allows automation and equal speed for all teams.</td>
+          </tr>
+          <tr>
+            <td>Flag Rotation (every 60s)</td>
+            <td>Regenerates active flags for every service of every team each tick.</td>
+            <td>Prevents replay abuse and keeps pressure on continuous exploitation.</td>
+          </tr>
+          <tr>
+            <td>5 Challenges per Team</td>
+            <td>Deploys the same vulnerable service set to each team stack.</td>
+            <td>Ensures fairness and provides multiple exploit classes.</td>
+          </tr>
+          <tr>
+            <td>NOP Stack</td>
+            <td>Always-on service stack for smoke tests and validator checks.</td>
+            <td>Lets organizers test pipelines safely outside team scoring impact.</td>
+          </tr>
+          <tr>
+            <td>Shared Competition Network</td>
+            <td>Control plane, teams, and NOP communicate on one private network.</td>
+            <td>Required for rotator reachability, checker traffic, and realistic lateral paths.</td>
+          </tr>
+          <tr>
+            <td>NAT Egress per Team</td>
+            <td>Attack requests traverse team NAT gateway before reaching targets.</td>
+            <td>Targets see NAT source identity, not internal attacker container IP.</td>
+          </tr>
+          <tr>
+            <td>Team VPN Access</td>
+            <td>WireGuard profiles grant secure access to private competition subnet.</td>
+            <td>Keeps services private while allowing remote team participation.</td>
+          </tr>
+          <tr>
+            <td>IaC for Hetzner</td>
+            <td>Terraform creates control, team hosts, NOP, VPN, and network.</td>
+            <td>Enables repeatable deployments, rollback, and auditability for events.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>Local Start</h2>
+      <pre><code class="language-bash">export POSTGRES_PASSWORD="$(openssl rand -hex 16)"
+export SERVICE_PUSH_SECRET="$(openssl rand -hex 32)"
+export SECRET_FLAG_KEY="$(openssl rand -hex 32)"
+export ADMIN_PASSWORD="$(openssl rand -base64 24)"
+export ADMIN_SESSION_SECRET="$(openssl rand -hex 32)"
+export GAME_ADMIN_TOKEN="$(openssl rand -hex 32)"
+python3 scripts/generate_compose.py --team-count 3 --output docker-compose.generated.yml
+docker compose -f docker-compose.generated.yml up -d --build</code></pre>
+      <p>Open leaderboard at <code>http://localhost:8088/scoreboard</code> and score JSON at <code>http://localhost:8088/api/v1/scoreboard</code>.</p>
+      <p>Team1 auto-attack loop (team2 + team3):</p>
+      <pre><code class="language-bash">python3 scripts/team1_attack_loop.py --targets team2,team3 --team-token submit-team1</code></pre>
+      <p>Stop stack:</p>
+      <pre><code class="language-bash">docker compose -f docker-compose.generated.yml down -v</code></pre>
+    </section>
+
+    <section class="card">
+      <h2>Scoring Logic</h2>
+      <ul>
+        <li>Attack points use ECSC-style jeopardy scoring: a captured flag starts at <code>10</code> points and decays as more teams submit that same flag.</li>
+        <li>Defense points reward teams whose flags remain retrievable across the retention window while other teams are compromised.</li>
+        <li>SLA points are based on checker health and retained flag availability for each service.</li>
+        <li>Leaderboard round number is user-friendly and increments <code>1, 2, 3, ...</code> each tick.</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

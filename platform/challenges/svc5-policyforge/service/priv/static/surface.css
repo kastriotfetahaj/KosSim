@@ -1,0 +1,14 @@
+.pf-surface {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.pf-cell {
+  min-height: 38px;
+  border: 1px solid rgba(155, 126, 79, 0.34);
+  background: rgba(22, 18, 15, 0.76);
+  color: #fff7ed;
+  padding: 10px 12px;
+  border-radius: 8px;
+}

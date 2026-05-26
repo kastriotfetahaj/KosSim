@@ -1,0 +1,36 @@
+Subject: remove the magic length=260 telemetry dump path
+
+The /api/tlv/decode handler returned the raw node payload as hex whenever
+the length querystring equalled 260. Drop that branch and the now-unused
+encoding/hex import so the endpoint only echoes the node kind.
+
+--- a/service/internal/routes/routes.go
++++ b/service/internal/routes/routes.go
+@@ -1,7 +1,6 @@
+ package routes
+ 
+ import (
+-	"encoding/hex"
+ 	"encoding/json"
+ 	"net/http"
+ 	"strings"
+@@ -193,7 +192,7 @@
+ // tlvDecode hosts VULN-B (magic length=260 dumps raw node data).
+ func tlvDecode(w http.ResponseWriter, r *http.Request, store *state.Store) {
+ 	nodeID := r.URL.Query().Get("node")
+-	length := r.URL.Query().Get("length")
++	_ = r.URL.Query().Get("length")
+ 	store.Lock.Lock()
+ 	node, exists := store.Nodes[nodeID]
+ 	store.Lock.Unlock()
+@@ -201,10 +200,6 @@
+ 		http.NotFound(w, r)
+ 		return
+ 	}
+-	if length == "260" {
+-		writeJSON(w, map[string]any{"node": nodeID, "value_hex": hex.EncodeToString([]byte(node.Data))})
+-		return
+-	}
+ 	writeJSON(w, map[string]any{"node": nodeID, "kind": node.Kind})
+ }
+ 

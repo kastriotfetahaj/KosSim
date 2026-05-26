@@ -1,0 +1,97 @@
+[project]
+name = "ctfroute-develop"
+version = "0.0.1"
+description = ""
+authors = [{ name = "no.shoes", email = "no.shoes@posteo.net" }]
+requires-python = "~=3.13.0"
+dependencies = ["ctfroute", "ctftest", "ctfroute-k8s"]
+
+[dependency-groups]
+dev = [
+    "ctftest",
+    "ruff>=0.9.7",
+    "pytest>=8.3.4,<9",
+    "pytest-asyncio>=0.25.3",
+    "mypy>=1.15.0",
+    "types-pyyaml>=6.0.12.20241230,<7",
+    "types-jsonschema>=4.24.0.20250708",
+    "pytest-cov>=6.0.0,<7",
+    "pytest-subtests>=0.14.2",
+    "cloudcoil[codegen, test]>=0.5.8",
+]
+
+[tool.uv.workspace]
+members = [
+    "ctfroute",
+    "ctfroute-k8s",
+    "ctftest",
+]
+
+[tool.uv.sources]
+ctfroute = { workspace = true }
+ctftest = { workspace = true }
+ctfroute-k8s = { workspace = true }
+
+[tool.ruff]
+exclude = ["**/*_pb2*.py", "**/*_pb2*.pyi", "ctfroute-k8s/ctfroute_k8s/models/*.py"]
+line-length = 88
+
+[tool.ruff.lint]
+extend-select = [
+    "F401", # Unused import
+    "I", # Imports
+    "ASYNC",
+    "D", # Docs, google style (see below)
+    "D213", # Multiline docstrings start with newline
+    "RUF022", # Sort __all__
+]
+ignore = [
+    "D100", # Docstrings on every module
+    "D101", # Docstring on every class
+    "D102", # Docstring on every method
+    "D103", # Missing docstring for functions
+    "D104", # Docstring on every package
+    "D105", # Docstring on every dunder
+    "D106", # Docstring on every nested class
+    "D107", # Docstring on every __init__
+    "D212", #  We use D213 instead
+    # Rule demands async file operations. Those don't exist in python standard library -
+    # arguably not at all - and we do very little file I/O anyway
+    "ASYNC230"
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.isort]
+known-first-party = ["ctfroute", "ctftest"]
+
+[tool.mypy]
+packages = ["ctfroute", "ctfroute_k8s"]
+mypy_path = ["./ctfroute", "./ctfroute_k8s"]
+plugins = ["cloudcoil.mypy"]
+check_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = ["pyroute2.*"]
+ignore_missing_imports = true
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = ["pydevd_pycharm.*"]
+ignore_missing_imports = true
+ignore_errors = true
+
+[tool.pytest.ini_options]
+testpaths = [
+    "ctfroute/tests"
+]
+addopts = [
+    #    "--import-mode=importlib",
+]
+asyncio_default_fixture_loop_scope = "session"
+markers = [
+    "integration: switch to integration tests with --integration",
+    "preflight: switch to preflight tests with --preflight",
+    "kubernetes: test needs kubernetes, enable with --kubernetes",
+]

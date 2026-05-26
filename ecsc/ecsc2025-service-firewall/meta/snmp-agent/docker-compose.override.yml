@@ -1,0 +1,18 @@
+# This is a compose override that you symlink to
+# service/docker-compose.override.yml during development so you
+# can conveniently rebuild everything from one place
+
+include:
+  - ../meta/snmp-agent/docker-compose.build.yml
+
+services:
+  firewall:
+    # Wait for the build container's build to finish.
+    # See https://docs.docker.com/compose/how-tos/dependent-images/
+    # The firewall dockerfile will then pull the agent binary directly
+    # from the builder image
+    build:
+      args:
+        AGENT_SOURCE: ecsc2025-service-firewall/agent-build
+      additional_contexts:
+        ecsc2025-service-firewall/agent-build: "service:agent-build"

@@ -1,0 +1,15 @@
+[project]
+name = "firewall-checker"
+version = "1.0.0"
+requires-python = ">=3.12"
+dependencies = [
+    "enochecker3",
+    "gunicorn>=23.0.0",
+    "psycopg[binary]>=3.2.10",
+    "pydantic>=2.11.9",
+    "pysnmp>=7.1.21",
+]
+
+[tool.uv.sources]
+enochecker-core = { git = "https://github.com/attacking-lab/enochecker-core", rev = "v0.13.0" }
+enochecker3 = { git = "https://github.com/attacking-lab/enochecker3", rev = "v0.13.4" }

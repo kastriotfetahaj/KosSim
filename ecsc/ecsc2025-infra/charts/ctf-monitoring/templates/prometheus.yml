@@ -1,0 +1,83 @@
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  name: ctf-prometheus
+  labels:
+    {{- include "ctf-monitoring.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCounts.prometheus }}
+  {{- if (gt (add (len .Values.podAnnotations) (len .Values.podLabels)) 0)}}
+  podMetadata:
+    {{- with .Values.podAnnotations }}
+    annotations:
+    {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.podLabels }}
+    labels:
+    {{- toYaml . | nindent 8 }}
+    {{- end }}
+  {{- end }}
+  serviceAccountName: {{ include "ctf-monitoring.serviceAccountName" . }}-prometheus
+  # Target all config resources in the namespace
+  serviceMonitorSelector:
+    matchLabels: { }
+  scrapeConfigSelector:
+    matchLabels: { }
+  podMonitorSelector:
+    matchLabels: { }
+  ruleSelector:
+    matchLabels: { }
+  probeSelector:
+    matchLabels: { }
+  # Needed because the ctfroute service only has EndpointSlices, no Endpoints
+  serviceDiscoveryRole: EndpointSlice
+  # We have to set either size or duration to override the default "24h"
+  retentionSize: {{ .Values.prometheus.storage.retentionSize }}
+  scrapeClasses:
+    - name: daemonset
+      relabelings:
+        - sourceLabels: [ __meta_kubernetes_pod_node_name ]
+          targetLabel: node
+    - name: router
+      relabelings:
+        - sourceLabels: [ __meta_dns_srv_record_target ]
+          targetLabel: node
+          regex: '([^.]+)\..*'
+          replacement: '$1'
+        # Avoid scraping workers twice, they are already scraped using the daemonset
+        # ServiceMonitor
+        - sourceLabels: [ __meta_dns_srv_record_target ]
+          regex: '.*-worker-.*'
+          action: drop
+    - name: vulnbox
+  nodeSelector:
+    {{- if .Values.analysisMode }}
+    ctfr.attacking-lab.com/role: core
+    {{- else }}
+    {{- include "ctf-monitoring.workerNodeSelector" . | nindent 4 }}
+    {{- end }}
+  tolerations:
+    {{- if .Values.analysisMode }}
+    - key: ctfr.attacking-lab.com/role
+      operator: Equal
+      value: core
+      effect: NoExecute
+    {{- else }}
+    {{- include "ctf-monitoring.workerTolerations" . | nindent 4 }}
+    {{- end }}
+  securityContext:
+    fsGroup: 2000
+    runAsGroup: 2000
+    runAsNonRoot: true
+    runAsUser: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  enableFeatures:
+    - promql-experimental-functions
+  storage:
+    volumeClaimTemplate:
+      spec:
+        resources:
+          requests:
+            storage: {{ .Values.prometheus.storage.request }}
+        storageClassName: {{ .Values.prometheus.storage.className }}

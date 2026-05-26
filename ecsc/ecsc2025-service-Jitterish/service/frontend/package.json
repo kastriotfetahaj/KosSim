@@ -1,0 +1,26 @@
+{
+  "name": "jitterish-frontend",
+  "version": "0.0.1",
+  "scripts": {
+    "build": "webpack --mode production",
+    "watch": "webpack -w",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "augmented-ui": "^2.0.0",
+    "simpledotcss": "^2.3.6"
+  },
+  "devDependencies": {
+    "css-loader": "^7.1.2",
+    "mini-css-extract-plugin": "^2.9.2",
+    "sass": "^1.87.0",
+    "sass-loader": "^16.0.5",
+    "scss-bundle": "^3.1.2",
+    "style-loader": "^4.0.0",
+    "webpack": "^5.99.8",
+    "webpack-cli": "^6.0.1"
+  }
+}

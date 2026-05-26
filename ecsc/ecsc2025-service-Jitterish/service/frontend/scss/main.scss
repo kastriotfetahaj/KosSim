@@ -1,0 +1,189 @@
+@use "sass:color";
+@use "utils";
+@use "vars";
+@use "aug";
+@import "simpledotcss/simple.min.css";
+@import "augmented-ui/augmented-ui.min.css";
+
+@import "alerts";
+@import "buttons";  // buttons and labels
+@import "cards";
+@import "header";
+@import "tiers";  // "tiers" on register page
+@import "docs";  // "docs" page only
+
+@font-face {
+    font-family: 'SAIBA-45';
+    font-style: normal;
+    font-weight: 400;
+    src: local('SAIBA-45'), url('https://fonts.cdnfonts.com/s/108519/SAIBA-45.woff') format('woff');
+}
+@font-face {
+    font-family: 'SAIBA-45-Outline';
+    font-style: normal;
+    font-weight: 400;
+    src: local('SAIBA-45-Outline'), url('https://fonts.cdnfonts.com/s/108519/SAIBA-45-Outline.woff') format('woff');
+}
+
+:root {
+  --sans-font: Titillium Web, "Segoe UI Web (West European)", Segoe UI, -apple-system, BlinkMacSystemFont, Roboto, Helvetica Neue, sans-serif;
+
+  color-scheme: dark;
+  --bg: #{vars.$bg};
+  --accent-bg: #{vars.$accent-bg};
+  --text: #{vars.$text};
+  --text-light: #{vars.$text-light}; // #ababab;
+  --accent: #{vars.$primary}; // #ffb300;
+  --accent-hover: #{vars.$primary-hover}; // #ffe099;
+  --accent-text: var(--bg);
+  --code: #f06292;
+  --preformatted: #ccc;
+  --disabled: #111;
+  --border: #{vars.$border-soft};
+}
+
+body {
+  background-image: radial-gradient(
+    circle at center,
+    var(--accent-bg) 0.15rem,
+    transparent 0
+  );
+  background-size: 10rem 10rem;
+  background-repeat: round;
+}
+
+p {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.lead {
+  font-size: 1.5rem;
+  font-variant: small-caps;
+}
+
+.text-center {
+  text-align: center;
+}
+
+h1 {
+  color: vars.$primary;
+  font-weight: 300;
+  font-variant: small-caps;
+  text-shadow: 0 0 .4rem color.adjust(vars.$primary, $lightness: -10%);
+  font-family: 'SAIBA-45', var(--sans-font);
+
+  text-align: center;
+
+  .subtitle {
+    display: block;
+    margin-top: .5rem;
+    font-size: 1.5rem;
+    font-weight: bold;
+    font-family: 'SAIBA-45-Outline', var(--sans-font);
+    color: color.adjust(vars.$primary, $lightness: -10%);
+    text-shadow: none;
+
+    @include utils.marker-start();
+    @include utils.marker-end();
+  }
+
+  .logo {
+    height: 3.2rem;
+    vertical-align: bottom;
+  }
+}
+
+h2 {
+  color: vars.$secondary;
+  font-weight: 300;
+  font-variant: small-caps;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: 2px solid rgba(vars.$primary, .5);
+  outline-offset: 1px;
+}
+
+input {
+  &:invalid {
+    outline-color: rgba(vars.$error, .5);
+  }
+  &:required:invalid {
+    border-color: vars.$error;
+  }
+}
+
+.spacer-2 {
+  margin: 2rem;
+}
+
+.quote-block {
+  margin: 2rem 0;
+
+  blockquote {
+    margin: 0 2rem;
+  }
+
+  .quote-author {
+    text-align: center;
+    font-size: 1rem;
+  }
+}
+
+.logo-container {
+  display: flex;
+  flex-direction: row;
+
+  .thumb {
+    padding: .5rem;
+
+    img {
+      max-width: 100%;
+    }
+  }
+}
+
+.condensed-list {
+  columns: 3;
+  
+  @media (max-width: 50rem) {
+    columns: 2;
+  }
+
+  @media (max-width: 30rem) {
+    columns: 1;
+  }
+}
+
+.database-list {
+  list-style-type: "⛁ ";
+}
+
+.text-primary {
+  color: vars.$primary;
+}
+
+.text-secondary {
+  color: vars.$secondary;
+}
+
+.text-error {
+  color: vars.$error;
+}
+
+.stats {
+  padding: .1rem .25rem;
+  margin: .5rem 0;
+
+  &:before {
+    content: "›";
+    margin-right: .25rem;
+    color: vars.$primary;
+  }
+
+  strong {
+    color: vars.$secondary;
+    margin-right: .25rem;
+  }
+}

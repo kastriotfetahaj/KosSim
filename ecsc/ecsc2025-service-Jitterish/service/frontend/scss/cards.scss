@@ -1,0 +1,57 @@
+@use "aug";
+@use "utils";
+@use "vars";
+
+.content-card-1, .content-card-2, .main-card {
+  @include aug.aug;
+
+  padding: 2rem;
+  margin-top: 1rem;
+  margin-bottom: 2rem;
+
+  > .title {
+    margin-top: 0;
+    margin: -2rem -2rem 1rem -2rem;
+    padding: 1.5rem 2rem .5rem 2rem;
+
+    border-bottom: 3px solid var(--accent);
+    background-color: #{rgba(vars.$primary, .25)};
+
+    color: vars.$secondary;
+    text-shadow: 0 0 2px #{rgba(vars.$secondary, .5)};
+    font-weight: 400;
+    font-variant: small-caps;
+
+    @include utils.marker-start();
+  }
+
+  > hr {
+    margin: 2rem -2rem;
+    background-color: vars.$primary;
+  }
+}
+
+.main-card {
+  @include aug.corner1(tl);
+  @include aug.corner1(bl);
+  @include aug.corner2(tr);
+  @include aug.corner2(br);
+
+  margin-bottom: 1rem;
+}
+
+.content-card-1 {
+  @include aug.corner1(tl);
+  @include aug.corner1(bl);
+  @include aug.corner2(tr);
+  @include aug.corner2(br);
+  @include aug.mid-insert-2(r);
+}
+
+.content-card-2 {
+  @include aug.corner1(tr);
+  @include aug.corner1(br);
+  @include aug.corner2(tl);
+  @include aug.corner2(bl);
+  @include aug.mid-insert-2(l);
+}

@@ -1,0 +1,23 @@
+Subject: drop the meta truncated/overflow_hex branch
+
+The /api/meta/<id>?view=truncated&limit=>4096 branch returns the object's
+body as overflow_hex. The branch is a leftover from a debug ticket and is
+not reachable through the public UI. Remove it.
+
+--- a/service/src/routes.cpp
++++ b/service/src/routes.cpp
+@@ -172,13 +172,8 @@
+     if (parts.size() == 3 && parts[0] == "api" && parts[1] == "meta") {
+         std::lock_guard<std::mutex> guard(state.db.mu);
+         auto it = state.meta_to_object.find(parts[2]);
+         if (it == state.meta_to_object.end()) return json(404, "{\"error\":\"missing_meta\"}");
+         const auto& obj = state.objects[it->second];
+-        std::string view = query_param(req, "view");
+-        std::string limit_str = query_param(req, "limit");
+-        int limit = limit_str.empty() ? 32 : std::stoi(limit_str);
+-        if (view == "truncated" && limit > 4096) {
+-            return json(200, "{\"meta\":\"" + obj.meta_id + "\",\"overflow_hex\":\"" + to_hex(obj.body) + "\"}");
+-        }
++        (void) obj;
+         return json(200, "{\"meta\":\"" + obj.meta_id + "\",\"class\":\"erasure-v2\"}");
+     }

@@ -1,0 +1,31 @@
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: kube-prometheus
+  namespace: kube-system
+spec:
+  targetNamespace: kube-prometheus
+  createNamespace: true
+  repo: https://prometheus-community.github.io/helm-charts
+  chart: kube-prometheus-stack
+  version: 76.4.0
+  valuesContent: |-
+    kubeStateMetrics:
+      enabled: false
+    nodeExporter:
+      enabled: false
+    grafana:
+      enabled: false
+    kubeProxy:
+      enabled: false
+    prometheus:
+      enabled: false
+    alertmanager:
+      enabled: false
+    nodeSelector:
+      ctfr.attacking-lab.com/role: core
+    tolerations:
+      - key: ctfr.attacking-lab.com/role
+        operator: Equal
+        value: core
+        effect: NoExecute

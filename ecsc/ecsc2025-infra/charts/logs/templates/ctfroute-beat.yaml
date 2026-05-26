@@ -1,0 +1,278 @@
+{{- $elasticUserSecret := lookup "v1" "Secret" .Release.Namespace .Values.elasticsearch.userSecret -}}
+{{- $elasticCA:= lookup "v1" "Secret" .Release.Namespace .Values.elasticsearch.caSecret -}}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ctf-es-connection
+  labels:
+    {{- include "logs.labels" . | nindent 4}}
+type: Opaque
+stringData:
+  url: "https://10.233.{{ .Values.networkIndex }}.101:{{ add 32200 .Values.networkIndex}}"
+  username: "elastic"
+  password: {{ index $elasticUserSecret.data "elastic" | b64dec | quote }}
+  ca.crt: |
+    {{- index $elasticCA.data "ca.crt" | b64dec | nindent 4 }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ctfroute-filebeat
+  labels:
+    {{- include "logs.labels" . | nindent 4 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: ctfroute-filebeat
+  labels:
+    {{- include "logs.labels" . | nindent 4 }}
+rules:
+- apiGroups: [""]
+  resources:
+  - namespaces
+  - pods
+  - nodes
+  verbs:
+  - get
+  - watch
+  - list
+- apiGroups: ["apps"]
+  resources:
+    - replicasets
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["batch"]
+  resources:
+    - jobs
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ctfroute-filebeat
+  labels:
+    {{- include "logs.labels" .  | nindent 4 }}
+rules:
+  - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
+    verbs: ["get", "create", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ctfroute-filebeat-kubeadm-config
+  labels:
+    {{- include "logs.labels" . | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources:
+      - configmaps
+    resourceNames:
+      - kubeadm-config
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: ctfroute-filebeat
+  labels:
+    {{- include "logs.labels" . | nindent 4 }}
+subjects:
+- kind: ServiceAccount
+  name: ctfroute-filebeat
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name: ctfroute-filebeat
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: filebeat
+  labels:
+    {{- include "logs.labels" . | nindent 4 }}
+subjects:
+  - kind: ServiceAccount
+    name: ctfroute-filebeat
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: Role
+  name: ctfroute-filebeat
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ctfroute-filebeat-kubeadm-config
+  labels:
+    {{- include "logs.labels" . | nindent 4 }}
+subjects:
+  - kind: ServiceAccount
+    name: ctfroute-filebeat
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: Role
+  name: ctfroute-filebeat-kubeadm-config
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ctfroute-filebeat-config
+  labels:
+    {{- include "logs.labels" . | nindent 4 }}
+data:
+  filebeat.yml: |-
+    filebeat.inputs:
+    - type: filestream
+      id: kubernetes-container-logs
+      paths:
+        - /var/log/containers/*.log
+      parsers:
+        - container: ~
+      prospector:
+        scanner:
+          fingerprint.enabled: true
+          symlinks: true
+      file_identity.fingerprint: ~
+      processors:
+        - add_kubernetes_metadata:
+            host: ${NODE_NAME}
+            matchers:
+            - logs_path:
+                logs_path: "/var/log/containers/"
+
+    processors:
+      - add_cloud_metadata:
+      - add_host_metadata:
+
+    {{/* cloud.id: ${ELASTIC_CLOUD_ID} */}}
+    {{/* cloud.auth: ${ELASTIC_CLOUD_AUTH} */}}
+
+    output.elasticsearch:
+      hosts: ['${ELASTICSEARCH_HOST:elasticsearch}:${ELASTICSEARCH_PORT:9200}']
+      username: ${ELASTICSEARCH_USERNAME}
+      password: ${ELASTICSEARCH_PASSWORD}
+      ssl:
+        certificate_authorities: ["/etc/ssl/es/tls.crt"]
+        verification_mode: full
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: ctfroute-filebeat
+  labels:
+    {{- include "logs.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      k8s-app: ctfroute-filebeat
+      {{- include "logs.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "logs.selectorLabels" . | nindent 8 }}
+        k8s-app: ctfroute-filebeat
+    spec:
+      tolerations:
+        - key: ctfr.attacking-lab.com/role
+          operator: Equal
+          value: router
+          effect: NoExecute
+        - key: ctfr.attacking-lab.com/ctf
+          operator: Equal
+          value: {{ .Values.ctf }}
+          effect: NoExecute
+        - key: node.kubernetes.io/not-ready
+          operator: Exists
+          effect: NoSchedule  
+        - key: node.cilium.io/agent-not-ready
+          operator: Exists
+          effect: NoSchedule
+      nodeSelector:
+        ctfr.attacking-lab.com/ctf: {{ .Values.ctf }}
+        ctfr.attacking-lab.com/role: router
+      serviceAccountName: ctfroute-filebeat
+      terminationGracePeriodSeconds: 30
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+      - name: filebeat
+        image: docker.elastic.co/beats/filebeat-wolfi:9.1.4
+        args: [
+          "-c", "/etc/filebeat.yml",
+          "-e",
+        ]
+        env:
+        - name: ELASTICSEARCH_HOST
+          value: "https://10.233.{{ .Values.networkIndex }}.101"
+        - name: ELASTICSEARCH_PORT
+          value: "{{ add 32200 .Values.networkIndex }}"
+        - name: ELASTICSEARCH_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: ctf-es-connection
+              key: username
+        - name: ELASTICSEARCH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ctf-es-connection
+              key: password
+        # - name: ELASTIC_CLOUD_ID
+        #   value:
+        # - name: ELASTIC_CLOUD_AUTH
+        #   value:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        securityContext:
+          runAsUser: 0
+          # If using Red Hat OpenShift uncomment this:
+          #privileged: true
+        resources:
+          limits:
+            memory: 200Mi
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        volumeMounts:
+        - name: config
+          mountPath: /etc/filebeat.yml
+          readOnly: true
+          subPath: filebeat.yml
+        - name: data
+          mountPath: /usr/share/filebeat/data
+        - name: varlibdockercontainers
+          mountPath: /var/lib/docker/containers
+          readOnly: true
+        - name: varlog
+          mountPath: /var/log
+          readOnly: true
+        - name: es-ca
+          mountPath: /etc/ssl/es
+          readOnly: true
+      volumes:
+      - name: config
+        configMap:
+          defaultMode: 0640
+          name: ctfroute-filebeat-config
+      - name: varlibdockercontainers
+        hostPath:
+          path: /var/lib/docker/containers
+      - name: varlog
+        hostPath:
+          path: /var/log
+      # data folder stores a registry of read status for all files, so we don't send everything again on a Filebeat pod restart
+      - name: data
+        hostPath:
+          # When filebeat runs as non-root user, this directory needs to be writable by group (g+w).
+          path: /var/lib/filebeat-data
+          type: DirectoryOrCreate
+      - name: es-ca
+        secret:
+          secretName: ctf-es-http-ca-internal
+---

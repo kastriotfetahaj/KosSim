@@ -1,0 +1,28 @@
+# Public Dashboards
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  namespace: kube-prometheus
+  name: longhorn
+spec:
+  instanceSelector:
+    matchLabels:
+      name: cluster-grafana
+  folder: ""
+  grafanaCom:
+    id: 16888
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  namespace: kube-prometheus
+  name: node-exporter-full
+spec:
+  instanceSelector:
+    matchLabels:
+      name: cluster-grafana
+  folder: ""
+  grafanaCom:
+    id: 1860
+---

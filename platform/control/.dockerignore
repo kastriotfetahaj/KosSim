@@ -1,0 +1,7 @@
+web/node_modules
+web/dist
+web/.vite
+__pycache__
+*.pyc
+.DS_Store
+.env

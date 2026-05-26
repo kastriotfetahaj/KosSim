@@ -1,0 +1,57 @@
+@use "vars";
+
+$element-clip-size: 12px;
+
+@mixin aug {
+  --aug-inlay: initial;
+  --aug-border: initial;
+  --aug-border-bg: #{vars.$border-color};
+  --aug-inlay-bg: linear-gradient(90deg, #{rgba(vars.$primary, .15)}, #{rgba(vars.$primary, .05)});
+}
+
+@mixin corner1($where) {
+  --aug-#{$where}: #{$element-clip-size};
+  --aug-#{$where}1: var(--aug-#{$where});
+  --aug-#{$where}2: var(--aug-#{$where}1);
+  --aug-#{$where}-extend1: var(--aug-#{$where}1);
+  --aug-#{$where}-extend2: var(--aug-#{$where}1);
+  --aug-clip-#{$where}1: initial;
+  --aug-clip-#{$where}2: initial;
+  --aug-#{$where}1-alt-join-out: initial;
+  --aug-#{$where}2-alt-join-in: initial;
+}
+
+@mixin corner2($where) {
+  --aug-#{$where}-inset1: var(--aug-#{$where}1);
+  --aug-#{$where}-inset2: var(--aug-#{$where}1);
+  --aug-#{$where}1-alt-join-in: initial;
+  --aug-#{$where}1-alt-join-out: initial;
+  --aug-#{$where}1: var(--aug-#{$where});
+  --aug-#{$where}: #{$element-clip-size};
+  --aug-clip-#{$where}1: initial;
+}
+
+@mixin corner-clip($where, $size: $element-clip-size) {
+  --aug-clip-#{$where}1: initial;
+  --aug-#{$where}: #{$size};
+  --aug-#{$where}1: var(--aug-#{$where});
+}
+
+@mixin mid-insert-1($where) {
+  --aug-#{$where}1-alt-join-out: initial;
+  --aug-#{$where}2-alt-join-in: initial;
+  --aug-clip-#{$where}1: initial;
+  --aug-clip-#{$where}2: initial;
+  --aug-#{$where}: #{$element-clip-size};
+  --aug-#{$where}1: var(--aug-#{$where});
+  --aug-#{$where}2: var(--aug-#{$where}1);
+}
+
+@mixin mid-insert-2($where) {
+  --aug-clip-#{$where}1: initial;
+  --aug-clip-#{$where}2: initial;
+  --aug-#{$where}-extend1: var(--aug-#{$where}1);
+  --aug-#{$where}: #{$element-clip-size};
+  --aug-#{$where}1: var(--aug-#{$where});
+  --aug-#{$where}2: var(--aug-#{$where}1);
+}

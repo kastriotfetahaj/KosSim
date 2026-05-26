@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+    <br>
+    <section>
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-12 order-lg-1">
+                    <div class="page-header">
+                        <h1>Write News:</h1>
+                    </div>
+                    <hr>
+                    <div class="flatpage-content col-xs-12">
+                        <form action="
+                                {% if news and news.id %}{% url 'news_edit' news.id %}{% else %}{% url 'news_add' %}{% endif %}"
+                              method="POST">
+                            <div class="form-group">
+                                <label for="inputTitle">Title:</label>
+                                <input type="text" class="form-control" id="inputTitle" name="inputTitle"
+                                       value="{{ news.title }}">
+                            </div>
+                            <div class="form-group">
+                                <label for="inputText">Text:</label>
+                                <textarea class="form-control" id="inputText" name="inputText"
+                                          rows="10">{{ news.text }}</textarea>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="inputVisible" name="inputVisible"
+                                       {% if news.is_visible %}checked{% endif %} value="true">
+                                <label for="inputVisible">Visible</label>
+                            </div>
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-dark" name="preview" value="preview">Preview</button>
+                            <button type="submit" class="btn btn-primary">Save</button>
+                        </form>
+
+                        {% if news.html %}
+                            <hr>
+                            <br/>
+                            <h3>
+                                Preview: {{ news.title }}
+                                <small class="float-right text-muted">{{ news.created_at|date:'d.m.Y H:i' }}</small>
+                            </h3>
+                            {{ news.html|safe }}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <br><br>
+{% endblock %}

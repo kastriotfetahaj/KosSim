@@ -1,0 +1,37 @@
+Subject: refuse semicolon-chained routes; honor only the exact authorized command
+
+The router authorized a request based on a string-prefix match against the
+token's allowed prefix, then executed every command in the ';'-delimited
+chain. Replace the prefix check with strict equality and execute only the
+single authorized command.
+
+--- a/service/internal/routes/routes.go
++++ b/service/internal/routes/routes.go
+@@ -168,24 +168,13 @@
+ func routeCommand(w http.ResponseWriter, r *http.Request, store *state.Store) {
+ 	raw := strings.TrimPrefix(r.URL.Path, "/api/route/")
+ 	tok, ok := token.Verify(store.Secret, r.URL.Query().Get("token"))
+-	if !ok || !strings.HasPrefix(raw, tok.Prefix) {
++	if !ok || raw != tok.Prefix {
+ 		http.Error(w, `{"error":"route_denied"}`, http.StatusForbidden)
+ 		return
+ 	}
+ 	results := []map[string]any{}
+-	for _, cmd := range strings.Split(raw, ";") {
+-		if cmd == "diag" {
+-			results = append(results, map[string]any{"status": "nominal"})
+-		}
+-		if strings.HasPrefix(cmd, "read:") {
+-			nodeID := strings.TrimPrefix(cmd, "read:")
+-			store.Lock.Lock()
+-			node, exists := store.Nodes[nodeID]
+-			store.Lock.Unlock()
+-			if exists {
+-				results = append(results, map[string]any{"node": nodeID, "telemetry": node})
+-			}
+-		}
++	if raw == "diag" {
++		results = append(results, map[string]any{"status": "nominal"})
+ 	}
+ 	writeJSON(w, map[string]any{"route": raw, "results": results})
+ }

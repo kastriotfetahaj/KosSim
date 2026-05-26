@@ -1,0 +1,23 @@
+Subject: require checker secret on /api/feed/range
+
+The range endpoint dumps a raw byte slice of the append-only log without
+verifying the caller. Records belonging to other tenants surface inside
+the returned blob. The endpoint is intended only for consistency checks
+between the storage daemon and the feed sidecar; gate it on the shared
+checker secret used by other internal endpoints.
+
+--- a/feed/main.go
++++ b/feed/main.go
+@@ -272,8 +272,12 @@
+ }
+
+ func (a *App) handleRange(w http.ResponseWriter, r *http.Request) {
++	if !a.requireSecret(r) {
++		writeJSON(w, http.StatusForbidden, map[string]string{"error": "forbidden"})
++		return
++	}
+ 	offsetStr := r.URL.Query().Get("offset")
+ 	lengthStr := r.URL.Query().Get("length")
+ 	offset, err := strconv.ParseInt(offsetStr, 10, 64)
+ 	if err != nil || offset < 0 {
+ 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "bad_offset"})

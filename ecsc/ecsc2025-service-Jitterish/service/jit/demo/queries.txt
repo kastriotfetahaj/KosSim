@@ -1,0 +1,42 @@
+// REMOVE IN PROD
+// dummy entrypoint for test - fire some queries
+func jit_entrypoint() {
+    print(all_entries());
+    print(my_team_members("saarsec"));
+    print(one_member("saarsec"));
+    print(team_points("saarsec"));
+}
+
+// data format: {"name": "...", "team": "...", "points": 123}
+
+func is_in_team(entry, teamname) {  // "teamname" is query parameter here
+    return entry["team"] == teamname;
+}
+
+func get_name(entry) {  // might be: (entry, teamname)
+    return entry["name"];
+}
+
+func get_points(entry) {  // might be: (entry, teamname)
+    return entry["points"];
+}
+
+func sum(data, acc) {  // might be: (data, acc, teamname)
+    return data + (acc ?: 0);
+}
+
+query all_entries on data1;
+
+query my_team_members on data1
+    filter is_in_team
+    map get_name;
+
+query one_member on data1
+    filter is_in_team
+    map get_name
+    limit 1;
+
+query team_points on data1
+    filter is_in_team
+    map get_points
+    reduce sum;

@@ -1,0 +1,570 @@
+name: kossim
+
+x-control-env: &control-env
+  DATABASE_URL: postgresql://kossim:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/kossim
+  TEAMS: team1,team2,team3
+  TEAM_COUNTRIES: ${TEAM_COUNTRIES:-}
+  DEFAULT_COUNTRY_CODE: ${DEFAULT_COUNTRY_CODE:-XK}
+  SERVICE_NAMES: svc1,svc2,svc3,svc4,svc5
+  NOP_TEAM_NAME: nop
+  TEAM_TOKEN_PREFIX: ${TEAM_TOKEN_PREFIX:-submit-}
+  SUBMISSION_POINTS: ${SUBMISSION_POINTS:-1}
+  MAX_ACCEPTED_PER_TEAM_PER_ROUND: ${MAX_ACCEPTED_PER_TEAM_PER_ROUND:-0}
+  ROTATION_SECONDS: ${ROTATION_SECONDS:-120}
+  FLAG_RETENTION_TICKS: ${FLAG_RETENTION_TICKS:-5}
+  GAME_AUTO_START: ${GAME_AUTO_START:-1}
+  FLAG_TCP_ENABLED: ${FLAG_TCP_ENABLED:-1}
+  FLAG_TCP_PORT: ${FLAG_TCP_PORT:-1337}
+  SCOREBOARD_FREEZE_TICK: ${SCOREBOARD_FREEZE_TICK:-0}
+  SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+  SECRET_FLAG_KEY: ${SECRET_FLAG_KEY:?set SECRET_FLAG_KEY}
+  ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+  ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD}
+  ADMIN_SESSION_SECRET: ${ADMIN_SESSION_SECRET:?set ADMIN_SESSION_SECRET}
+  GAME_ADMIN_TOKEN: ${GAME_ADMIN_TOKEN:?set GAME_ADMIN_TOKEN}
+  CHECKER_CONCURRENCY: ${CHECKER_CONCURRENCY:-8}
+  CHECKER_MAX_ATTEMPTS: ${CHECKER_MAX_ATTEMPTS:-2}
+  CHECKER_RETRY_DELAY_SECONDS: ${CHECKER_RETRY_DELAY_SECONDS:-3}
+  SERVICE_HTTP_TIMEOUT: ${SERVICE_HTTP_TIMEOUT:-3.0}
+  SERVICE_CHECK_BUDGET_SECONDS: ${SERVICE_CHECK_BUDGET_SECONDS:-25}
+  REDIS_URL: redis://redis:6379/0
+  CELERY_BROKER_URL: redis://redis:6379/0
+  CELERY_RESULT_BACKEND: redis://redis:6379/0
+  VULNBOX_COMPOSE_BIN: ${VULNBOX_COMPOSE_BIN:-docker compose}
+  VULNBOX_COMPOSE_FILE: ${VULNBOX_COMPOSE_FILE:-/workspace/docker-compose.yml}
+  VULNBOX_COMPOSE_PROJECT: ${VULNBOX_COMPOSE_PROJECT:-kossim}
+  AUTOINIT_DB: "1"
+
+x-svc1: &svc1
+  build:
+    context: ./platform/challenges
+    dockerfile: svc1-ledgerforge/service/Dockerfile
+  restart: unless-stopped
+  environment:
+    SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+  mem_limit: 384m
+  cpus: 0.75
+  healthcheck:
+    test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/health >/dev/null"]
+    interval: 10s
+    timeout: 3s
+    retries: 6
+    start_period: 10s
+  networks:
+    - ctf_net
+
+x-svc2: &svc2
+  build:
+    context: ./platform/challenges
+    dockerfile: svc2-vaultgrid/service/Dockerfile
+  restart: unless-stopped
+  environment:
+    SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+  mem_limit: 384m
+  cpus: 0.75
+  healthcheck:
+    test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/health >/dev/null"]
+    interval: 10s
+    timeout: 3s
+    retries: 6
+    start_period: 10s
+  networks:
+    - ctf_net
+
+x-svc3: &svc3
+  build:
+    context: ./platform/challenges
+    dockerfile: svc3-specterlog/service/Dockerfile
+  restart: unless-stopped
+  environment:
+    SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+  mem_limit: 384m
+  cpus: 0.75
+  healthcheck:
+    test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/health >/dev/null"]
+    interval: 10s
+    timeout: 3s
+    retries: 6
+    start_period: 10s
+  networks:
+    - ctf_net
+
+x-svc4: &svc4
+  build:
+    context: ./platform/challenges
+    dockerfile: svc4-nanofleet/service/Dockerfile
+  restart: unless-stopped
+  environment:
+    SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+  mem_limit: 384m
+  cpus: 0.75
+  healthcheck:
+    test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/health >/dev/null"]
+    interval: 10s
+    timeout: 3s
+    retries: 6
+    start_period: 10s
+  networks:
+    - ctf_net
+
+x-svc5: &svc5
+  build:
+    context: ./platform/challenges
+    dockerfile: svc5-policyforge/service/Dockerfile
+  restart: unless-stopped
+  environment:
+    SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+  mem_limit: 384m
+  cpus: 0.75
+  healthcheck:
+    test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/health >/dev/null"]
+    interval: 10s
+    timeout: 3s
+    retries: 6
+    start_period: 10s
+  networks:
+    - ctf_net
+
+x-nat-gateway: &nat-gateway
+  build:
+    context: ./platform/nat-gateway
+  restart: unless-stopped
+  mem_limit: 192m
+  cpus: 0.35
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=2).read()"]
+    interval: 10s
+    timeout: 3s
+    retries: 6
+    start_period: 10s
+  networks:
+    - ctf_net
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: kossim
+      POSTGRES_USER: kossim
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kossim -d kossim"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    mem_limit: 512m
+    cpus: 1.0
+    networks:
+      - ctf_net
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    mem_limit: 256m
+    cpus: 0.5
+    networks:
+      - ctf_net
+
+  control-api:
+    build:
+      context: ./platform/control
+    restart: unless-stopped
+    environment: *control-env
+    volumes:
+      - ./platform/challenges:/challenges:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8088:8000"
+      - "1337:1337"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2).read()"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 20s
+    mem_limit: 512m
+    cpus: 1.0
+    networks:
+      - ctf_net
+
+  flag-rotator:
+    build:
+      context: ./platform/control
+    restart: unless-stopped
+    environment: *control-env
+    command: ["python", "-m", "app.rotator"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      control-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os, psycopg2; conn = psycopg2.connect(os.environ['DATABASE_URL']); conn.close()"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+    mem_limit: 512m
+    cpus: 1.0
+    networks:
+      - ctf_net
+
+  checker-worker:
+    build:
+      context: ./platform/control
+    restart: unless-stopped
+    user: "0:0"
+    environment: *control-env
+    volumes:
+      - ./platform/challenges:/challenges:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - .:/workspace:ro
+    command: ["sh", "-c", "celery -A app.worker:celery_app worker --loglevel=${CELERY_LOG_LEVEL:-INFO} --concurrency=${CHECKER_WORKER_CONCURRENCY:-4} -Q checkers,vulnboxes,celery"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os, redis; redis.Redis.from_url(os.environ['REDIS_URL']).ping()"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+    mem_limit: 768m
+    cpus: 1.0
+    networks:
+      - ctf_net
+
+  team1-nat:
+    <<: *nat-gateway
+    environment:
+      NAT_TEAM: team1
+    ports:
+      - "18081:8080"
+
+  team1-svc1:
+    <<: *svc1
+    environment:
+      TEAM_NAME: team1
+      SERVICE_NAME: svc1
+      BOOT_FLAG: FLAG{BOOT_team1_svc1}
+      SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+    volumes:
+      - ledgerforge_team1_data:/var/lib/ledgerforge
+
+  team1-svc2:
+    <<: *svc2
+    environment:
+      TEAM_NAME: team1
+      SERVICE_NAME: svc2
+      BOOT_FLAG: FLAG{BOOT_team1_svc2}
+      SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+      VAULTGRID_CRYPT_HOST: team1-vg-crypt
+      VAULTGRID_CRYPT_PORT: 4102
+      VAULTGRID_FEED_HOST: team1-vg-feed
+      VAULTGRID_FEED_PORT: 4103
+    volumes:
+      - vaultgrid_team1_data:/var/lib/vaultgrid
+  team1-vg-crypt:
+    build:
+      context: ./platform/challenges
+      dockerfile: svc2-vaultgrid/crypt/Dockerfile
+    restart: unless-stopped
+    environment:
+      SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+    volumes:
+      - vaultgrid_crypt_team1_data:/var/lib/vaultgrid-crypt
+    mem_limit: 192m
+    cpus: 0.4
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:4102/health >/dev/null"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 10s
+    networks:
+      - ctf_net
+
+  team1-vg-feed:
+    build:
+      context: ./platform/challenges
+      dockerfile: svc2-vaultgrid/feed/Dockerfile
+    restart: unless-stopped
+    environment:
+      SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+    volumes:
+      - vaultgrid_feed_team1_data:/var/lib/vaultgrid-feed
+    mem_limit: 192m
+    cpus: 0.4
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:4103/health >/dev/null"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 10s
+    networks:
+      - ctf_net
+
+
+  team1-svc3:
+    <<: *svc3
+    environment:
+      TEAM_NAME: team1
+      SERVICE_NAME: svc3
+      BOOT_FLAG: FLAG{BOOT_team1_svc3}
+      SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+    volumes:
+      - specterlog_team1_data:/var/lib/specterlog
+
+  team1-svc4:
+    <<: *svc4
+    environment:
+      TEAM_NAME: team1
+      SERVICE_NAME: svc4
+      BOOT_FLAG: FLAG{BOOT_team1_svc4}
+      SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+
+  team1-svc5:
+    <<: *svc5
+    environment:
+      TEAM_NAME: team1
+      SERVICE_NAME: svc5
+      BOOT_FLAG: FLAG{BOOT_team1_svc5}
+      SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+
+  team2-nat:
+    <<: *nat-gateway
+    environment:
+      NAT_TEAM: team2
+    ports:
+      - "18082:8080"
+
+  team2-svc1:
+    <<: *svc1
+    environment:
+      TEAM_NAME: team2
+      SERVICE_NAME: svc1
+      BOOT_FLAG: FLAG{BOOT_team2_svc1}
+      SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+    volumes:
+      - ledgerforge_team2_data:/var/lib/ledgerforge
+
+  team2-svc2:
+    <<: *svc2
+    environment:
+      TEAM_NAME: team2
+      SERVICE_NAME: svc2
+      BOOT_FLAG: FLAG{BOOT_team2_svc2}
+      SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+      VAULTGRID_CRYPT_HOST: team2-vg-crypt
+      VAULTGRID_CRYPT_PORT: 4102
+      VAULTGRID_FEED_HOST: team2-vg-feed
+      VAULTGRID_FEED_PORT: 4103
+    volumes:
+      - vaultgrid_team2_data:/var/lib/vaultgrid
+  team2-vg-crypt:
+    build:
+      context: ./platform/challenges
+      dockerfile: svc2-vaultgrid/crypt/Dockerfile
+    restart: unless-stopped
+    environment:
+      SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+    volumes:
+      - vaultgrid_crypt_team2_data:/var/lib/vaultgrid-crypt
+    mem_limit: 192m
+    cpus: 0.4
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:4102/health >/dev/null"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 10s
+    networks:
+      - ctf_net
+
+  team2-vg-feed:
+    build:
+      context: ./platform/challenges
+      dockerfile: svc2-vaultgrid/feed/Dockerfile
+    restart: unless-stopped
+    environment:
+      SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+    volumes:
+      - vaultgrid_feed_team2_data:/var/lib/vaultgrid-feed
+    mem_limit: 192m
+    cpus: 0.4
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:4103/health >/dev/null"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 10s
+    networks:
+      - ctf_net
+
+
+  team2-svc3:
+    <<: *svc3
+    environment:
+      TEAM_NAME: team2
+      SERVICE_NAME: svc3
+      BOOT_FLAG: FLAG{BOOT_team2_svc3}
+      SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+    volumes:
+      - specterlog_team2_data:/var/lib/specterlog
+
+  team2-svc4:
+    <<: *svc4
+    environment:
+      TEAM_NAME: team2
+      SERVICE_NAME: svc4
+      BOOT_FLAG: FLAG{BOOT_team2_svc4}
+      SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+
+  team2-svc5:
+    <<: *svc5
+    environment:
+      TEAM_NAME: team2
+      SERVICE_NAME: svc5
+      BOOT_FLAG: FLAG{BOOT_team2_svc5}
+      SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+
+  team3-nat:
+    <<: *nat-gateway
+    environment:
+      NAT_TEAM: team3
+    ports:
+      - "18083:8080"
+
+  team3-svc1:
+    <<: *svc1
+    environment:
+      TEAM_NAME: team3
+      SERVICE_NAME: svc1
+      BOOT_FLAG: FLAG{BOOT_team3_svc1}
+      SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+    volumes:
+      - ledgerforge_team3_data:/var/lib/ledgerforge
+
+  team3-svc2:
+    <<: *svc2
+    environment:
+      TEAM_NAME: team3
+      SERVICE_NAME: svc2
+      BOOT_FLAG: FLAG{BOOT_team3_svc2}
+      SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+      VAULTGRID_CRYPT_HOST: team3-vg-crypt
+      VAULTGRID_CRYPT_PORT: 4102
+      VAULTGRID_FEED_HOST: team3-vg-feed
+      VAULTGRID_FEED_PORT: 4103
+    volumes:
+      - vaultgrid_team3_data:/var/lib/vaultgrid
+  team3-vg-crypt:
+    build:
+      context: ./platform/challenges
+      dockerfile: svc2-vaultgrid/crypt/Dockerfile
+    restart: unless-stopped
+    environment:
+      SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+    volumes:
+      - vaultgrid_crypt_team3_data:/var/lib/vaultgrid-crypt
+    mem_limit: 192m
+    cpus: 0.4
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:4102/health >/dev/null"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 10s
+    networks:
+      - ctf_net
+
+  team3-vg-feed:
+    build:
+      context: ./platform/challenges
+      dockerfile: svc2-vaultgrid/feed/Dockerfile
+    restart: unless-stopped
+    environment:
+      SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+    volumes:
+      - vaultgrid_feed_team3_data:/var/lib/vaultgrid-feed
+    mem_limit: 192m
+    cpus: 0.4
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:4103/health >/dev/null"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 10s
+    networks:
+      - ctf_net
+
+
+  team3-svc3:
+    <<: *svc3
+    environment:
+      TEAM_NAME: team3
+      SERVICE_NAME: svc3
+      BOOT_FLAG: FLAG{BOOT_team3_svc3}
+      SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+    volumes:
+      - specterlog_team3_data:/var/lib/specterlog
+
+  team3-svc4:
+    <<: *svc4
+    environment:
+      TEAM_NAME: team3
+      SERVICE_NAME: svc4
+      BOOT_FLAG: FLAG{BOOT_team3_svc4}
+      SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+
+  team3-svc5:
+    <<: *svc5
+    environment:
+      TEAM_NAME: team3
+      SERVICE_NAME: svc5
+      BOOT_FLAG: FLAG{BOOT_team3_svc5}
+      SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+
+volumes:
+  postgres_data:
+  redis_data:
+  ledgerforge_team1_data:
+  ledgerforge_team2_data:
+  ledgerforge_team3_data:
+  vaultgrid_team1_data:
+  vaultgrid_team2_data:
+  vaultgrid_team3_data:
+  specterlog_team1_data:
+  specterlog_team2_data:
+  specterlog_team3_data:
+  vaultgrid_crypt_team1_data:
+  vaultgrid_feed_team1_data:
+  vaultgrid_crypt_team2_data:
+  vaultgrid_feed_team2_data:
+  vaultgrid_crypt_team3_data:
+  vaultgrid_feed_team3_data:
+
+networks:
+  ctf_net:
+    driver: bridge

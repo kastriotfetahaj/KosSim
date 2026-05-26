@@ -1,0 +1,40 @@
+[auth]
+connection = "postgresql://ftp:__PASSWORD__@db/firewall?sslmode=disable"
+password_file = "/state/ftp/secrets/db"
+query = "SELECT password FROM users WHERE name = %s LIMIT 1"
+root = "/state/ftp/data/"
+
+[data]
+cleanup_interval = 60
+maximum_age = 3600
+timeout = 60
+
+[ftp]
+auth_failed_timeout = 3
+banner = "CZECHPOINT INTERNAL FTP SERVICES"
+certfile = "/state/ftp/tls/tls.crt"
+disk_quota = 65536
+encoding = "utf-8"
+entry_quota = 128
+keyfile = "/state/ftp/tls/tls.key"
+# masquerade_address_map = (none)
+# masquerade_address = (none)
+max_login_attempts = 3
+# passive_ports = (none)
+permit_foreign_addresses = true
+permit_privileged_ports = false
+# ssl_options = OP_NO_SSLv2 | OP_NO_SSLv3 | OP_NO_COMPRESSION
+# ssl_protocol = TLS_SERVER_METHOD
+tcp_no_delay = true
+timeout = 60
+tls_control_required = false
+tls_data_required = false
+use_gmt_times = true
+use_sendfile = true
+
+[server]
+backlog = 2048
+host = '::'
+max_cons = 2048
+max_cons_per_ip = 4
+port = 21

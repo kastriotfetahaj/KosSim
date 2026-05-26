@@ -1,0 +1,15 @@
+diff --git a/service/firewall/firewalld/src/filter/conntrack.rs b/service/firewall/firewalld/src/filter/conntrack.rs
+index 77aa4cb..55c298a 100644
+--- a/service/firewall/firewalld/src/filter/conntrack.rs
++++ b/service/firewall/firewalld/src/filter/conntrack.rs
+@@ -148,6 +148,10 @@ impl Table {
+         let destination = packet.destination_ip()?;
+         let peer = pattern.extract(packet)?;
+ 
++        if peer.ip != packet.source_ip()? {
++            return None;
++        }
++
+         let partial = Connection::new(Peer::new(destination, 0), peer);
+         tracing::trace!("Connection tracking: FTP: Adding new related connection {partial}");
+         self.pending.insert(partial, ()).await;

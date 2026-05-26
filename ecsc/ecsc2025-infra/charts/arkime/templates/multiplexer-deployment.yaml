@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: arkime-multiplexer
+  labels:
+    app: arkime-multiplexer
+    {{- include "arkime.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app: arkime-multiplexer
+      {{- include "arkime.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: arkime-multiplexer
+        {{- include "arkime.selectorLabels" . | nindent 8 }}
+    spec:
+      nodeSelector:
+        ctfr.attacking-lab.com/role: worker
+        ctfr.attacking-lab.com/ctf: {{ .Values.ctf }}
+      tolerations:
+        - key: ctfr.attacking-lab.com/ctf
+          operator: Equal
+          value: {{ .Values.ctf }}
+          effect: NoExecute
+        - key: ctfr.attacking-lab.com/role
+          operator: Equal
+          value: worker
+          effect: NoExecute
+      volumes:
+        - name: config
+          configMap:
+            name: arkime-multiplexer-config
+      containers:
+        - name: caddy
+          image: {{ .Values.multiplexer.image }}
+          imagePullPolicy: {{ .Values.multiplexer.imagePullPolicy }}
+          workingDir: /etc/caddy/
+          command: [ "caddy", "run" ]
+          volumeMounts:
+            - mountPath: /etc/caddy
+              name: config
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP

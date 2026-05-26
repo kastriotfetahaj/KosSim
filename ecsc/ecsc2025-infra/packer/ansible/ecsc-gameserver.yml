@@ -1,0 +1,11 @@
+- name: "ECSC-Checker"
+  hosts: all
+  become: true
+  become_method: ansible.builtin.sudo
+  vars_files:
+    - "static.yml"
+    - "secrets.yml"
+
+  roles:
+    - gameserver
+    - attack_api

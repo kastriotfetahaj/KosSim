@@ -1,0 +1,17 @@
+services:
+  # This service builds the binary and is NOT given to players
+  agent-build:
+    image: ecsc2025-service-firewall/agent-build
+    pull_policy: never
+    container_name: firewall-agent-build
+    network_mode: none
+    build:
+      context: .
+      args:
+        SNMP_PROFILE: release
+    volumes:
+      - type: bind
+        source: ${SERVICE_DIRECTORY:-../../service/firewall/snmp}
+        target: /service/
+    # Copy the final binary into the service directory
+    command: /bin/cp /agent /service/agent

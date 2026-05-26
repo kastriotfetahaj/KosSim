@@ -1,0 +1,4 @@
+services:
+  arkime:
+    image: ci.attacking-lab.com/arkime/arkime
+    build: .

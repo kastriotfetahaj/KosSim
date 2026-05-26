@@ -1,0 +1,16 @@
+diff --git a/service/firewall/firewalld/src/vpn/packets.rs b/service/firewall/firewalld/src/vpn/packets.rs
+index 3ce4cc8..dacf302 100644
+--- a/service/firewall/firewalld/src/vpn/packets.rs
++++ b/service/firewall/firewalld/src/vpn/packets.rs
+@@ -460,6 +460,11 @@ impl TxRing {
+                 continue;
+             };
+ 
++            if destination_ip.to_canonical().is_loopback() {
++                tracing::warn!("Transmit thread: dropping packet to loopback address {destination_ip}");
++                continue;
++            }
++
+             let arp_table_entry = match arp.get_one(&destination_ip).map(|guard| *guard) {
+                 Some(entry) if entry.expires > Instant::now() => entry,
+                 _ => {

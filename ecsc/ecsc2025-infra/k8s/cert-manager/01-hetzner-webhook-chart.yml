@@ -1,0 +1,28 @@
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: hetzner-webhook
+  namespace: kube-system
+spec:
+  targetNamespace: cert-manager
+  createNamespace: true
+  repo: https://vadimkim.github.io/cert-manager-webhook-hetzner
+  chart: cert-manager-webhook-hetzner
+  version: 1.3.3
+  valuesContent: |-
+    groupName: hetzner.cert-mananger-webhook.noshoes.xyz
+
+    # Tell the webhook where cert-manager is
+    certManager:
+      namespace: cert-manager
+      serviceAccountName: cert-manager
+
+    nodeSelector:
+      ctfr.attacking-lab.com/role: core
+      kubernetes.io/os: linux
+
+    tolerations:
+      - key: ctfr.attacking-lab.com/role
+        operator: Equal
+        value: core
+        effect: NoExecute

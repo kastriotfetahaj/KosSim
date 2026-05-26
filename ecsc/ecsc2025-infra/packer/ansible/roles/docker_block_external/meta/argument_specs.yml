@@ -1,0 +1,13 @@
+---
+argument_specs:
+  main:
+    short_description: "Block docker services from external interfaces"
+    author:
+      - "Lucas Druschke"
+      - "Marc Munier"
+    options:
+      docker_block_external_interfaces:
+        type: list
+        elements: str
+        default: ["{{ansible_default_ipv4.interface}}"]
+        description: "Interfaces to block traffic from"

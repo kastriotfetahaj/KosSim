@@ -1,0 +1,31 @@
+---
+- name: Check if Filebeat is installed
+  ansible.builtin.command: dpkg-query -W filebeat
+  register: filebeat_check_deb
+  failed_when: filebeat_check_deb.rc > 1
+  changed_when: filebeat_check_deb.rc == 1
+
+- name: Download Filebeat
+  ansible.builtin.get_url:
+    url: "https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-8.4.3-amd64.deb"
+    dest: "/tmp/filebeat.deb"
+    mode: "0644"
+  when: filebeat_check_deb.rc == 1
+
+- name: Install Filebeat
+  ansible.builtin.apt:
+    deb: "/tmp/filebeat.deb"
+  become: true
+  when: filebeat_check_deb.rc == 1
+
+- name: Copy filebeat.yml to host
+  ansible.builtin.template:
+    src: "filebeat.yml.j2"
+    dest: "/etc/filebeat/filebeat.yml"
+    mode: "0644"
+
+- name: Enable and start Filebeat
+  ansible.builtin.service:
+    name: filebeat
+    state: restarted
+    enabled: true

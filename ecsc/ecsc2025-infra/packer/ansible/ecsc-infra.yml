@@ -1,0 +1,64 @@
+---
+- name: "ECSC-Infra"
+  hosts: all
+  become: true
+  become_method: ansible.builtin.sudo
+  vars_files:
+    - "static.yml"
+    - "secrets.yml"
+
+  roles:
+    - base
+    - ssh_keys
+    - root_login
+    - infra_root_pw
+    - nft
+    - role: "programs"
+      vars:
+        programs_list:
+          - python3-pip
+          - curl
+          - iproute2
+          - tcpdump
+          - iputils-ping
+          - dnsutils
+          - jq
+          - iperf3
+          - iftop
+          - htop
+          - netcat-openbsd
+          - postgresql-client
+          - silversearcher-ag
+          - ripgrep
+          - rsync
+
+    - filebeat
+    - docker
+    - role: docker_login
+      docker_login_server: "{{ image_registry_token.server }}"
+      docker_login_username: "{{ image_registry_token.username }}"
+      docker_login_password: "{{ image_registry_token.password }}"
+
+    # - journalbeat
+    # - metricbeat
+    - role: k3s
+      k3s_install_env:
+        INSTALL_K3S_SKIP_ENABLE: true
+        INSTALL_K3S_VERSION: "v1.33.3+k3s1"
+
+    - cluster_dns_client
+    - role: "open_iscsi"
+      open_iscsi_daemon_enabled: false
+
+    - uv
+    - role: uv_tools
+      uv_tools_packages:
+        - enochecker_logs
+
+    - role: alias
+      alias_list:
+        dc: "docker compose"
+
+    - role: git_config
+      git_config_email: "bot@attacking-lab.com"
+      git_config_name: "Attacking Bot"

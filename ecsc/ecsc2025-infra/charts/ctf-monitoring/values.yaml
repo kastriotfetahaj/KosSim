@@ -1,0 +1,49 @@
+replicaCounts:
+  prometheus: 2
+  grafana: 1
+  oauth2Proxy: 1
+  elastic: 2
+  timescale: 2
+
+timescaleNodePort: 32532
+
+# This is to override the chart name.
+nameOverride: ""
+fullnameOverride: ""
+
+# Set annotations on all pods
+podAnnotations: { }
+# Set labes on all pods
+podLabels: { }
+
+# Used to target appropriate nodes with the ctfr.attacking-lab.com/ctf taint and label
+# And to determine the hostname suffix for grafana and kibana
+ctf: monitoring-demo
+
+networkIndex: 42
+
+grafanaOAuthSecretName: oauth2-proxy-grafana
+kibanaOAuthSecretName: oauth2-proxy-kibana
+
+analysisMode: False
+
+elastic:
+  storage:
+    request: 64Gi
+    className: longhorn-ha-databases
+  resources:
+    requests:
+      limits:
+        memory: 20Gi
+
+prometheus:
+  storage:
+    # Approx 37MB per node per hour
+    request: 50Gi
+    # Just let it burn!
+    # Don't forget the "B" there... it is unfortinately required
+    retentionSize: 99GiB
+    className: longhorn-zone-replicated
+
+grafanaCommDashboards:
+  node-exporter-full: 1860

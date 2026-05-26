@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load mainpage %}
+{% block content %}
+    <br>
+    <section>
+        <div class="container-fluid">
+            <div class="page-header">
+                <h1>All VMs:</h1>
+            </div>
+            <p class="flatpage-content">
+                <div class="mb-3">
+                    <form action="{% url 'vm_admin' %}" method="POST" data-confirmation="Are you sure?" class="require-confirmation d-inline-block">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="create_all">
+                        <button type="submit" class="btn btn-outline-success">Create all VMs</button>
+                    </form>
+                    <form action="{% url 'vm_admin' %}" method="POST" data-confirmation="Are you sure?" class="require-confirmation d-inline-block">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="start_all">
+                        <button type="submit" class="btn btn-outline-success"><span class="oi oi-media-play"></span> Start all offline VMs</button>
+                    </form>
+                    <form action="{% url 'vm_admin' %}" method="POST" data-confirmation="Are you sure?" class="require-confirmation d-inline-block">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="reboot_all">
+                        <button type="submit" class="btn btn-outline-light">Reboot all VMs</button>
+                    </form>
+                    <form action="{% url 'vm_admin' %}" method="POST" data-confirmation="Are you sure?" class="require-confirmation d-inline-block">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="reset_all">
+                        <button type="submit" class="btn btn-outline-warning">Reset all VMs</button>
+                    </form>
+                    <form action="{% url 'vm_admin' %}" method="POST" data-confirmation="Are you sure?" class="require-confirmation d-inline-block">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="shutdown_all">
+                        <button type="submit" class="btn btn-outline-warning"><span class="oi oi-media-stop"></span> Shutdown all VMs</button>
+                    </form>
+                    <form action="{% url 'vm_admin' %}" method="POST" data-confirmation="Are you sure?" class="require-confirmation d-inline-block">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="destroy_all">
+                        <button type="submit" class="btn btn-outline-danger">Destroy all VMs</button>
+                    </form>
+                </div>
+                <div class="row align-items-center" id="vms">
+                    {% for vm_name, tmpl, vm, team, vulnbox_ip in vms %}
+                        <div class="col-md-6 col-lg-6 col-xl-4">
+                            {% include "snippets/vm_control.html" with tmpl=tmpl vm=vm team_id=team.team_id vulnbox_ip=vulnbox_ip vm_name=vm_name admin=True control=True %}
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <h2 class="mt-5">VM Templates</h2>
+                <p>{{ templates |length }} VM templates have been configured.</p>
+                {% if templates %}
+                    <ul>
+                        {% for tmpl in templates %}
+                            <li>
+                                <strong>{{ tmpl.name }}</strong>:
+                                Type <code>{{ tmpl.template.kind }}</code>, IP <code>.{{ tmpl.ip_suffix }}</code>
+                                {% if tmpl.has_control_available_from %}
+                                    , control available <em>{% if tmpl.runtime_control_available_from > now %}in {{ tmpl.runtime_control_available_from|timeuntil:now }}{% else %}for {{ tmpl.runtime_control_available_from|timesince:now }}{% endif %}</em>
+                                {% endif %}
+                                {% if tmpl.has_control_available_to %}
+                                    , control denied <em>{% if tmpl.runtime_control_available_to > now %}in {{ tmpl.runtime_control_available_to|timeuntil:now }}{% else %}for {{ tmpl.runtime_control_available_to|timesince:now }}{% endif %}</em>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+
+                    </ul>
+                {% else %}
+                    <p class="text-muted">No VM templates configured</p>
+                {% endif %}
+
+                <h2 class="mt-5">VM Logs</h2>
+                {% if logs %}
+                    <ul class="list-group">
+                        {% for log in logs %}
+                            <li class="list-group-item">
+                                <span class="text-muted">{{ log.created_at |date:'H:i:s' }}</span> |
+                                <strong>#{{ log.team_id }} {{ log.team.user.username }}</strong>,
+                                <em>{{ log.kind }}</em> |
+                                {% if log.message %}
+                                    {{ log.message }}
+                                {% else %}
+                                    <span class="text-muted">
+                                        &quot;{{ log.field }}&quot; changed <code>{{ log.old_value |json }}</code> &rArr; <code>{{ log.new_value |json }}</code>
+                                    </span>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+
+                    </ul>
+                {% else %}
+                    <p class="text-muted">No VM logs available</p>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+    <br><br>
+{% endblock %}
+
+{% block scripts %}
+    <script src="{% static 'js/confirmation.js' %}"></script>
+{% endblock %}

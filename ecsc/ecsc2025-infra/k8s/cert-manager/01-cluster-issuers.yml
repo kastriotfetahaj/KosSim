@@ -1,0 +1,68 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: hetzner-dns-staging
+  namespace: cert-manager
+spec:
+  acme:
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: hetzner-dns-staging-issuer
+    solvers:
+      - dns01:
+          webhook:
+            groupName: hetzner.cert-mananger-webhook.noshoes.xyz
+            solverName: hetzner
+            config:
+              secretName: hetzner-secret
+              apiUrl: https://dns.hetzner.com/api/v1
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: hetzner-dns
+  namespace: cert-manager
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: hetzner-dns-issuer
+    solvers:
+      - dns01:
+          webhook:
+            groupName: hetzner.cert-mananger-webhook.noshoes.xyz
+            solverName: hetzner
+            config:
+              secretName: hetzner-secret
+              apiUrl: https://dns.hetzner.com/api/v1
+---
+apiVersio: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: staging-letsencrypt-http
+  namespace: cert-manager
+spec:
+  acme:
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: acme-staging
+    solvers:
+      - http01:
+          ingress:
+            ingressClassName: traefik
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-http
+  namespace: cert-manager
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: acme-production
+    solvers:
+      - http01:
+          ingress:
+            ingressClassName: traefik

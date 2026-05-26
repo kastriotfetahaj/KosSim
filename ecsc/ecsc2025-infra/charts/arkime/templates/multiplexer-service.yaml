@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: arkime-multiplexer
+  labels:
+    app: arkime-multiplexer
+    {{- include "arkime.selectorLabels" . | nindent 4}}
+spec:
+  type: ClusterIP
+  selector:
+    app: arkime-multiplexer
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

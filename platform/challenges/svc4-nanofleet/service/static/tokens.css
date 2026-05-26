@@ -1,0 +1,13 @@
+:root {
+  --nf-bg: #071316;
+  --nf-panel: #0d2024;
+  --nf-line: #284d55;
+  --nf-text: #dcfce7;
+  --nf-accent: #5eead4;
+  --nf-warn: #fde68a;
+}
+
+[data-tone="quiet"] {
+  --nf-panel: #0a1a1e;
+  --nf-line: #213f47;
+}

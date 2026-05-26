@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ctfroute-api-server
+  labels:
+    app: ctfroute-api-server
+spec:
+  ports:
+   - port: 80
+     targetPort: 80
+  selector:
+    app: ctfroute-api-server
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ctfroute-api-server
+spec:
+  selector:
+    matchLabels:
+      app: ctfroute-api-server
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: ctfroute-api-server
+    spec:
+      imagePullSecrets:
+        - name: ci-attacking-lab-cr
+      volumes:
+        - name: ctfroute-yml
+          configMap:
+            name: ctfroute-yml
+      terminationGracePeriodSeconds: 10
+      containers:
+        - name: ctfroute-api-server
+          image: ci.attacking-lab.com/ctf-route/ctftest:latest
+          imagePullPolicy: Always
+          env:
+            - name: CTFROUTE_CONFIG
+              value: /etc/ctfroute/ctfroute.yml
+          command:
+            - bash
+            - -c
+            - "fastapi run --host 0.0.0.0 --port 80 ctftest/ctftest/test_rest_server/__init__.py"
+          volumeMounts:
+            - name: ctfroute-yml
+              mountPath: /etc/ctfroute/
+          securityContext:
+            capabilities:
+              add:
+                - "NET_ADMIN"
+---

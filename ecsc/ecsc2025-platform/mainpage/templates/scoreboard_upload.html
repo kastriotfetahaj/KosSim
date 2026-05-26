@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+    <br>
+    <section>
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-12 order-lg-1">
+                    <div class="page-header">
+                        <h1>Upload Scoreboard:</h1>
+                    </div>
+                    <hr>
+                    <div class="flatpage-content col-xs-12">
+                        <form action="{% url 'scoreboard_upload' %}" method="POST" enctype="multipart/form-data">
+                            <div class="form-group">
+                                <label for="archiveFile">7z Scoreboard Archive</label>
+                                <input type="file" class="form-control-file" id="archiveFile" name="archive">
+                            </div>
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-primary">Upload</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <br><br>
+{% endblock %}

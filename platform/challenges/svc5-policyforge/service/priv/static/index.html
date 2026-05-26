@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PolicyForge</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <main class="policy-shell">
+    <header class="policy-head">
+      <p>policy workbench</p>
+      <h1>PolicyForge</h1>
+      <div class="toolbar">
+        <button id="session">Guest session</button>
+        <button id="eval">Evaluate rule</button>
+      </div>
+    </header>
+    <section class="policy-grid">
+      <section class="objects">
+        <h2>Object Labels</h2>
+        <div id="objects"></div>
+      </section>
+      <section class="matrix">
+        <h2>Decision Matrix</h2>
+        <div id="matrix"></div>
+      </section>
+      <section class="review">
+        <h2>Review Buffer</h2>
+        <textarea id="expr" spellcheck="false">allow if label == public</textarea>
+        <pre id="out">ready</pre>
+      </section>
+    </section>
+  </main>
+  <script src="/static/app.js"></script>
+</body>
+</html>

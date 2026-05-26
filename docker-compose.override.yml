@@ -1,0 +1,16 @@
+services:
+  team1-svc1:
+    volumes:
+      - ./platform/challenges/svc1-ledgerforge/service/static:/app/static:ro
+  team1-svc2:
+    volumes:
+      - ./platform/challenges/svc2-vaultgrid/service/static:/app/static:ro
+  team1-svc3:
+    volumes:
+      - ./platform/challenges/svc3-specterlog/service/static:/app/static:ro
+  team1-svc4:
+    volumes:
+      - ./platform/challenges/svc4-nanofleet/service/static:/app/static:ro
+  team1-svc5:
+    volumes:
+      - ./platform/challenges/svc5-policyforge/service/priv/static:/app/priv/static:ro

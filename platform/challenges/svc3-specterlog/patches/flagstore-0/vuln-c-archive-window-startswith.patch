@@ -1,0 +1,35 @@
+Subject: harden /api/events listing and /api/archive private filter
+
+/api/events publishes archive ids for every event including private ones,
+which gives an unauthenticated caller the join key for /api/archive.
+/api/archive then exposes private events whenever the window query
+parameter starts with "public:../private". Drop the magic-string ACL and
+strip private archive ids from the public listing.
+
+--- a/service/src/routes.ts
++++ b/service/src/routes.ts
+@@ -86,10 +86,10 @@
+   app.get("/api/events", async () => ({
+     events: store.events.map((ev) => ({
+       id: ev.id,
+       stream: ev.stream,
+       kind: ev.kind,
+       public: ev.public,
+-      archive: ev.archive,
++      archive: ev.public ? ev.archive : null,
+       payload: ev.payload,
+     })),
+   }));
+@@ -168,11 +168,9 @@
+   app.get("/api/archive/:archive", async (req, reply) => {
+     const archive = (req.params as { archive: string }).archive;
+-    const q = req.query as Record<string, string>;
+     const ids = store.archives.get(archive);
+     if (!ids) return reply.code(404).send({ error: "missing_archive" });
+-    const includePrivate = (q.window ?? "").startsWith("public:../private");
+     return {
+       archive,
+-      events: ids.map((id) => store.events[id]).filter((ev) => ev.public || includePrivate),
++      events: ids.map((id) => store.events[id]).filter((ev) => ev.public),
+     };
+   });

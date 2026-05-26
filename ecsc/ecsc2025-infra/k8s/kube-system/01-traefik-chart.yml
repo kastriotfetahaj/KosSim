@@ -1,0 +1,128 @@
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: traefik
+  namespace: kube-system
+spec:
+  # This flag causes helm controller to select control plane nodes for the
+  # "helm-install-" Job. They won't be scheduled there since we are also using our own
+  # taint for these nodes, so it get's stuck.
+  # bootstrap: true
+  failurePolicy: abort
+  targetNamespace: kube-system
+  repo: https://traefik.github.io/charts
+  chart: traefik
+  version: 37.0.0
+  valuesContent: |- 
+    additionalArguments: 
+      - "--api.insecure=true"
+    
+    deployment:
+      kind: DaemonSet
+      replicas: ~
+
+    updateStrategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxUnavailable: 1
+        maxSurge:
+     
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: ctfr.attacking-lab.com/role
+                  operator: In
+                  values:
+                    - core
+                    - control-plane
+    
+    tolerations:
+      - key: ctfr.attacking-lab.com/role
+        operator: Equal
+        value: control-plane
+        effect: NoSchedule
+      - key: ctfr.attacking-lab.com/role
+        operator: Equal
+        value: core
+        effect: NoSchedule
+
+    ports:
+      traefik:
+        port: 8080
+        expose:
+          default: true
+        exposedPort: 8080
+        nodePort:
+        protocol: TCP
+
+      metrics:
+        port: 9100
+        expose:
+          default: yes
+        exposedPort: 9100
+        nodePort:
+        protocol: TCP
+      web:
+        port: 8000
+        hostPort: 80
+        expose:
+          default: true
+        exposedPort: 8000
+        nodePort:
+        protocol: TCP
+        redirections:
+          entryPoint: { }
+        forwardedHeaders:
+          trustedIPs: [ ]
+          insecure: false
+        proxyProtocol:
+          trustedIPs: [ ]
+          insecure: false
+        transport:
+          respondingTimeouts:
+            readTimeout:
+            writeTimeout:
+            idleTimeout:
+          lifeCycle:
+            requestAcceptGraceTimeout:
+            graceTimeOut:
+          keepAliveMaxRequests:
+          keepAliveMaxTime:
+      websecure:
+        asDefault: true
+        port: 8443
+        hostPort: 443
+        expose:
+          default: true
+        exposedPort: 8443
+        nodePort:
+        protocol: TCP
+        allowACMEByPass: false
+        http3:
+          enabled: false
+          advertisedPort:
+        forwardedHeaders:
+          trustedIPs: [ ]
+          insecure: false
+        proxyProtocol:
+          trustedIPs: [ ]
+          insecure: false
+        transport:
+          respondingTimeouts:
+            readTimeout:
+            writeTimeout:
+            idleTimeout:
+          lifeCycle:
+            requestAcceptGraceTimeout:
+            graceTimeOut:
+          keepAliveMaxRequests:
+          keepAliveMaxTime:
+        tls:
+          enabled: true
+          options: ""
+          certResolver: ""
+          domains: [ ]
+        middlewares: [ ]
+

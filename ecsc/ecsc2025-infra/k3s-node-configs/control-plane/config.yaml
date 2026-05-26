@@ -1,0 +1,21 @@
+# First node needs cluster init
+# cluster-init: true
+# new nodes need the server address
+server: https://gartenverein-tackenberg.de:6443
+cluster-cidr: 10.237.0.0/16
+service-cidr: 10.238.0.0/16
+cluster-dns: 10.238.0.10
+flannel-backend: none
+disable-network-policy: true
+disable-kube-proxy: true
+disable:
+  - coredns
+  - traefik
+  - local-storage
+  - servicelb
+tls-san:
+  - gartenverein-tackenberg.de
+node-label:
+  - ctfr.attacking-lab.com/role=control-plane
+node-taint:
+  - ctfr.attacking-lab.com/role=control-plane:NoSchedule

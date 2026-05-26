@@ -1,0 +1,44 @@
+name: jitterishdb-checker
+
+services:
+  jitterish-checker:
+    container_name: jitterish-checker
+    build: 
+      context: .
+      secrets:
+        - github-pat
+
+    ports:
+      - "8400:8400"
+    environment:
+      - MONGO_ENABLED=1
+      - MONGO_HOST=jitterish-mongo
+      - MONGO_PORT=8401
+      - MONGO_USER=jitterish_checker
+      - MONGO_PASSWORD=jitterish_checker
+    depends_on:
+      - jitterish-mongo
+    restart: unless-stopped
+    ulimits:
+      nofile: 65535
+
+  jitterish-mongo:
+    container_name: jitterish-mongo
+    image: mongo@sha256:f4367b45782bf9538cdd83e661b37a09891646bf63a6bc5d1d5980c61dd6d3e9
+    command: mongod --port 8401
+    volumes:
+      - ./data:/data/db
+    ports:
+      - "8401:8401"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: jitterish_checker
+      MONGO_INITDB_ROOT_PASSWORD: jitterish_checker
+    restart: unless-stopped
+
+networks:
+  default:
+    name: jitterish_checker
+
+secrets:
+  github-pat:
+    environment: GITHUB_PAT

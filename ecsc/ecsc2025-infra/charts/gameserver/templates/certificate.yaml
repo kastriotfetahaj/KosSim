@@ -1,0 +1,13 @@
+{{- if and .Values.exposePublic (not .Values.scoreboard.certificateSecret) }}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: scoreboard-tls
+spec:
+  dnsNames:
+    - {{ .Values.publicScoreBoardHost }}
+  issuerRef:
+    name: staging-letsencrypt-http
+    kind: ClusterIssuer
+  secretName: scoreboard-tls
+{{- end }}

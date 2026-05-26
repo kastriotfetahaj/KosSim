@@ -1,0 +1,13 @@
+:root {
+  --pf-bg: #140f0c;
+  --pf-panel: #211914;
+  --pf-line: #594231;
+  --pf-text: #fff7ed;
+  --pf-accent: #86efac;
+  --pf-warn: #fdba74;
+}
+
+[data-tone="quiet"] {
+  --pf-panel: #1a1411;
+  --pf-line: #493827;
+}

@@ -1,0 +1,27 @@
+diff --git a/service/ftp/ftpd.py b/service/ftp/ftpd.py
+index 4b9f56f..9184f18 100644
+--- a/service/ftp/ftpd.py
++++ b/service/ftp/ftpd.py
+@@ -176,6 +176,9 @@ class QuotaFTPHandler(TLS_FTPHandler):
+         if (cleanup := getattr(self.authorizer, 'close', None)):
+             cleanup()
+ 
++    def _make_eport(self, ip, port) -> typing.Any:
++        return super()._make_eport(ip.lower() if isinstance(ip, str) else ip, port)
++
+ 
+ class QuotaWrappedFile:
+     '''Wrapper around a file object that tracks quota in a QuotaAbstractedFS'''
+diff --git a/service/ftp/ftpd.toml b/service/ftp/ftpd.toml
+index 04dfea8..6886136 100644
+--- a/service/ftp/ftpd.toml
++++ b/service/ftp/ftpd.toml
+@@ -21,7 +21,7 @@ keyfile = "/state/ftp/tls/tls.key"
+ # masquerade_address = (none)
+ max_login_attempts = 3
+ # passive_ports = (none)
+-permit_foreign_addresses = true
++permit_foreign_addresses = false
+ permit_privileged_ports = false
+ # ssl_options = OP_NO_SSLv2 | OP_NO_SSLv3 | OP_NO_COMPRESSION
+ # ssl_protocol = TLS_SERVER_METHOD

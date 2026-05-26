@@ -1,0 +1,33 @@
+{{- if not .Values.analysisMode }}
+apiVersion: kibana.k8s.elastic.co/v1
+kind: Kibana
+metadata:
+  name: ctf
+spec:
+  version: "9.1.3"
+  count: 1
+  elasticsearchRef:
+    name: ctf
+  secureSettings:
+    - secretName: ctf-es-elastic-user
+      entries:
+        - key: elastic
+          path: xpack.security.authc.providers.anonymous.anonymous1.credentials.password
+  config:
+    xpack.security.authc.providers:
+      basic.basic1:
+        order: 0
+      anonymous.anonymous1:
+        order: 1
+        credentials:
+          username: "elastic"
+  podTemplate:
+    spec:
+      nodeSelector:
+        ctfr.attacking-lab.com/role: core
+      tolerations:
+        - key: ctfr.attacking-lab.com/role
+          operator: Equal
+          value: core
+          effect: NoExecute
+{{- end }}

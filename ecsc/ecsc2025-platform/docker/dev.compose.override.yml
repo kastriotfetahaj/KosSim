@@ -1,0 +1,8 @@
+services:
+  django:
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - staticfiles:/opt/app/static_collected
+      - imagefiles:/opt/app/uploads
+      # Mount python code into container
+      - ../mainpage/:/opt/app/mainpage

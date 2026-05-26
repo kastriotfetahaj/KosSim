@@ -1,0 +1,131 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: arkime
+  labels:
+    app: arkime
+    {{- include "arkime.labels" . | nindent 4 }}
+spec:
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 100%
+  selector:
+    matchLabels:
+      app: arkime
+      {{- include "arkime.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: arkime
+       {{- include "arkime.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8}}
+      {{- end }}
+      nodeSelector:
+        ctfr.attacking-lab.com/role: router
+        ctfr.attacking-lab.com/ctf: {{ .Values.ctf }}
+      tolerations:
+        - key: node.kubernetes.io/not-ready
+          operator: "Exists"
+          effect: NoSchedule
+        - key: ctfr.attacking-lab.com/role
+          operator: Equal
+          value: router
+          effect: NoExecute
+        - key: ctfr.attacking-lab.com/ctf
+          operator: Equal
+          value: {{ .Values.ctf }}
+          effect: NoExecute
+      hostNetwork: true
+      {{- with .Values.arkime.terminationGracePeriodSeconds}}
+      terminationGracePeriodSeconds: {{ . }}
+      {{- end}}
+      volumes:
+        - name: arkime-config
+          configMap:
+            name: arkime-config
+        - name: pcaps
+          hostPath:
+            type: DirectoryOrCreate
+            path: {{ .Values.arkime.pcapHostPath }}
+      initContainers:
+        - name: set-hostpath-perms
+          image: busybox
+          command: [ "chmod","-R","777","/mnt/pcaps" ]
+          volumeMounts:
+            - name: pcaps
+              mountPath: /mnt/pcaps
+        - name: fix-interface-config
+          image: "{{ .Values.arkime.image.repository }}{{- if .Values.arkime.image.tag }}:{{ .Values.arkime.image.tag }}{{- end }}"
+          command: [ "sh","-c","ethtool -K {{ .Values.arkime.interface }} tx off sg off gro off gso off lro off tso off" ]
+          securityContext:
+            capabilities:
+              add: [ "NET_ADMIN" ]
+      containers:
+        - name: capture
+          image: "{{ .Values.arkime.image.repository }}{{- if .Values.arkime.image.tag }}:{{ .Values.arkime.image.tag }}{{- end }}"
+          imagePullPolicy: Always
+          securityContext:
+            capabilities:
+              add: [ "NET_RAW" ]
+          command: [ "bash","-c" ]
+          args:
+            - >-
+              /opt/arkime/bin/capture
+              --insecure
+              -c /opt/arkime/etc/config.ini
+              -o elasticsearch="https://elastic:${ELASTIC_PASSWORD}@10.233.{{ int .Values.networkIndex }}.101:{{ add .Values.networkIndex 31200 }}"
+              -n ${ROUTER_NAME}
+          env:
+            - name: ELASTIC_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: elasticsearch-arkime-es-elastic-user
+                  key: elastic
+            - name: ROUTER_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          volumeMounts:
+            - name: pcaps
+              mountPath: /opt/arkime/raw
+            - name: arkime-config
+              mountPath: /opt/arkime/etc/config.ini
+              subPath: config.ini
+
+        - name: viewer
+          image: "{{ .Values.arkime.image.repository }}{{- if .Values.arkime.image.tag }}:{{ .Values.arkime.image.tag }}{{- end }}"
+          imagePullPolicy: Always
+          workingDir: /opt/arkime/viewer
+          command: [ "bash","-c" ]
+          args:
+            - >-
+              /opt/arkime/bin/node viewer.js
+              --insecure
+              -c /opt/arkime/etc/config.ini
+              -o elasticsearch="https://elastic:${ELASTIC_PASSWORD}@10.233.{{ int .Values.networkIndex }}.101:{{ add .Values.networkIndex 31200 }}"
+              -n ${ROUTER_NAME}
+              -o webBasePath=/${ROUTER_NAME}/
+          env:
+            - name: ELASTIC_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: elasticsearch-arkime-es-elastic-user
+                  key: elastic
+            - name: ROUTER_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          ports:
+            - name: arkime
+              containerPort: 8005
+          volumeMounts:
+            - name: pcaps
+              mountPath: /opt/arkime/raw
+            - name: arkime-config
+              mountPath: /opt/arkime/etc/config.ini
+              subPath: config.ini

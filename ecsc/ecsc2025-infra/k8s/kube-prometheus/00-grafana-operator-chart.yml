@@ -1,0 +1,19 @@
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: grafana-operator
+  namespace: kube-system
+spec:
+  targetNamespace: kube-prometheus
+  createNamespace: true
+  repo: https://grafana.github.io/helm-charts
+  chart: grafana-operator
+  version: 5.19.4
+  valuesContent: |-
+    nodeSelector:
+      ctfr.attacking-lab.com/role: core
+    tolerations:
+      - key: ctfr.attacking-lab.com/role
+        operator: Equal
+        value: core
+        effect: NoExecute

@@ -1,0 +1,16 @@
+services:
+  # Ultra-verbose monitoring setup. You probably don't need this.
+  firewall-chkmon:
+    build: monitoring/network
+    image: ecsc2025-service-firewall/checker/monitoring
+    pull_policy: never
+    container_name: firewall-chkmon
+    volumes:
+      - type: bind
+        source: ./monitoring/network/logs
+        target: /logs/
+    cap_add:
+      - NET_ADMIN
+    depends_on:
+      - firewall-checker
+    network_mode: "service:firewall-checker"

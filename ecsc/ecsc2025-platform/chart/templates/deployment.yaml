@@ -1,0 +1,232 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: platform
+  labels:
+    {{- include "platform.labels" . | nindent 4}}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: platform
+      {{- include "platform.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: platform
+        {{- include "platform.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{ toYaml . | nindent 8}}
+      {{- end }}
+      nodeSelector:
+        ctfr.attacking-lab.com/role: core
+      tolerations:
+        - key: ctfr.attacking-lab.com/role
+          operator: Equal
+          value: core
+      volumes:
+        - name: "platform-configs"
+          configMap:
+            name: "platform-configs"
+        - name: "platform-static"
+          emptyDir: {}
+        - name: "platform-uploads"
+          persistentVolumeClaim:
+            claimName: platform-django
+
+      containers:
+        - name: django
+          image: {{ .Values.platform.image | quote }}
+          imagePullPolicy: Always
+          envFrom:
+            - secretRef:
+                name: platform-secrets
+          env:
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  key: dbname
+                  name: platform-cluster-app
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  key: username
+                  name: platform-cluster-app
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: password
+                  name: platform-cluster-app
+            - name: POSTGRES_HOST
+              value: platform-cluster-rw
+            - name: POSTGRES_PORT
+              value: "5432"
+            - name: DJANGO_SETTINGS_MODULE
+              value: {{ .Values.platform.settingsModule }}
+            - name: HOST_NAME
+              value: {{ .Values.host }}
+            - name: HOSTING_VM_TEMPLATES
+              value: /opt/platform/vm_templates.json
+            - name: PYHTONUNBUFFERED
+              value: "True"
+          volumeMounts:
+            - name: "platform-configs"
+              mountPath: /opt/platform/vm_templates.json
+              subPath: vm_templates.json
+            - name: platform-static
+              mountPath: /opt/app/static_collected
+            - name: platform-uploads
+              mountPath: /opt/app/uploads
+          command:
+            - gunicorn
+            - --bind
+            - localhost:8000
+            - mainpage.wsgi
+          ports:
+            - name: web
+              containerPort: 8000
+        - name: q-cluster
+          image: {{ .Values.platform.image | quote }}
+          imagePullPolicy: Always
+          envFrom:
+            - secretRef:
+                name: platform-secrets
+          env:
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  key: dbname
+                  name: platform-cluster-app
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  key: username
+                  name: platform-cluster-app
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: password
+                  name: platform-cluster-app
+            - name: POSTGRES_HOST
+              value: platform-cluster-rw
+            - name: POSTGRES_PORT
+              value: "5432"
+            - name: DJANGO_SETTINGS_MODULE
+              value: {{ .Values.platform.settingsModule }}
+            - name: HOST_NAME
+              value: {{ .Values.host }}
+            - name: CONFIG_EMAIL_HOST
+              value: {{ .Values.mailWorker.mailHost }}
+            - name: CONFIG_EMAIL_HOST_USER
+              value: {{ .Values.mailWorker.mailUser }}
+            - name: CONFIG_EMAIL_HOST_PASSWORD
+              value: {{ .Values.mailWorker.mailPassword }}
+            - name: PYHTONUNBUFFERED
+              value: "True"
+          command:
+            - python
+            - manage.py
+            - qcluster
+        - name: caddy
+          image: caddy:2.10-alpine
+          env:
+            - name: HOST_NAME
+              value: {{ .Values.host }}
+          ports:
+            - name: http
+              containerPort: 80
+          volumeMounts:
+            - name: platform-configs
+              mountPath: /etc/caddy/Caddyfile
+              subPath: Caddyfile
+            - name: platform-static
+              mountPath: /srv/static
+            - name: platform-uploads
+              mountPath: /srv/uploads
+      initContainers:
+        - name: collectstatic
+          image: {{ .Values.platform.image }}
+          imagePullPolicy: Always
+          envFrom:
+            - secretRef:
+                name: platform-secrets
+          env:
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  key: dbname
+                  name: platform-cluster-app
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  key: username
+                  name: platform-cluster-app
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: password
+                  name: platform-cluster-app
+            - name: POSTGRES_HOST
+              value: platform-cluster-rw
+            - name: POSTGRES_PORT
+              value: "5432"
+            - name: DJANGO_SETTINGS_MODULE
+              value: {{ .Values.platform.settingsModule }}
+            - name: HOST_NAME
+              value: {{ .Values.host }}
+          volumeMounts:
+          - name: platform-static
+            mountPath: /opt/app/static_collected
+          command:
+            - python
+            - manage.py
+            - collectstatic
+            - --no-input
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: platform-redis
+  labels:
+    {{ include "platform.labels" . | nindent 4 }}
+spec:
+  revisionHistoryLimit: 0
+  replicas: 1
+  selector:
+    matchLabels:
+      app: platform-redis
+      {{- include "platform.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: platform-redis
+        {{- include "platform.selectorLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: Always
+      nodeSelector:
+        ctfr.attacking-lab.com/role: core
+      tolerations:
+        - key: ctfr.attacking-lab.com/role
+          operator: Equal
+          value: core
+      containers:
+        - image: redis:7.4-alpine
+          imagePullPolicy: IfNotPresent
+          name: redis
+          command: ["sh", "-c", "exec redis-server --requirepass $REDIS_HOST_PASSWORD"]
+          env:
+            - name: REDIS_HOST_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: platform-secrets
+                  key: REDIS_PASSWORD
+          readinessProbe:
+            tcpSocket:
+              port: 6379
+            periodSeconds: 15
+            initialDelaySeconds: 1
+

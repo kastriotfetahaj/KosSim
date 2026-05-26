@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block customization %}
+  .packet {
+    font-family: "Courier New", monospace;
+		word-wrap: anywhere;
+  }
+  main table {
+    table-layout: fixed;
+  }
+  .time {
+    text-align: center;
+    width: 24ch;
+  }
+{% endblock %}
+{% block content %}
+  <table>
+    <caption>Dropped Traffic</caption>
+    <thead>
+      <tr>
+        <th class="time" scope="col">Timestamp</th>
+        <th scope="col">Packet Data</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for entry in entries %}
+      <tr>
+        <td class="time">{{ entry.timestamp.strftime("%Y-%m-%d %H:%M:%S") }}</td>
+        <td class="packet">{{ entry.packet.hex() }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

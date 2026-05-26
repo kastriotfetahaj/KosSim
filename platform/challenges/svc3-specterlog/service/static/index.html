@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SpecterLog</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <main class="sl-app">
+    <aside class="sl-nav">
+      <header class="mast">
+        <p>incident replay shell</p>
+        <h1>SpecterLog</h1>
+        <span id="event-count">0 events indexed</span>
+        <span id="session-banner" class="session">session: anonymous</span>
+      </header>
+      <nav>
+        <button class="nav-link" data-view="console">console</button>
+        <button class="nav-link" data-view="cases">cases</button>
+        <button class="nav-link" data-view="briefs">briefs</button>
+        <button class="nav-link" data-view="audit">audit</button>
+      </nav>
+      <section class="sign-in">
+        <form id="sign-in-form" autocomplete="off">
+          <input id="sign-user" placeholder="username" autocomplete="off">
+          <input id="sign-pass" placeholder="password" type="password" autocomplete="off">
+          <div class="sign-actions">
+            <button data-action="login">login</button>
+            <button data-action="register">register</button>
+            <button data-action="logout" type="button">logout</button>
+          </div>
+        </form>
+        <pre id="sign-feedback"></pre>
+      </section>
+    </aside>
+    <section class="sl-main">
+      <div id="view-console" class="view active">
+        <div class="term-head">
+          <span>specterlog@replay</span>
+          <span>cursor mode</span>
+        </div>
+        <div id="events" class="event-list"></div>
+        <div id="screen" class="screen"></div>
+        <form id="cli" class="prompt">
+          <label for="cmd">sl$</label>
+          <input id="cmd" autocomplete="off" spellcheck="false" value="help">
+          <button>run</button>
+        </form>
+      </div>
+      <div id="view-cases" class="view">
+        <header class="view-head">
+          <h2>cases</h2>
+          <button id="case-new">new case</button>
+        </header>
+        <div id="case-list" class="card-grid"></div>
+        <pre id="case-detail" class="detail"></pre>
+      </div>
+      <div id="view-briefs" class="view">
+        <header class="view-head">
+          <h2>briefs</h2>
+          <button id="brief-new">new brief</button>
+        </header>
+        <div id="brief-list" class="card-grid"></div>
+        <pre id="brief-detail" class="detail"></pre>
+      </div>
+      <div id="view-audit" class="view">
+        <header class="view-head">
+          <h2>audit</h2>
+          <button id="audit-refresh">refresh</button>
+        </header>
+        <pre id="audit-log" class="detail"></pre>
+      </div>
+    </section>
+  </main>
+  <script src="/static/app.js" type="module"></script>
+</body>
+</html>

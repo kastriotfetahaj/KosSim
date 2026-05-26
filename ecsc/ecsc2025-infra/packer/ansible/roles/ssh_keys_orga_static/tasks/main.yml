@@ -1,0 +1,14 @@
+---
+- name: Insert static ssh-key (ANSIBLE_USER)
+  ansible.posix.authorized_key:
+    user: "{{ ansible_user }}"
+    state: present
+    key: "{{ orga_ssh_pubkey }}"
+  become: false
+  when: "ansible_user != 'root'"
+
+- name: Insert static ssh-key (ROOT)
+  ansible.posix.authorized_key:
+    user: root
+    state: present
+    key: "{{ orga_ssh_pubkey }}"

@@ -1,0 +1,19 @@
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: elastic-operator
+  namespace: kube-system
+spec:
+  targetNamespace: elastic
+  createNamespace: true
+  repo: https://helm.elastic.co
+  chart: eck-operator
+  version: 3.1.0
+  valuesContent: |-
+    nodeSelector:
+      ctfr.attacking-lab.com/role: core
+    tolerations:
+      - key: ctfr.attacking-lab.com/role
+        operator: Equal
+        value: core
+        effect: NoExecute

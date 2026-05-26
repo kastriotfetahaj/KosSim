@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load mainpage %}
+{% block content %}
+    <header class="masthead text-center text-white banner">
+        <div class="masthead-content">
+            <!--<div id=enisa-logo><img src="/static/img/enisa.png"></img></div>-->
+            <div id=title-container class="container-fluid">
+                <h1 class="masthead-heading mb-0">{{ ctf.name_short }}</h1>
+                <div style="font-family: Saiba;font-size:2.5em; color: #44dfdf90">ECSC 2025</div>
+                <div class="row counter flex" id="countdown" data-date="{% date_8601 config.TIME_START %}">
+                    <div class="flex-1"></div>
+                    <div class="row flex flex-8 counter-main">
+                        <div class="flex flex-1">
+                            <div class="counter-div flex-2">
+                                <div class="countdown-div">
+                                    <span class="counter-number" id="days"></span>
+                                    <br>
+                                    <span class="counter-text">Days</span>
+                                </div>
+                            </div>
+                            <div class="counter-div flex-2">
+                                <div class="countdown-div">
+                                    <span class="counter-number" id="hours"></span>
+                                    <br>
+                                    <span class="counter-text">Hours</span>
+                                </div>
+                            </div>
+                            <div class="counter-div flex-2">
+                                <div class=" countdown-div">
+                                    <span class="counter-number" id="mins"></span>
+                                    <br>
+                                    <span class="counter-text">Minutes</span>
+                                </div>
+                            </div>
+                            <div class="counter-div flex-2">
+                                <div class="countdown-div">
+                                    <span class="counter-number" id="sec"></span>
+                                    <br>
+                                    <span class="counter-text">Seconds</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="countdown-final" class="flex-1">
+                            started!
+                        </div>
+                    </div>
+                    <div class="flex-1"></div>
+                </div>
+
+                <div class="downloads">
+                    {% if URL_ROUTER %}
+                        <a href="{{ URL_ROUTER }}" class="btn btn-dark">
+                            <span class="oi oi-data-transfer-download"></span> Router VM</a>
+                    {% endif %}
+                    {% if URL_VULNBOX %}
+                        <a href="{{ URL_VULNBOX }}" class="btn btn-secondary btn-lg">
+                            <span class="oi oi-data-transfer-download"></span>
+                            Vulnbox</a>
+                    {% endif %}
+                    {% if URL_TESTBOX %}
+                        <a href="{{ URL_TESTBOX }}" class="btn btn-dark">
+                            <span class="oi oi-data-transfer-download"></span>
+                            Testbox</a>
+                    {% endif %}
+                    {% if URL_CLOUD %}
+                        <br/>
+                        <br/>
+                        <a href="{{ URL_CLOUD }}" class="btn btn-dark">
+                            <span class="oi oi-cloud"></span> Cloud Hosting</a>
+                    {% endif %}
+                </div>
+            </div>
+            <!--<div id=ecsc-logo><img src="/static/img/logo.svg"></img></div>-->
+        </div>
+    </header>
+    <section>
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-12 order-lg-1">
+                    <hr>
+                    <div class="p-5">
+                        {% if newslist|length == 0 %}
+                            <h4>No news yet!</h4>
+                        {% else %}
+                            <h2 class="display-3">News:</h2>
+                        {% endif %}
+                        {% for news in newslist %}
+                            {% if news.title %}
+                                <h3>
+                                    {{ news.title }}
+                                    <small class="float-right text-muted">{{ news.created_at|date:'d.m.Y H:i' }}</small>
+                                </h3>
+                            {% endif %}
+                            {% if not news.is_visible %}
+                                <p class="text-muted">(news is invisible)</p>
+                            {% endif %}
+                            {{ news.html|safe }}
+                            {% if user.is_superuser %}
+                                <p>
+                                    <a href="{% url 'news_edit' news.id %}"
+                                       class="btn btn-sm btn-dark float-right">Edit
+                                        News</a>
+                                </p>
+                            {% endif %}
+                            <br/>
+                            <hr/>
+                            <br/>
+                        {% endfor %}
+
+
+                        {% if user.is_superuser %}
+                            <p>
+                                <a href="{% url 'news_add' %}"
+                                   class="btn btn-lg btn-secondary">Write News</a>
+                            </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}
+
+{% block scripts %}
+    <script src="{% static 'js/main.js' %}"></script>
+{% endblock %}
+

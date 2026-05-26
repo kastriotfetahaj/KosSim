@@ -1,0 +1,29 @@
+#cloud-config
+package_update: true
+package_upgrade: false
+
+runcmd:
+  - apt-get update
+  - apt-get install -y ca-certificates curl git
+  - install -m 0755 -d /etc/apt/keyrings
+  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+  - chmod a+r /etc/apt/keyrings/docker.asc
+  - echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo $VERSION_CODENAME) stable" > /etc/apt/sources.list.d/docker.list
+  - apt-get update
+  - apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+  - systemctl enable --now docker
+  - mkdir -p /opt/${competition_name}
+  - git clone ${repo_url} /opt/${competition_name}
+  - cd /opt/${competition_name} && git checkout ${repo_ref}
+  - |
+    cat > /opt/${competition_name}/infra/compose/.env.${team_name} << 'EOF'
+    TEAM_NAME=${team_name}
+    SERVICE_PUSH_SECRET=${service_push_secret}
+    NAT_GATEWAY_PORT=${nat_gateway_port}
+    TEAM_SERVICE_1_PORT=${service_1_port}
+    TEAM_SERVICE_2_PORT=${service_2_port}
+    TEAM_SERVICE_3_PORT=${service_3_port}
+    TEAM_SERVICE_4_PORT=${service_4_port}
+    TEAM_SERVICE_5_PORT=${service_5_port}
+    EOF
+  - cd /opt/${competition_name} && docker compose -f infra/compose/team-stack.yml --env-file infra/compose/.env.${team_name} up -d --build

@@ -1,0 +1,21 @@
+Subject: enforce doc.public on LFQL LOAD
+
+The LFQL validator blocks scripts that contain the literal substring
+"/vault/", but LOAD:public::<doc_id> looks up by id in the global doc map
+without checking doc.public. Bind the LOAD branch to public docs.
+
+--- a/service/src/query.rs
++++ b/service/src/query.rs
+@@ -13,9 +13,11 @@
+     for token in script.split_whitespace() {
+         if let Some(raw) = token.strip_prefix("LOAD:") {
+             let doc_id = raw.strip_prefix("public::").unwrap_or(raw);
+             if let Some(doc) = state.docs.get(doc_id) {
+-                out.push(serde_json::json!({"id": doc.id, "body": doc.body}));
++                if doc.public {
++                    out.push(serde_json::json!({"id": doc.id, "body": doc.body}));
++                }
+             }
+         }
+         if token == "LIST:public" {
+             for doc in state.docs.values().filter(|d| d.public) {

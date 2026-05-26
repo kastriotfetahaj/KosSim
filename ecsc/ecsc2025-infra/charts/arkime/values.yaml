@@ -1,0 +1,67 @@
+imagePullSecrets:
+
+nameOverride: ""
+fullnameOverride: ""
+
+ctf: "arkime-demo"
+networkIndex: 32
+
+elasticsearch:
+  nodeCount: 3
+  storage:
+    className: longhorn-ha-databases
+    request: 50G
+  resources:
+    limits:
+      memory: 20G
+
+kibana:
+  nameSuffix: kibana
+  count: 1
+  nodeSelector: { }
+  tolerations: [ ]
+
+elasticSetup:
+  nodeSelector: { }
+  tolerations: [ ]
+
+arkime:
+  image:
+    repository: ci.attacking-lab.com/arkime/arkime
+    tag: ""
+
+  terminationGracePeriod: 0
+
+  # host path for pcap storage
+  pcapHostPath: /mnt/pcaps
+
+  # interface name used by arkime on router nodes
+  interface: router_mesh
+
+  elastic:
+    # secret containing the elastic password (defaults to <es-name>-es-elastic-user)
+    secretName: ""
+
+  capture:
+    extraArgs: [ ]
+
+  configExtra: |
+    # Add extra Arkime settings here if needed
+
+
+multiplexer:
+  name: arkime-multiplexer
+  image: caddy:2.10-alpine
+  imagePullPolicy: IfNotPresent
+
+
+oauth2Proxy:
+  replicas: 1
+  image: quay.io/oauth2-proxy/oauth2-proxy:v7.12.0
+  imagePullPolicy: IfNotPresent
+
+  # Secret with client-id, client-secret and cookie-secret
+  secretName: oauth2-proxy-arkime
+
+  nodeSelector: { }
+  tolerations: [ ]

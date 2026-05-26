@@ -1,0 +1,13 @@
+diff --git a/service/firewall/firewalld/filter b/service/firewall/firewalld/filter
+index 30f0026..719b7e9 100644
+--- a/service/firewall/firewalld/filter
++++ b/service/firewall/firewalld/filter
+@@ -2,7 +2,7 @@ track "tcp" for ("10.0.0.0/24" "fd00:ec5c::/112")
+ track "ftp" for ("10.0.0.2" "fd00:ec5c::2")
+ 
+ state new {
+-  port 21 || port 80 allow
++  dport 21 || dport 80 allow
+   drop
+ }
+ 

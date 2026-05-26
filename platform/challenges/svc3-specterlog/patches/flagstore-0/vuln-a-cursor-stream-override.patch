@@ -1,0 +1,28 @@
+Subject: bind /api/replay stream to the signed cursor
+
+The replay handler reads the cursor's stream after verification but then
+overrides it from the query string when q.mode=delta is supplied. The
+public predicate is also relaxed in delta mode. Both branches let an
+unauthenticated caller pull events from the private stream by presenting a
+valid public cursor.
+
+Apply with: patch -p1 < this.patch  (from the service/ root)
+
+--- a/service/src/routes.ts
++++ b/service/src/routes.ts
+@@ -138,12 +138,11 @@
+   app.get("/api/replay", async (req, reply) => {
+     const q = req.query as Record<string, string>;
+     const cursor = verifyCursor(store.cursorSecret, q.cursor ?? "");
+     if (!cursor) return reply.code(403).send({ error: "bad_cursor" });
+-    let stream = String(cursor.stream ?? "public");
+-    if (q.mode === "delta") stream = q.stream ?? stream;
++    const stream = String(cursor.stream ?? "public");
+     const after = Number(cursor.after ?? 0);
+     return {
+       events: store.events.filter(
+-        (ev) => ev.id >= after && ev.stream === stream && (ev.public || q.mode === "delta"),
++        (ev) => ev.id >= after && ev.stream === stream && ev.public,
+       ),
+     };
+   });

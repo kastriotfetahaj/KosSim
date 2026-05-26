@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VaultGrid</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <main class="vault-cli">
+    <aside class="index">
+      <p class="eyebrow">shard operations console</p>
+      <h1>VaultGrid</h1>
+      <div class="mini-stats">
+        <span><b id="object-count">0</b> objects</span>
+        <span><b id="selected-name">none</b> selected</span>
+      </div>
+      <div id="objects" class="objects"></div>
+    </aside>
+    <section class="terminal">
+      <div class="term-head">
+        <span>vaultgrid@repair-bus</span>
+        <span>interactive</span>
+      </div>
+      <div id="screen" class="screen"></div>
+      <form id="cli" class="prompt">
+        <label for="cmd">vg$</label>
+        <input id="cmd" autocomplete="off" spellcheck="false" value="help">
+        <button>run</button>
+      </form>
+    </section>
+  </main>
+  <script src="/static/app.js"></script>
+</body>
+</html>

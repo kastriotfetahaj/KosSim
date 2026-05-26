@@ -1,0 +1,33 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ctfroute-yml
+  labels:
+  {{- include "ctfroute.labels" . | nindent 4 }}
+data:
+  ctfroute.yml: |
+{{ toYaml .Values.ctfroute | indent 4 }}
+
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: conntrack-ports
+  labels:
+  {{- include "ctfroute.labels" . | nindent 4 }}
+data:
+  ports.conf: |
+    # general
+    tcp:22
+    tcp:80
+    # services
+    tcp:9100
+    tcp:9101
+    tcp:9200
+    tcp:9201
+    tcp:9300
+    tcp:9301
+    tcp:9400
+    tcp:9501

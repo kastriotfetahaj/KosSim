@@ -1,0 +1,29 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: platform-cluster
+  labels:
+    {{ include "platform.labels" . | nindent 4}}
+  annotations:
+    "helm.sh/resource-policy": keep
+spec:
+
+  instances: 1
+  imageName: "ghcr.io/cloudnative-pg/postgresql:17"
+  storage:
+    storageClass: longhorn-ha-postgres
+    size: 4Gi
+    pvcTemplate:
+      volumeMode: Filesystem
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: {{ .Values.ctf }}-postgres
+  annotations:
+    "helm.sh/resource-policy": keep
+spec:
+  name: {{ .Values.ctf }}
+  owner: {{ .Values.ctf }}
+  cluster:
+    name: "platform-cluster"

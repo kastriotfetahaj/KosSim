@@ -1,0 +1,33 @@
+---
+- name: "Install gameserver"
+  ansible.builtin.git: # noqa: latest[git]
+    repo: "{{ gameserver_repo_url }}"
+    dest: "/srv/gameserver"
+
+# - name: "Set gameserver image_registry"
+#   ansible.builtin.lineinfile:
+#     path: "/srv/gameserver/.env"
+#     state: present
+#     create: true
+#     mode: "0644"
+#     line: "{{ item }}"
+#   loop:
+#     - "IMAGE_REGISTRY=ci.attacking-lab.com"
+
+- name: "Set gameserver env"
+  ansible.builtin.copy:
+    dest: "/srv/gameserver/.env"
+    src: "/srv/gameserver/.env.example"
+    mode: preserve
+    remote_src: true
+
+
+- name: "Pull missing images"
+  ansible.builtin.command:
+    argv: ["docker", "compose", "pull", "--ignore-buildable", "--include-deps"]
+    chdir: "/srv/gameserver"
+
+- name: "Build attack_api"
+  ansible.builtin.command:
+    argv: ["docker", "compose", "build"]
+    chdir: "/srv/gameserver"

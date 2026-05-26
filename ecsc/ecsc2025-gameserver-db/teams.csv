@@ -1,0 +1,41 @@
+id,name,vpn_connected,vpn_last_connect,vpn_last_disconnect,affiliation,logo,website,vpn_connection_count,vpn2_connected,wg_vulnbox_connected,wg_boxes_connected
+17,Team Ireland,f,,,,1dc7fc23bc469895e40ab71409ad5992,,0,f,f,f
+8,Team Czechia,f,,,,3c5270be52dc9b2b7db241ae4e6ff035,,0,f,f,f
+2,Team Albania,f,,,,e5e5e92d0e9fdb5f5ec323714e76dcd0,,0,f,f,f
+23,Team Netherlands,f,,,,56f2fdb6886d76d5d1f8da249323d57d,,0,f,f,f
+3,Team Austria,f,,,,e31237bad9d0607fd7f0975915c13942,,0,f,f,f
+25,Team Poland,f,,,,27f9746276e2d9a3af92e09e22ff6996,,0,f,f,f
+4,Team Belgium,f,,,,af08668a370ee61e9b79ac34a7a25cdd,,0,f,f,f
+22,Team Luxembourg,f,,,,3b3c0df2acdeb3a44e8cb24117d9e1cb,,0,f,f,f
+5,Team Bulgaria,f,,,,5011c4aa458b195fcfc3be738305212d,,0,f,f,f
+19,Team Latvia,f,,,,a8a1fc463b335296f2811952cd7ab5d0,,0,f,f,f
+6,Team Croatia,f,,,,17fdcba3d48707776c5d8e963ded2a27,,0,f,f,f
+11,Team Finland,f,,,,a0e6a1dc5a7e6af0f9809f9898bd949e,,0,f,f,f
+7,Team Cyprus,f,,,,a023d2cc52116ddeb0d7517eecbc4bc9,,0,f,f,f
+24,Team Norway,f,,,,b03bf2b0db67ed7a9ebdd1997200f84b,,0,f,f,f
+16,Team Iceland,f,,,,0fd8cb566f012e89cd02e79dfe8bbeac,,0,f,f,f
+9,Team Denmark,f,,,,52fc32ba45313e8fd765b75be3f772e2,,0,f,f,f
+10,Team Estonia,f,,,,a306fb11e6dc1cfeb73916420d2c1c30,,0,f,f,f
+12,Team France,f,,,,0a08f8b70c619e279b3e378abd08dbd2,,0,f,f,f
+13,Team Germany,f,,,,508a904af1af776bd727251a19f00433,,0,f,f,f
+14,Team Greece,f,,,,9d3469b122016d7aeea3ad1a12aa31b6,,0,f,f,f
+15,Team Hungary,f,,,,c99500bf700bc4346d8d582dd62c8d6f,,0,f,f,f
+18,Team Italy,f,,,,91065db9724d6a7d02f28b9eaafeaece,,0,f,f,f
+20,Team Liechtenstein,f,,,,e757d638be289cc8b4b7d6292c017e9e,,0,f,f,f
+21,Team Lithuania,f,,,,829bd5b41f5cda941d09b0edd32a402d,,0,f,f,f
+26,Team Portugal,f,,,,61a9866fb2775434cdce53d668e2817d,,0,f,f,f
+27,Team Romania,f,,,,89ee3163b8c598a16479c01412a1af58,,0,f,f,f
+37,Team Canada,f,,,,5c9bde8f151ea732cb6b91ea6b678deb,,0,f,f,f
+28,Team Serbia,f,,,,b801a4dc77cd74d94b8e7f56406b6c18,,0,f,f,f
+29,Team Slovakia,f,,,,2794dfd97afbf83c513dabda25809679,,0,f,f,f
+30,Team Slovenia,f,,,,4a65bf295b7ecd83911dcad9071d0761,,0,f,f,f
+1,NOP,f,,,,60d6afb8124d8265685254565096ed98,,0,f,f,f
+31,Team Spain,f,,,,2013d980ecdd57bd2aa14c3763d566c2,,0,f,f,f
+39,Team Kosovo,f,,,,73019a0fdc99780efe350c7c399b2335,,0,f,f,f
+32,Team Sweden,f,,,,638de6669b28cb7ef25fac23179a7a15,,0,f,f,f
+33,Team Switzerland,f,,,,fc630eabd93a8a1588addea4bb345e95,,0,f,f,f
+34,Team Ukraine,f,,,,b698c88e218f3f2d6e2a4df3360408c2,,0,f,f,f
+35,Team United Kingdom,f,,,,e88ae3e74822f9f116a15bcac48d14b1,,0,f,f,f
+36,Team Australia,f,,,,9079f774ac80f43c113b85d11085b04c,,0,f,f,f
+38,Team Costa Rica,f,,,,554976b4448d2e15c8c0b6517d241605,,0,f,f,f
+40,Team USA,f,,,,4c927144268894dd8773c54a2256b25f,,0,f,f,f

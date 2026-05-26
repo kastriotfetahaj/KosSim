@@ -1,0 +1,79 @@
+---
+- name: Create /services
+  ansible.builtin.file:
+    path: /services
+    state: directory
+    mode: "0755"
+
+- name: "Template vulnbox-repo path"
+  ansible.builtin.set_fact:
+    vulnbox_checkers_repo_local_repo_path: "./services/{{ inventory_hostname }}/vulnbox_repo"
+
+- name: Clean local services cache
+  become: false
+  ansible.builtin.file:
+    path: "{{ vulnbox_checkers_repo_local_repo_path }}"
+    state: absent
+    mode: "0755"
+  delegate_to: localhost
+
+- name: "Pull vulnbox-repo"
+  become: false
+  ansible.builtin.git: # noqa: latest
+    repo: "{{ vulnbox_checkers_repo_url }}"
+    dest: "{{ vulnbox_checkers_repo_local_repo_path }}"
+  delegate_to: localhost
+
+# - name: "Copy services to vulnbox"
+#   ansible.posix.synchronize:
+#     src: "{{ vulnbox_checkers_repo_local_repo_path }}/services/"
+#     dest: "/services"
+#     rsync_path: "sudo rsync"
+
+- name: "Get submodule urls"
+  become: false
+  ansible.builtin.command:
+    argv: ["git", "submodule", "--quiet", "foreach", "git", "remote", "get-url", "origin"]
+    chdir: "{{ vulnbox_checkers_repo_local_repo_path }}"
+  delegate_to: "localhost"
+  register: vulnbox_checkers_submodule_urls
+
+- name: "Debug submodule paths"
+  ansible.builtin.debug:
+    var: vulnbox_checkers_submodule_urls
+
+- name: "Docker login"
+  ansible.builtin.command:
+    argv:
+      - docker
+      - login
+      - "--username"
+      - "{{ vulnbox_checkers_repo_registry.username }}"
+      - "--password-stdin"
+      - "{{ vulnbox_checkers_repo_registry.server }}"
+    stdin: "{{ vulnbox_checkers_repo_registry.password }}\n"
+  when: "vulnbox_checkers_repo_registry != None"
+  # no_log: true
+
+- name: "Clones checkers"
+  ansible.builtin.command:
+    argv: ["git", "clone", "{{ item }}"]
+    chdir: "/services"
+  with_items: "{{ vulnbox_checkers_submodule_urls.stdout_lines }}"
+
+- name: "Start checkers"
+  ansible.builtin.find:
+    paths: "/services"
+    patterns:
+      - checker
+    recurse: true
+    depth: 2
+    file_type: directory
+  register: vulnbox_checkers_repo_directories
+
+- name: "Prepare checker"
+  ansible.builtin.include_tasks:
+    file: "prepare_checker.yml"
+  loop: "{{ vulnbox_checkers_repo_directories.files }}"
+  loop_control:
+    loop_var: checker_item

@@ -1,0 +1,51 @@
+apiVersion: elasticsearch.k8s.elastic.co/v1
+kind: Elasticsearch
+metadata:
+  name: elasticsearch-arkime
+  labels:
+    {{- include "arkime.labels" . | nindent 4 }}
+spec:
+  version: "9.1.3"
+  http:
+    service:
+      spec:
+        type: NodePort
+        ports:
+          - name: http
+            port: 9200
+            targetPort: 9200
+            nodePort: {{ add 31200 .Values.networkIndex }}
+  nodeSets:
+    - name: default
+      count: {{ .Values.elasticsearch.nodeCount }}
+      config:
+        "node.store.allow_mmap": false
+      volumeClaimTemplates:
+        - metadata:
+            name: elasticsearch-data
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: {{ .Values.elasticsearch.storage.request | quote }}
+            storageClassName: {{ .Values.elasticsearch.storage.className | quote }}
+      podTemplate:
+        spec:
+          containers:
+            - name: elasticsearch
+              {{- with .Values.elasticsearch.resources }}
+              {{- toYaml . | nindent 14 }}
+              {{- end }}
+          nodeSelector:
+            ctfr.attacking-lab.com/role: worker
+            ctfr.attacking-lab.com/ctf: {{ .Values.ctf }}
+          tolerations:
+            - key: ctfr.attacking-lab.com/ctf
+              operator: Equal
+              value: {{ .Values.ctf }}
+              effect: NoExecute
+            - key: ctfr.attacking-lab.com/role
+              operator: Equal
+              value: worker
+              effect: NoExecute

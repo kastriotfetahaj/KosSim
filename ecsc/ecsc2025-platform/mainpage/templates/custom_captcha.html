@@ -1,0 +1,12 @@
+{% load i18n %}
+{% spaceless %}
+    <div class="input-group {{ widget.attrs.container_class }}">
+        <div class="input-group-prepend">
+            {% if audio %}
+                <a title="{% trans "Play CAPTCHA as audio file" %}" href="{{ audio }}">Audio</a>
+            {% endif %}
+            <img src="{{ image }}" alt="captcha" class="captcha"/>
+        </div>
+        {% include "django/forms/widgets/multiwidget.html" %}
+    </div>
+{% endspaceless %}

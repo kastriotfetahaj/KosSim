@@ -1,0 +1,119 @@
+services:
+  nat-gateway:
+    build:
+      context: ../../platform/nat-gateway
+    restart: unless-stopped
+    environment:
+      NAT_TEAM: ${TEAM_NAME}
+    ports:
+      - "${NAT_GATEWAY_PORT:-18081}:8080"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=2).read()"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 10s
+    mem_limit: 192m
+    cpus: 0.35
+
+  svc1:
+    build:
+      context: ../../platform/challenges
+      dockerfile: svc1-ledgerforge/service/Dockerfile
+    restart: unless-stopped
+    environment:
+      TEAM_NAME: ${TEAM_NAME}
+      SERVICE_NAME: svc1
+      SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+      BOOT_FLAG: FLAG{BOOT_${TEAM_NAME}_svc1}
+    ports:
+      - "${TEAM_SERVICE_1_PORT:-22001}:8080"
+    volumes:
+      - svc1_data:/var/lib/ledgerforge
+    healthcheck: &service-healthcheck
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/health >/dev/null"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 10s
+    mem_limit: 384m
+    cpus: 0.75
+
+  svc2:
+    build:
+      context: ../../platform/challenges
+      dockerfile: svc2-vaultgrid/service/Dockerfile
+    restart: unless-stopped
+    environment:
+      TEAM_NAME: ${TEAM_NAME}
+      SERVICE_NAME: svc2
+      SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+      BOOT_FLAG: FLAG{BOOT_${TEAM_NAME}_svc2}
+    ports:
+      - "${TEAM_SERVICE_2_PORT:-22002}:8080"
+    volumes:
+      - svc2_data:/var/lib/vaultgrid
+    healthcheck: *service-healthcheck
+    mem_limit: 384m
+    cpus: 0.75
+
+  svc3:
+    build:
+      context: ../../platform/challenges
+      dockerfile: svc3-specterlog/service/Dockerfile
+    restart: unless-stopped
+    environment:
+      TEAM_NAME: ${TEAM_NAME}
+      SERVICE_NAME: svc3
+      SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+      BOOT_FLAG: FLAG{BOOT_${TEAM_NAME}_svc3}
+    ports:
+      - "${TEAM_SERVICE_3_PORT:-22003}:8080"
+    volumes:
+      - svc3_data:/var/lib/specterlog
+    healthcheck: *service-healthcheck
+    mem_limit: 384m
+    cpus: 0.75
+
+  svc4:
+    build:
+      context: ../../platform/challenges
+      dockerfile: svc4-nanofleet/service/Dockerfile
+    restart: unless-stopped
+    environment:
+      TEAM_NAME: ${TEAM_NAME}
+      SERVICE_NAME: svc4
+      SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+      BOOT_FLAG: FLAG{BOOT_${TEAM_NAME}_svc4}
+    ports:
+      - "${TEAM_SERVICE_4_PORT:-22004}:8080"
+    volumes:
+      - svc4_data:/var/lib/nanofleet
+    healthcheck: *service-healthcheck
+    mem_limit: 384m
+    cpus: 0.75
+
+  svc5:
+    build:
+      context: ../../platform/challenges
+      dockerfile: svc5-policyforge/service/Dockerfile
+    restart: unless-stopped
+    environment:
+      TEAM_NAME: ${TEAM_NAME}
+      SERVICE_NAME: svc5
+      SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+      BOOT_FLAG: FLAG{BOOT_${TEAM_NAME}_svc5}
+    ports:
+      - "${TEAM_SERVICE_5_PORT:-22005}:8080"
+    volumes:
+      - svc5_data:/var/lib/policyforge
+    healthcheck: *service-healthcheck
+    mem_limit: 384m
+    cpus: 0.75
+
+volumes:
+  svc1_data:
+  svc2_data:
+  svc3_data:
+  svc4_data:
+  svc5_data:

@@ -1,0 +1,28 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: arkime-multiplexer-config
+  labels:
+    app: arkime-multiplexer
+    {{- include "arkime.labels" . | nindent 4 }}
+data:
+  Caddyfile: |
+    {
+      admin off
+    } 
+    http://:80 {
+      # Route block to enforce order of handlers
+      route {
+        # Set the header based on the request uri
+        request_header X-Instance {http.request.uri}
+        # Extract first path segment and map to <segment>.routers.<namespace>.svc.cluster.local
+        request_header X-Instance "^/([A-Za-z0-9-]*)/.*$" "$1.routers.{{ default .Release.Namespace }}.svc.cluster.local"
+      }
+
+      reverse_proxy { 
+        dynamic a {
+          port 8005
+          name {http.request.header.X-Instance}
+        }
+      }
+    }

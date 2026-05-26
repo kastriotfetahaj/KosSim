@@ -1,0 +1,12 @@
+---
+argument_specs:
+  main:
+    short_description: "Install a list of tools via uv_tools"
+    author:
+      - "Marc Munier"
+    options:
+      uv_tools_packages:
+        elements: str
+        type: list
+        required: true
+        description: "URL to clone the vulnbox-meta-repository from"

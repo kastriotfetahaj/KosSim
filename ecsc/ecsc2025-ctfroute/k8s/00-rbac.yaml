@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ctfroute-router
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: ctfroute-router
+rules:
+  - verbs:
+      - watch
+      - get
+      - list
+    resources:
+      - gates
+    apiGroups:
+      - ctfroute.attacking-lab.com
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: ctfroute-router
+roleRef:
+  apiGroup: ""
+  kind: Role
+  name: ctfroute-router
+subjects:
+  - kind: "ServiceAccount"
+    name: ctfroute-router

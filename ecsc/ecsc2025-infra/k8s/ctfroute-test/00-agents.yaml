@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: agent
+spec:
+  selector:
+    matchLabels:
+      app: agent
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 100%
+  template:
+    metadata:
+      labels:
+        app: agent
+    spec:
+      nodeSelector:
+        ctfr.attacking-lab.com/role: vulnboxes
+        ctfr.attacking-lab.com/ctf: demo-1
+      tolerations:
+        - key: ctfr.attacking-lab.com/role
+          operator: Equal
+          value: vulnbox
+          effect: NoExecute
+        - key: ctfr.attacking-lab.com/ctf
+          operator: Equal
+          value: demo-1
+          effect: NoExecute
+      volumes:
+        - name: vulnbox-wireguard-confs
+          configMap:
+            name: vulnbox-wireguard-confs
+      imagePullSecrets:
+        - name: ci-attacking-lab-cr
+      terminationGracePeriodSeconds: 10
+      hostNetwork: true
+      containers:
+        - name: vulnbox-testagent
+          image: ci.attacking-lab.com/ctf-route/ctftest:demo-1
+          imagePullPolicy: Always
+          command:
+            - ctftest-agent
+          securityContext:
+            capabilities:
+              add:
+                - "NET_RAW"

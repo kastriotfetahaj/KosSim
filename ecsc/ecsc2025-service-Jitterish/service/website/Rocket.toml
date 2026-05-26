@@ -1,0 +1,7 @@
+[default]
+template_dir = "templates"
+
+[default.limits]
+form = "64 kB"
+string = "64 kB"
+bytes = "64 kB"

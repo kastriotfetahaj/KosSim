@@ -1,0 +1,19 @@
+---
+argument_specs:
+  main:
+    short_description: "Run the k3s install script"
+    author:
+      - "Marc Munier"
+    options:
+      k3s_install_env:
+        description: "Env supplied to the install command"
+        required: false
+        type: "dict"
+        options:
+          INSTALL_K3S_SKIP_ENABLE:
+            type: bool
+            required: false
+
+          INSTALL_K3S_VERSION:
+            type: str
+            required: false

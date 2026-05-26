@@ -1,0 +1,97 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: arkime-oauth2-proxy
+  labels:
+    app: oauth2-proxy
+    {{- include "arkime.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.oauth2Proxy.replicas }}
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: oauth2-proxy
+      {{- include "arkime.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: oauth2-proxy
+        {{- include "arkime.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.oauth2Proxy.nodeSelector }}
+      nodeSelector:
+        {{ toYaml . | nindent 8}}
+      {{- end }}
+      {{- with .Values.oauth2Proxy.tolerations }}
+      tolerations:
+        {{ toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: oauth2-proxy
+          image: "{{ .Values.oauth2Proxy.image }}"
+          imagePullPolicy: {{ .Values.oauth2Proxy.imagePullPolicy }}
+          args:
+            - --http-address=0.0.0.0:4180
+            - --https-address=0.0.0.0:4443
+            - --metrics-address=0.0.0.0:44180
+            - --config=/etc/oauth2_proxy/oauth2_proxy.cfg
+            - --standard-logging=true
+            - --request-logging=true
+            - --auth-logging=true
+          env:
+            - name: OAUTH2_PROXY_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.oauth2Proxy.secretName }}
+                  key: client-id
+            - name: OAUTH2_PROXY_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.oauth2Proxy.secretName }}
+                  key: client-secret
+            - name: OAUTH2_PROXY_COOKIE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.oauth2Proxy.secretName }}
+                  key: cookie-secret
+          ports:
+            - name: http
+              containerPort: 4180
+            - name: metrics
+              containerPort: 44180
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 0
+            timeoutSeconds: 1
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 0
+            timeoutSeconds: 5
+            successThreshold: 1
+            periodSeconds: 10
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ "ALL" ]
+            readOnlyRootFilesystem: true
+            runAsGroup: 2000
+            runAsNonRoot: true
+            runAsUser: 2000
+            seccompProfile:
+              type: RuntimeDefault
+          resources: { }
+          volumeMounts:
+            - name: config
+              mountPath: /etc/oauth2_proxy/oauth2_proxy.cfg
+              subPath: oauth2_proxy.cfg
+      volumes:
+        - name: config
+          configMap:
+            name: arkime-oauth2-proxy
+            defaultMode: 420

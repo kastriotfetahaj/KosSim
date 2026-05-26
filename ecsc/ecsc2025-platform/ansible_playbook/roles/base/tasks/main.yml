@@ -1,0 +1,15 @@
+- name: Update apt cache
+  apt:
+    update_cache: yes
+
+- name: Install packages
+  package:
+    name:
+      - traceroute
+      - vim
+      - tmux
+      - fish
+      - ncat
+      - wireguard
+      - tcpdump
+    state: present

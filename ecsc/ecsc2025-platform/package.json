@@ -1,0 +1,31 @@
+{
+    "name": "ctf-platform",
+    "version": "1.0.0",
+    "description": "A Platform to manage teams and players in an A/D CTF",
+    "main": "index.js",
+    "scripts": {
+        "build": "vite build",
+        "dev": "vite --logLevel info",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "dependencies": {
+        "axios": "^1.7.7",
+        "vue": "^3.5.13"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.15.0",
+        "@types/eslint__js": "^8.42.3",
+        "@vitejs/plugin-vue": "^5.2.0",
+        "eslint": "^9.15.0",
+        "eslint-config-prettier": "^9.1.0",
+        "glob": "^11.0.0",
+        "path": "^0.12.7",
+        "prettier": "^3.3.3",
+        "rollup-plugin-includepaths": "^0.2.4",
+        "typescript": "^5.6.3",
+        "typescript-eslint": "^8.15.0",
+        "vite": "^5.4.11",
+        "vue-eslint-parser": "^9.4.3",
+        "vue-tsc": "^2.1.10"
+    }
+}

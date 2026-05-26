@@ -1,0 +1,5 @@
+- name: "Enable iscsid service"
+  ansible.builtin.systemd:
+    enabled: "{{ open_iscsi_daemon_enabled }}"
+    daemon_reload: true
+    name: "iscsid.service"

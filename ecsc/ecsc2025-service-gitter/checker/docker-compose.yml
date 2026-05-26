@@ -1,0 +1,39 @@
+name: gitter-checker
+
+services:
+  gitter-checker:
+    container_name: gitter-checker
+    build:
+      context: .
+      secrets:
+        - github-pat
+    ports:
+      - 8200:8200
+    environment:
+      - MONGO_ENABLED=1
+      - MONGO_HOST=gitter-mongo
+      - MONGO_PORT=8201
+      - MONGO_USER=gitter_checker
+      - MONGO_PASSWORD=gitter_checker
+    ulimits:
+      nofile: 65535
+    restart: unless-stopped
+  gitter-mongo:
+    container_name: gitter-mongo
+    image: mongo
+    command: mongod --port 8201
+    volumes:
+      - ./data:/data/db
+    ports:
+      - 8201:8201
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: gitter_checker
+      MONGO_INITDB_ROOT_PASSWORD: gitter_checker
+    restart: unless-stopped
+networks:
+  default:
+    name: gitter-checker
+
+secrets:
+  github-pat:
+    environment: GITHUB_PAT

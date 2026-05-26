@@ -1,0 +1,78 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: vulnbox
+  labels:
+    app: vulnbox
+spec:
+  ports:
+    - name: grpc
+      targetPort: 50051
+      port: 50051
+  clusterIP: None
+  selector:
+    app: vulnbox
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: vulnbox
+spec:
+  ordinals:
+    start: 1
+  selector:
+    matchLabels:
+      app: vulnbox
+  serviceName: "vulnbox"
+  replicas: 4
+  podManagementPolicy: Parallel
+  updateStrategy: # Feature still in alpha :/
+    rollingUpdate:
+      maxUnavailable: 3
+  template:
+    metadata:
+      labels:
+        app: vulnbox
+    spec:
+      volumes:
+        - name: vulnbox-wireguard-confs
+          configMap:
+            name: vulnbox-wireguard-confs
+      imagePullSecrets:
+        - name: ci-attacking-lab-cr
+      terminationGracePeriodSeconds: 10
+      initContainers:
+        - name: vulnbox-wireguard
+          image: ci.attacking-lab.com/ctf-route/ctftest:latest
+          imagePullPolicy: Always
+          env:
+            - name: VULNBOX_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['apps.kubernetes.io/pod-index']
+          command:
+            - wg-quick
+            - up
+            - client$(VULNBOX_ID)
+          volumeMounts:
+            - name: vulnbox-wireguard-confs
+              mountPath: /etc/wireguard/
+          securityContext:
+            capabilities:
+              add:
+                - "NET_ADMIN"
+      containers:
+        - name: vulnbox-testagent
+          image: ci.attacking-lab.com/ctf-route/ctftest:latest
+          imagePullPolicy: Always
+          env:
+            - name: VULNBOX_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['apps.kubernetes.io/pod-index']
+          command:
+            - ctftest-agent
+          securityContext:
+            capabilities:
+              add:
+                - "NET_RAW"

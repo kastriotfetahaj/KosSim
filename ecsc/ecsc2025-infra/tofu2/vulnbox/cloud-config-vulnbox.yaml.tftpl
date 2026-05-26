@@ -1,0 +1,12 @@
+#cloud-config
+
+package_update: false
+package_upgrade: false
+
+write_files:
+  - path: /etc/wireguard/game.conf
+    encoding: b64
+    content: ${base64encode(wireguard_conf)}
+
+runcmd:
+  - systemctl enable --now wg-quick@game

@@ -1,0 +1,75 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: redirect-scoreboard-to-https
+  labels:
+    {{- include "gameserver.labels" . | nindent 4 }}
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true
+---
+{{- if .Values.publicScoreBoardHost  }}
+{{- if .Values.createCertificate }}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: scoreboard-tls
+  labels:
+    {{- include "gameserver.labels" . | nindent 4 }}
+spec:
+  dnsNames:
+    - {{ .Values.publicScoreBoardHost }}
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt-http
+  secretName: {{ .Values.scoreboardTlsSecret | default "scoreboard-tls" }}
+{{- end }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: scoreboard-websecure
+  labels:
+    {{- include "gameserver.labels" . | nindent 4}}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`{{ .Values.publicScoreBoardHost }}`)
+      services:
+      {{- if .Values.exposeScoreboardToTheWorld }}
+        - kind: Service
+          name: gameserver
+          port: scoreboard
+      {{- else }}
+        - kind: TraefikService
+          name: noop@internal
+      {{- end }}
+  {{- if .Values.scoreboardTlsSecret }}
+  tls:
+    secretName: {{ .Values.scoreboardTlsSecret }}
+  {{- else if .Values.createCertificate }}
+  tls:
+    secretName: {{ .Values.scoreboardTlsSecret | default "scoreboard-tls" }}
+  {{- end }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: scoreboard-web
+  labels:
+    {{- include "gameserver.labels" . | nindent 4}}
+spec:
+  entryPoints:
+    - web
+  routes:
+    - kind: Rule
+      match: Host(`{{ .Values.publicScoreBoardHost }}`)
+      middlewares:
+        - name: redirect-scoreboard-to-https
+      services:
+        - kind: TraefikService
+          name: noop@internal
+{{- end }}

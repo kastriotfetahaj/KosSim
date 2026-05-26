@@ -1,0 +1,152 @@
+{{#*inline "page"}}
+    <h1>
+        Documentation
+        <span class="subtitle">the fastest query language in the cyberspace</span>
+    </h1>
+
+    <div data-augmented-ui class="content-card-1">
+        <h3 class="title">Data Format</h3>
+        <p>
+            We store arbitrary JSON objects, in an append-only storage.
+            You can organize your objects in different <em>collections</em>.
+        </p>
+        <p>Example data:</p>
+        <pre class="demo-code">
+<span class="cmd">APPEND</span> <span class="collection">employees</span> {"id": "e1", "name": "Aria",   "division": "HR", "joined": 2127}
+<span class="cmd">APPEND</span> <span class="collection">employees</span> {"id": "e2", "name": "Xyla",   "division": "HR", "joined": 2124}
+<span class="cmd">APPEND</span> <span class="collection">employees</span> {"id": "e3", "name": "Alaric", "division": "Support", "joined": 2125}
+<span class="cmd">APPEND</span> <span class="collection">bonus</span> {"employee": "Xyla",   "bonus": 100, "comment": null}
+<span class="cmd">APPEND</span> <span class="collection">bonus</span> {"employee": "Xyla",   "bonus": 300, "comment": "saving the ceo"}
+<span class="cmd">APPEND</span> <span class="collection">bonus</span> {"employee": "Alaric", "bonus": 200, "comment": null}</pre>
+        <p> To fill up the database with the presented example, go to <em>Write to collection</em>, insert <em>employees</em> as collection and the json as data.</p>
+        <p>We'll use the <em>bonus</em> collection in the upcoming examples.</p>
+    </div>
+
+
+    <div data-augmented-ui class="content-card-2">
+        <h3 class="title">Simple Queries</h3>
+        <p>
+            We use a map-reduce approach.
+            A query (keyword <code>query</code>) selects a collection, and then filters, transforms, and summarizes its content.
+            Filters, transformations, and summarizers are written as functions (keyword <code>func</code>).
+        </p>
+        <p>Example 1: Select an employee by name</p>
+        <pre class="demo-code">
+<span class="keyword">func</span> <span class="ident">name_is_xyla</span>(entry) {
+    <span class="keyword">return</span> entry[<span class="constant">"employee"</span>] == <span class="constant">"Xyla"</span>;
+}
+
+<span class="keyword">query</span> <span class="ident">get_xylas_bonus</span> <span class="keyword">on</span> <span class="collection">bonus</span>
+<span class="keyword">filter</span> name_is_xyla;</pre>
+        <pre class="demo-code">
+<span class="cmd">EXECUTE</span> <span class="ident">get_xylas_bonus</span>
+<span class="response">{"employee": "Xyla", "bonus": 100, "comment": null}</span>
+<span class="response">{"employee": "Xyla", "bonus": 300, "comment": "saving the ceo"}</span></pre>
+    </div>
+
+
+    <div data-augmented-ui class="content-card-1">
+        <h3 class="title">Queries with parameter</h3>
+        <p>
+            Queries can have a parameter. It is passed to all functions used in the query.
+        </p>
+        <p>Example 2: Select an employee by name</p>
+        <pre class="demo-code">
+<span class="keyword">func</span> <span class="ident">name_is</span>(entry, <span class="hl">param</span>) {
+    <span class="keyword">return</span> entry[<span class="constant">"employee"</span>] == <span class="hl">param</span>;
+}
+
+<span class="keyword">query</span> <span class="ident">get_employee_bonus</span> <span class="keyword">on</span> <span class="collection">bonus</span>
+<span class="keyword">filter</span> name_is;</pre>
+                <pre class="demo-code">
+<span class="cmd">EXECUTE</span> <span class="ident">get_employee_bonus</span> <span class="constant hl">&quot;Alaric&quot;</span>
+<span class="response">{"employee": "Alaric", "bonus": 200, "comment": null}</span></pre>
+    </div>
+
+
+    <div data-augmented-ui class="content-card-2">
+        <h3 class="title">Full Queries</h3>
+        <p>Example 3: Select the sum of all bonus payments for an employee</p>
+        <pre class="demo-code">
+<span class="keyword">func</span> <span class="ident">name_is</span>(entry, param) {
+    <span class="keyword">return</span> entry[<span class="constant">"employee"</span>] == param;
+}
+
+<span class="keyword">func</span> <span class="ident">get_bonus</span>(entry) {
+    <span class="keyword">return</span> entry[<span class="constant">"bonus"</span>];
+}
+
+<span class="keyword">func</span> <span class="ident">sum</span>(entry, acc) {
+    <span class="keyword">return</span> (acc ?: <span class="constant">0</span>) + entry;
+}
+
+<span class="keyword">query</span> <span class="ident">employee_bonus_sum</span> <span class="keyword">on</span> <span class="collection">bonus</span>
+<span class="keyword">filter</span> name_is
+<span class="keyword">map</span> get_bonus
+<span class="keyword">reduce</span> sum;</pre>
+                <pre class="demo-code">
+<span class="cmd">EXECUTE</span> <span class="ident">employee_bonus_sum</span> <span class="constant">&quot;Xyla&quot;</span>
+<span class="response">400</span></pre>
+
+        <hr/>
+        <p>How does that work? Let's go through it step by step:</p>
+        <ol class="demo-code">
+            <li>
+                <pre><span class="cmd">EXECUTE</span> <span class="ident">employee_bonus_sum</span> <span class="constant">&quot;Xyla&quot;</span></pre>
+                set <code>param = "Xyla"</code>, execute query/func <span class="ident">employee_bonus_sum</span>
+            </li>
+            <li>
+                <pre><span class="keyword">query</span> <span class="ident">employee_bonus_sum</span> <span class="keyword">on</span> <span class="collection">bonus</span></pre>
+                read collection <span class="collection">bonus</span>. current data:
+                <pre class="data">{"employee": "Xyla",   "bonus": 100, "comment": null}
+{"employee": "Xyla",   "bonus": 300, "comment": "saving the ceo"}
+{"employee": "Alaric", "bonus": 200, "comment": null}</pre>
+            </li>
+            <li>
+                <pre><span class="keyword">filter</span> name_is</pre>
+                call <code><span class="ident">name_is</span>({"employee": ...}, <span class="constant">"Xyla"</span>)</code> for each entry, discard if false.
+                <pre class="data">{"employee": "Xyla",   "bonus": 100, "comment": null}
+{"employee": "Xyla",   "bonus": 300, "comment": "saving the ceo"}</pre>
+            </li>
+            <li>
+                <pre><span class="keyword">map</span> get_bonus</pre>
+                call <code><span class="ident">get_bonus</span>({"employee": ...}, <span class="constant">"Xyla"</span>)</code> for each entry, keep result.
+                <pre class="data">100
+300</pre>
+            </li>
+            <li>
+                <pre><span class="keyword">reduce</span> sum;</pre>
+                call <code>acc = <span class="ident">sum</span>(entry, acc);</code> for each entry and return <code>acc</code>:
+                <ul><li><code>acc = sum(100, undefined)  => 100</code></li></ul>
+                <ul><li><code>acc = sum(300, 100)        => 400</code></li></ul>
+                result:
+                <pre class="data">400</pre>
+            </li>
+        </ol>
+    </div>
+
+
+    <div data-augmented-ui class="content-card-1">
+        <h3 class="title">Objects</h3>
+        <p>You can work with objects in any place, just ensure you initialize them properly.</p>
+        <p>Example 4: Select the sum of all bonus payments for <em>all</em> employees</p>
+        <pre class="demo-code">
+<span class="comment">// invoked once for every entry</span>
+<span class="comment">// acc is preserved (starting with undefined)</span>
+<span class="keyword">func</span> <span class="ident">sum_bonus_per_employee</span>(entry, acc) {
+    <span class="keyword">if</span> !<span class="op">defined</span> acc  acc = {};         <span class="comment">// initialize acc as object</span>
+    acc[entry[<span class="constant">"employee"</span>]] =
+        (acc[entry[<span class="constant">"employee"</span>]] ?: <span class="constant">0</span>)  <span class="comment">// initialize value with 0</span>
+        + entry[<span class="constant">"bonus"</span>];              <span class="comment">// sum bonus</span>
+    <span class="keyword">return</span> acc;
+}
+
+<span class="keyword">query</span> <span class="ident">all_employee_bonus_sum</span> <span class="keyword">on</span> <span class="collection">bonus</span>
+<span class="keyword">reduce</span> sum_bonus_per_employee;</pre>
+                <pre class="demo-code">
+<span class="cmd">EXECUTE</span> <span class="ident">sum_bonus_per_employee</span>
+<span class="response">{"Xyla": 400, "Alaric": 200}</span></pre>
+    </div>
+
+{{/inline}}
+{{> default title="Documentation" pagename="docs"}}

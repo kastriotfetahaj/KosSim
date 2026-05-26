@@ -1,0 +1,84 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: router
+  labels:
+    app: router
+spec:
+  # TODO: Wireguard
+  ports: [ ]
+  clusterIP: None
+  selector:
+    app: router
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: router
+spec:
+  ordinals:
+    start: 1
+  selector:
+    matchLabels:
+      app: router
+  serviceName: "router"
+  replicas: 3
+  podManagementPolicy: Parallel
+  updateStrategy: # Feature still in alpha :/
+    rollingUpdate:
+      maxUnavailable: 3
+  template:
+    metadata:
+      labels:
+        app: router
+    spec:
+      serviceAccountName: ctfroute-router
+      imagePullSecrets:
+        - name: ci-attacking-lab-cr
+      volumes:
+        - name: ctfroute-yml
+          configMap:
+            name: ctfroute-yml
+        - name: metrics
+          emptyDir: { }
+      terminationGracePeriodSeconds: 2
+      containers:
+        - name: router
+          image: ci.attacking-lab.com/ctf-route/ctfroute:latest
+          imagePullPolicy: Always
+          env:
+            - name: CTF_ROUTE_RID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['apps.kubernetes.io/pod-index']
+          command:
+            - ctfroute
+            - /etc/ctfroute/ctfroute.yml
+          volumeMounts:
+            - name: ctfroute-yml
+              mountPath: /etc/ctfroute/
+            - name: metrics
+              mountPath: /var/ctfroute/metrics/
+          securityContext:
+            capabilities:
+              add:
+                - "NET_ADMIN"
+        - name: metrics
+          image: caddy:2.10-alpine
+          imagePullPolicy: IfNotPresent
+          workingDir: /var/ctfroute/metrics/
+          command:
+            - caddy
+            - file-server
+            - --root
+            - .
+            - -l
+            - 0.0.0.0:9000
+          volumeMounts:
+            - name: metrics
+              mountPath: /var/ctfroute/metrics/
+          ports:
+            - name: metrics
+              containerPort: 9000
+              protocol: TCP
+---

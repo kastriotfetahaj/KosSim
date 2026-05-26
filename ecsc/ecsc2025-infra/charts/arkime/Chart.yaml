@@ -1,0 +1,8 @@
+apiVersion: v2
+name: arkime
+description: Arkime deployment on multiple routers with oauth2-proxy
+
+type: application
+version: 0.1.0
+# Doesn't really make sense here because we deploy multiple applications
+appVersion: 0.1.0

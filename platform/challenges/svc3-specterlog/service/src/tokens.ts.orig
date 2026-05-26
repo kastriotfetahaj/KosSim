@@ -1,0 +1,126 @@
+import { createHmac, createHash, randomBytes } from "node:crypto";
+
+function b64(data: Buffer | string): string {
+  return Buffer.from(data).toString("base64url");
+}
+
+function fromB64(value: string): Buffer {
+  return Buffer.from(value, "base64url");
+}
+
+export function shortHash(text: string): string {
+  return createHash("sha256").update(text).digest("hex").slice(0, 18);
+}
+
+export function newId(prefix: string): string {
+  return `${prefix}_${randomBytes(8).toString("hex")}`;
+}
+
+export function signCursor(secret: string, payload: Record<string, unknown>): string {
+  const body = b64(JSON.stringify(payload));
+  const sig = createHmac("sha256", secret).update(body).digest("base64url");
+  return `${body}.${sig}`;
+}
+
+export function verifyCursor(secret: string, token: string): Record<string, unknown> | null {
+  const [body, sig] = token.split(".");
+  if (!body || !sig) return null;
+  const want = createHmac("sha256", secret).update(body).digest("base64url");
+  if (want !== sig) return null;
+  try {
+    return JSON.parse(fromB64(body).toString("utf8")) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+export type DownloadClaim = {
+  case_id: string;
+  handle: string;
+  exp: number;
+};
+
+export function signDownload(secret: string, claim: DownloadClaim): string {
+  const body = `${claim.case_id}|${claim.handle}|${claim.exp}`;
+  return createHmac("sha256", secret).update(body).digest("hex");
+}
+
+export function verifyDownload(secret: string, claim: DownloadClaim, sig: string): boolean {
+  const expect = signDownload(secret, claim);
+  if (expect.length !== sig.length) return false;
+  let diff = 0;
+  for (let i = 0; i < expect.length; i++) diff |= expect.charCodeAt(i) ^ sig.charCodeAt(i);
+  return diff === 0;
+}
+
+export type ViewClaims = {
+  sub: string;
+  scope: string;
+  brief_id: string;
+  exp: number;
+};
+
+export function signView(secret: string, claims: ViewClaims): string {
+  const header = b64(JSON.stringify({ alg: "HS256", typ: "view" }));
+  const body = b64(JSON.stringify(claims));
+  const sig = createHmac("sha256", secret).update(`${header}.${body}`).digest("base64url");
+  return `${header}.${body}.${sig}`;
+}
+
+export type ViewVerifyResult =
+  | { ok: true; claims: ViewClaims }
+  | { ok: false; reason: string };
+
+export function verifyView(secret: string, token: string): ViewVerifyResult {
+  const parts = token.split(".");
+  if (parts.length !== 3) return { ok: false, reason: "shape" };
+  const [headerB64, bodyB64, sig] = parts;
+  let header: Record<string, unknown>;
+  let body: Record<string, unknown>;
+  try {
+    header = JSON.parse(fromB64(headerB64).toString("utf8")) as Record<string, unknown>;
+    body = JSON.parse(fromB64(bodyB64).toString("utf8")) as Record<string, unknown>;
+  } catch {
+    return { ok: false, reason: "decode" };
+  }
+  const alg = String(header.alg ?? "");
+  if (alg !== "HS256") return { ok: false, reason: "alg" };
+  const want = createHmac("sha256", secret).update(`${headerB64}.${bodyB64}`).digest("base64url");
+  if (want !== sig) return { ok: false, reason: "sig" };
+  const claims: ViewClaims = {
+    sub: String(body.sub ?? ""),
+    scope: String(body.scope ?? ""),
+    brief_id: String(body.brief_id ?? ""),
+    exp: Number(body.exp ?? 0),
+  };
+  if (claims.exp && claims.exp < Math.floor(Date.now() / 1000)) {
+    return { ok: false, reason: "expired" };
+  }
+  return { ok: true, claims };
+}
+
+export type SessionClaim = {
+  uid: number;
+  exp: number;
+};
+
+export function signSession(secret: string, claim: SessionClaim): string {
+  const body = b64(JSON.stringify(claim));
+  const sig = createHmac("sha256", secret).update(body).digest("base64url");
+  return `${body}.${sig}`;
+}
+
+export function verifySession(secret: string, token: string): SessionClaim | null {
+  const [body, sig] = token.split(".");
+  if (!body || !sig) return null;
+  const want = createHmac("sha256", secret).update(body).digest("base64url");
+  if (want !== sig) return null;
+  try {
+    const parsed = JSON.parse(fromB64(body).toString("utf8")) as SessionClaim;
+    if (typeof parsed.uid !== "number" || typeof parsed.exp !== "number") return null;
+    if (parsed.exp < Math.floor(Date.now() / 1000)) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}

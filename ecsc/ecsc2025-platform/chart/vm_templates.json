@@ -1,0 +1,46 @@
+[
+  {
+    "name": "Vulnbox",
+    "description": "Vulnbox for ECSC 2025 Infra Test",
+    "ip_suffix": 2,
+    "template": {
+      "kind": "VB",
+      "sshkey": "{{ssh_keys}}",
+      "files": {
+        "/etc/wireguard/vulnbox.conf": {
+          "content": "{{wireguard_config_file}}",
+          "permission": "0600",
+          "owner": "root:root"
+        }
+      },
+      "action_counters": {
+        "reboot": 0,
+        "reset": 0,
+        "reset_root_password": 0
+      },
+      "root_password": "{{generate}}"
+    }
+  },
+  {
+    "name": "Exploiter",
+    "description": "Exploiter for ECSC 2025 Infra Test",
+    "ip_suffix": 3,
+    "template": {
+      "kind": "EX",
+      "sshkey": "{{ssh_keys}}",
+      "files": {
+        "/etc/wireguard/vulnbox.conf": {
+          "content": "{{wireguard_config_file}}",
+          "permission": "0600",
+          "owner": "root:root"
+        }
+      },
+      "action_counters": {
+        "reboot": 0,
+        "reset": 0,
+        "reset_root_password": 0
+      },
+      "root_password": "{{generate}}"
+    }
+  }
+]

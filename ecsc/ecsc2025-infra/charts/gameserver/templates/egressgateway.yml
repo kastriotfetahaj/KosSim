@@ -1,0 +1,20 @@
+apiVersion: cilium.io/v2
+kind: CiliumEgressGatewayPolicy
+metadata:
+  name: {{ include "gameserver.fullname" . }}-{{ .Release.Namespace }}-infra-net-via-gameserver
+spec:
+  selectors:
+    - podSelector: { }
+      nodeSelector:
+        matchExpressions:
+          - key: ctfr.attacking-lab.com/role
+            operator: NotIn
+            values: [ vulnbox ]
+  destinationCIDRs:
+    - 10.{{ .Values.networkIndex }}.251.0/24
+  egressGateway:
+    nodeSelector:
+      matchLabels:
+        ctfr.attacking-lab.com/ctf: {{ .Values.ctf }}
+        ctfr.attacking-lab.com/gameserver: primary
+

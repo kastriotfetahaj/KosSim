@@ -1,0 +1,12 @@
+diff --git a/platform/challenges/svc5-policyforge/service/lib/policy_forge/state.ex b/platform/challenges/svc5-policyforge/service/lib/policy_forge/state.ex
+--- a/platform/challenges/svc5-policyforge/service/lib/policy_forge/state.ex
++++ b/platform/challenges/svc5-policyforge/service/lib/policy_forge/state.ex
+@@
+-      key = "#{session["user"]}:#{obj.tenant}:#{obj.class}"
++      key = "#{session["user"]}:#{obj.tenant}:#{obj.class}:#{object_id}:#{obj.owner}"
+diff --git a/platform/challenges/svc5-policyforge/service/lib/policy_forge/snapshot.ex b/platform/challenges/svc5-policyforge/service/lib/policy_forge/snapshot.ex
+--- a/platform/challenges/svc5-policyforge/service/lib/policy_forge/snapshot.ex
++++ b/platform/challenges/svc5-policyforge/service/lib/policy_forge/snapshot.ex
+@@
+-      if tenant_claim == "public" or obj.public do
++      if tenant_claim == obj.tenant or obj.public do

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block head %}
+  <base href="{{ url_for('manager.index') }}">
+{% endblock %}
+{% block content %}
+  <table id="advanced">
+    <caption>Raw Get</caption>
+    <tr>
+      <td class="label"><label for="advanced-get-input">Data (hex-encoded)</label></td>
+      <td class="input"><input type="text" id="advanced-get-input" name="advanced-get-input" pattern="([0-9a-fA-F]{2})+"></td>
+    </tr>
+    <tr class="results">
+      <td class="label">Result</td>
+      <td id="advanced-result"></td>
+    </tr>
+    <tr>
+      <td colspan="2" class="button"><button onclick="advancedGet()">Get Value</button></td>
+    </tr>
+  </table>
+{% endblock %}
+{% block atend %}
+  <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+{% endblock %}

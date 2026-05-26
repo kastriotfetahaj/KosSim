@@ -1,0 +1,15 @@
+---
+- name: "Fetch k3s install script"
+  ansible.builtin.get_url:
+    url: "https://get.k3s.io"
+    dest: "/tmp/install_k3s.sh"
+    mode: "0744"
+  become: true
+
+- name: "Run k3s install script"
+  ansible.builtin.command:
+    argv: ["/tmp/install_k3s.sh", "agent"]
+  environment:
+    INSTALL_K3S_SKIP_ENABLE: "{{ k3s_install_env.INSTALL_K3S_SKIP_ENABLE | lower | default('') }}"
+    INSTALL_K3S_VERSION: "{{ k3s_install_env.INSTALL_K3S_VERSION | default('') }}"
+  changed_when: true

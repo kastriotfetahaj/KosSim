@@ -1,0 +1,19 @@
+Subject: empty treasury viewer scopes deny, not allow
+
+check_scope returned true when the viewer's scope set is empty, intending
+to mean "no scope constraint required". The seeded public-viewer ships with
+scopes=[], which therefore reads receipts of any scope. Reverse the
+default: an empty scope set must mean "no scopes granted".
+
+--- a/service/src/treasury.rs
++++ b/service/src/treasury.rs
+@@ -66,11 +66,11 @@
+ }
+
+ fn check_scope(viewer_scopes: &[String], receipt: &Receipt) -> bool {
+     if viewer_scopes.is_empty() {
+-        return true;
++        return false;
+     }
+     viewer_scopes.iter().any(|s| *s == receipt.scope)
+ }

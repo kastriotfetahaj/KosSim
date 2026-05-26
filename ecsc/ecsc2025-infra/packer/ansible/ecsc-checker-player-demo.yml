@@ -1,0 +1,12 @@
+- name: "ECSC-Checker-Player-Demo"
+  hosts: all
+  become: true
+  become_method: ansible.builtin.sudo
+  vars_files:
+    - "static.yml"
+    - "secrets.yml"
+
+  roles:
+    - role: vulnbox_checkers_repo
+      vulnbox_checkers_repo_url: "{{ player_demo_vulnbox_meta_repo_url }}"
+      vulnbox_checkers_repo_env_secrets: "{{ checker_env_secrets }}"

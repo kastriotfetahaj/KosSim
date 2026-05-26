@@ -1,0 +1,31 @@
+---
+- name: Check if journalbeat is installed
+  ansible.builtin.command: dpkg-query -W journalbeat
+  register: journalbeat_check_deb
+  failed_when: journalbeat_check_deb.rc > 1
+  changed_when: journalbeat_check_deb.rc == 1
+
+- name: Download journalbeat
+  ansible.builtin.get_url:
+    url: "https://artifacts.elastic.co/downloads/beats/journalbeat/journalbeat-7.6.2-amd64.deb"
+    dest: "/tmp/journalbeat.deb"
+    mode: "0644"
+  when: journalbeat_check_deb.rc == 1
+
+- name: Install journalbeat
+  ansible.builtin.apt:
+    deb: "/tmp/journalbeat.deb"
+  become: true
+  when: journalbeat_check_deb.rc == 1
+
+- name: Sync journalbeat config
+  ansible.builtin.template:
+    src: journalbeat.yml.j2
+    dest: /etc/journalbeat/journalbeat.yml
+    mode: "0644"
+
+- name: Enable and start journalbeat
+  ansible.builtin.service:
+    name: journalbeat
+    state: restarted
+    enabled: true

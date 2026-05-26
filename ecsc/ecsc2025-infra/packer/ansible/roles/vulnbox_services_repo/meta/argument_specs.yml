@@ -1,0 +1,14 @@
+---
+argument_specs:
+  main:
+    short_description: "Install services into /service via a meta repository"
+    author:
+      - "Marc Munier"
+    options:
+      vulnbox_services_repo_url:
+        type: str
+        required: true
+        description: "URL to clone the vulnbox-meta-repository from"
+      vulnbox_services_repo_encryption_pw:
+        type: str
+        required: true

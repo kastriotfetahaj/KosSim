@@ -1,0 +1,34 @@
+# There are several serviceMonitors already installed
+# with the helm-chart!
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  namespace: kube-prometheus
+  name: node-exporter
+  labels:
+    cluster-prometheus: "true"
+spec:
+  endpoints:
+    - targetPort: 9100
+  scrapeClass: daemonset
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: prometheus-node-exporter
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  namespace: kube-prometheus
+  name: longhorn
+  labels:
+    cluster-prometheus: "true"
+spec:
+  selector:
+    matchLabels:
+      app: longhorn-manager
+  namespaceSelector:
+    matchNames:
+      - longhorn-system
+  endpoints:
+    - port: manager

@@ -1,0 +1,35 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: gameserver-postgres
+  labels:
+    {{ include "gameserver.labels" . | nindent 4}}
+  annotations:
+    "helm.sh/resource-policy": keep
+spec:
+  instances: 2
+  affinity:
+    topologyKey: kubernetes.io/hostname
+    podAntiAffinityType: required
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: ctfr.attacking-lab.com/gameserver
+                operator: Exists
+    tolerations:
+      - key: ctfr.attacking-lab.com/role
+        operator: Equal
+        value: worker
+        effect: NoExecute
+      - key: ctfr.attacking-lab.com/ctf
+        operator: Equal
+        value: {{ .Values.ctf }}
+        effect: NoExecute
+  imageName: "ghcr.io/cloudnative-pg/postgresql:17"
+  storage:
+    storageClass: longhorn-ha-postgres
+    size: 4Gi
+    pvcTemplate:
+      volumeMode: Filesystem
+---

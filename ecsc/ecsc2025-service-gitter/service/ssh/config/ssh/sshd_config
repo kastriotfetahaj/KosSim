@@ -1,0 +1,13 @@
+PermitRootLogin prohibit-password
+
+PubkeyAuthentication yes
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+UsePAM no
+
+ExposeAuthInfo yes
+AcceptEnv GIT_PROTOCOL
+AllowUsers git
+
+AuthorizedKeysCommand /opt/gitter-keys
+AuthorizedKeysCommandUser root

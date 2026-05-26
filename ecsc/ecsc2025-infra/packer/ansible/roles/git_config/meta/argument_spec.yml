@@ -1,0 +1,16 @@
+argument_specs:
+  main:
+    short_description: "Setup aliases"
+    author:
+      - "Marc Munier"
+
+    options:
+      git_config_email:
+        type: str
+        required: true
+        description: "user.email to configure"
+
+      git_config_name:
+        type: dict
+        required: true
+        description: "user.name to configure"

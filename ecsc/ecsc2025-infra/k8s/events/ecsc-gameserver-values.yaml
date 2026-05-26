@@ -1,0 +1,9 @@
+publicScoreBoardHost: scoreboard.ad.ecsc2025.pl
+
+createCertificate: true
+
+# 418 if false
+exposeScoreboardToTheWorld: true
+
+ctf: ecsc
+networkIndex: 42

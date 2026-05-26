@@ -1,0 +1,65 @@
+:root {
+  color-scheme: dark;
+  --bg: #061712;
+  --panel: #0c271e;
+  --line: #245945;
+  --text: #eafff5;
+  --muted: #91b9a7;
+  --accent: #63f0a7;
+  --amber: #f6c85f;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #04100d;
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+.fleet-shell { min-height: 100vh; display: grid; grid-template-columns: minmax(0, 1fr) 390px; }
+.map {
+  position: relative;
+  overflow: hidden;
+  min-height: 100vh;
+  padding: 30px;
+  background: linear-gradient(120deg, rgba(99, 240, 167, .08), transparent 45%), linear-gradient(#071c16, #04100d);
+}
+.map::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(99, 240, 167, .08) 1px, transparent 1px), linear-gradient(rgba(99, 240, 167, .08) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+header { position: relative; z-index: 1; max-width: 680px; }
+header p { margin: 0 0 8px; color: var(--accent); text-transform: uppercase; letter-spacing: .18em; font-size: 12px; font-weight: 800; }
+h1 { margin: 0; font-size: 64px; letter-spacing: 0; }
+h2 { margin: 0 0 16px; font-size: 20px; }
+.nodes { position: relative; z-index: 1; height: calc(100vh - 180px); min-height: 520px; margin-top: 24px; border: 1px solid var(--line); }
+.node {
+  position: absolute;
+  width: 170px;
+  min-height: 112px;
+  border: 1px solid var(--line);
+  background: rgba(12, 39, 30, .92);
+  padding: 12px;
+  cursor: pointer;
+}
+.node.active { border-color: var(--amber); box-shadow: 0 0 0 2px rgba(246, 200, 95, .22); }
+.node strong { display: block; color: var(--accent); text-transform: uppercase; font-size: 12px; }
+.node b { display: block; margin: 8px 0; color: var(--amber); font-size: 22px; }
+.node code { color: var(--muted); overflow-wrap: anywhere; font-size: 11px; }
+.control { border-left: 1px solid var(--line); background: #071611; padding: 28px; display: flex; flex-direction: column; gap: 10px; }
+button { min-height: 42px; border: 1px solid var(--line); background: transparent; color: var(--text); font-weight: 800; cursor: pointer; }
+button:hover { border-color: var(--accent); color: var(--accent); }
+.prompt { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; margin-top: 8px; }
+.prompt label { align-self: center; color: var(--accent); font-family: ui-monospace, monospace; }
+.prompt input { min-width: 0; min-height: 42px; border: 1px solid var(--line); background: #030b09; color: var(--text); padding: 0 10px; font-family: ui-monospace, monospace; }
+.prompt button { min-width: 64px; }
+pre { flex: 1; min-height: 300px; white-space: pre-wrap; overflow: auto; background: #030b09; border: 1px solid var(--line); color: var(--text); padding: 12px; }
+@media (max-width: 900px) {
+  .fleet-shell { grid-template-columns: 1fr; }
+  .control { border-left: 0; }
+  .node { position: static; width: auto; margin: 10px; }
+  .nodes { height: auto; }
+}

@@ -1,0 +1,7 @@
+{% extends "admin/base.html" %}
+{% load static %}
+{% block extrastyle %}
+    {% if site_environment %}
+        <link href="{% static 'css/env-'|add:site_environment|add:'.css' %}" rel="stylesheet">
+    {% endif %}
+{% endblock %}

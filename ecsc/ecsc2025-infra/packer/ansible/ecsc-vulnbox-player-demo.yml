@@ -1,0 +1,34 @@
+---
+- name: Player Demo Vulnbox
+  hosts: all
+  become: true
+  become_method: ansible.builtin.sudo
+  vars_files:
+    - "static.yml"
+    - "secrets.yml"
+  pre_tasks:
+    - name: Print all available facts
+      ansible.builtin.debug:
+        var: ansible_facts
+  roles:
+    - base
+    - firewall
+    - docker
+    - docker_block_external
+
+    # - role: vuln_services
+    #   vuln_services_run_build: true
+    # - vulnbox_enomoloch
+    # - bambixploit
+    - root_password_login
+    - role: programs
+      vars:
+        programs_list:
+          - unzip
+          - iperf3
+    # - role: pip_packages
+    #   vars:
+    #     pip_packages_list:
+    #       - pwntools
+    - role: vulnbox_services_repo
+      vulnbox_services_repo_url: "{{ player_demo_vulnbox_meta_repo_url }}"

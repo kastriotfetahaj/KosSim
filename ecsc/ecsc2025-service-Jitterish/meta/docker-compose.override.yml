@@ -1,0 +1,10 @@
+services:
+  cleanup-source:
+    image: debian:trixie
+    volumes:
+      - ./:/service
+      - ../meta:/meta
+    working_dir: /service/
+    command: /meta/cleanup.sh && /meta/default-data.sh
+    profiles:
+      - donotstart # Service doesn't start with docker-compose up

@@ -1,0 +1,264 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load mainpage %}
+{% load vite %}
+{% block content %}
+<br>
+<section>
+    <div class="container align-items-center">
+        <div class="page-header">
+            <h1>Team Profile:</h1>
+        </div>
+        <div class="flatpage-content">
+            <div class="card">
+                <div class="row">
+                    <div class="col-md-2" id="team_logo">
+                        <button id="logo_edit" type="button" class="btn btn-primary"
+                                style="position: absolute;top: 10px;right: -5px;" hidden>Edit (max 1.5MB)
+                        </button>
+                        <img class="team-logo" src="{% team_logo team %}">
+                        {% if player.is_at_least_technician %}
+                            <form action="{% url 'change_logo' %}" method="POST"
+                                  enctype="multipart/form-data" class="team-logo-form">
+                                <input id="file-input" type="file" name="new_logo" class="team-logo-input"/>
+                                {% csrf_token %}
+                            </form>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-10">
+                        <ul class="list-group in-card-row" style="margin:0px">
+                            <li class="list-group-item">
+                                Your Team:
+                                <h5 class="card-title settings mb-0">{{ team.name }}</h5>
+                            </li>
+                           {% comment %}
+                            <li class="list-group-item">
+                                Affiliation:
+                                <input type="text"
+                                       id="affiliation"
+                                       class="form-control settings"
+                                       value="{{ team.affiliation|default:'' }}"
+                                    {% if not player.is_at_least_technician %}
+                                       readonly
+                                    {% endif %}
+                                >
+                            </li>
+                            <li class="list-group-item">
+                                Website:
+                                <input type="text"
+                                       id="website"
+                                       class="form-control settings"
+                                       value="{{ team.website|default:'' }}"
+                                    {% if not player.is_at_least_technician %}
+                                       readonly
+                                    {% endif %}>
+                            </li>
+                           {% endcomment %}
+                            <li class="list-group-item">
+                                Join Link:
+                                <span data-toggle="tooltip"
+                                      title="Share this link with your players, so that they can manage their own WireGuard key.">
+                                        <span class="oi oi-question-mark text-muted"></span>
+                                    </span>
+                                <input type="text"
+                                       class="form-control settings"
+                                       value="{{ join_link }}"
+                                       readonly>
+                            </li>
+
+                            <li class="list-group-item mt-1">
+                                Your Account: <strong class="settings">{{ player.username }}</strong>
+                            </li>
+
+                            <li class="list-group-item">
+                                Your Captain:
+                                <input type="text"
+                                       class="form-control settings"
+                                       value="{{ team.captain.username }} <{{ team.captain.email }}>"
+                                       readonly>
+                            </li>
+                            {% if config.HOSTING_CONFIGURABLE %}
+                                <li class="list-group-item mt-1">
+                                    Hosting:
+                                    <form method="post" action="{% url 'change_team_hosting' %}" class="settings">
+                                        {% csrf_token %}
+                                        {% if team.use_cloudhosting %}
+                                            <span class="oi oi-cloud"></span> Cloud-Hosting
+                                            <input type="hidden" name="use_cloudhosting" value="false">
+                                            {% if player.is_at_least_technician and config.HOSTING_CONFIGURABLE %}
+                                                <button type="submit" class="btn btn-outline-secondary btn-sm float-right"><span
+                                                    class="oi oi-monitor"></span> switch to selfhosted
+                                                </button>
+                                            {% endif %}
+                                            <br/><small>we will host a vulnbox for you in the cloud</small>
+                                        {% else %}
+                                            <span class="oi oi-monitor"></span> Selfhosted
+                                            <input type="hidden" name="use_cloudhosting" value="true">
+                                            {% if player.is_at_least_technician %}
+                                                <button type="submit" class="btn btn-outline-secondary btn-sm float-right"><span
+                                                    class="oi oi-cloud"></span> switch to cloud-hosting
+                                                </button>
+                                            {% endif %}
+                                            <br/><small>you host the VM image yourselves, and setup the required VPN</small>
+                                        {% endif %}
+                                    </form>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if team.use_cloudhosting %}
+        <div class="container mt-5">
+            <div class="page-header">
+                <h2>Cloud Hosting</h2>
+            </div>
+            <p>
+                We will host a vulnbox for you.
+                When the CTF starts, {% if player.is_at_least_technician %}you{% else %}your captain/technician{% endif %} can request your vulnbox on this page.
+            </p>
+            <div class="clearfix">
+                {% if player.is_at_least_technician %}
+                    <form method="post" action="{% url 'edit_ssh_key' %}">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="sshkeys">Your SSH public keys (one per line):</label>
+                            <textarea class="form-control form-control-sm monospace-input" id="sshkeys" name="sshkeys"
+                                      rows="3">{{ team.ssh_keys }}</textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </form>
+                {% endif %}
+            </div>
+            <br/>
+
+            {% if not vms %}
+                <p class="text-muted">No VMs available. VMs will be available when the competition starts.</p>
+            {% endif %}
+            <div class="row align-items-center" id="vms">
+            {% for tmpl, vm in vms %}
+                <div class="col-lg-6 {% if vms|length > 2 %} col-xl-4{% endif %}">
+                    {% include "snippets/vm_control.html" with tmpl=tmpl vm=vm team_id=team.team_id vulnbox_ip=vulnbox_ip admin=False control=player.is_at_least_technician %}
+                </div>
+            {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    {% if team_id > 0 and service_tokens %}
+        <div class="container mt-5 align-items-center">
+            <div class="page-header">
+                <h2>Service Tokens</h2>
+            </div>
+            {% for service_token in service_tokens %}
+                <h4>{{ service_token.name }}</h4>
+                {{ service_token.html | safe }}
+                <p>
+                    <code>{{ service_token.token }}</code>
+                </p>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% if team_id > 0 and show_config %}
+        <div class="container align-items-center mt-5">
+            <div class="page-header">
+                <h2>Network</h2>
+            </div>
+            <div class="flatpage-content">
+                <dl class="row">
+                    <dt class="col-lg-3 col-4-md col-6">Your Team ID</dt>
+                    <dd class="col-lg-9 col-8-md col-6">{{ team_id }}</dd>
+                    <dt class="col-lg-3 col-4-md col-6">Your network</dt>
+                    <dd class="col-lg-9 col-8-md col-6"><code>{{ subnet }}</code></dd>
+                    <dt class="col-lg-3 col-4-md col-6">Your vulnbox</dt>
+                    <dd class="col-lg-9 col-8-md col-6"><code>{{ vulnbox_ip }}</code></dd>
+                    <dt class="col-lg-3 col-4-md col-6">Your exploiter</dt>
+                    <dd class="col-lg-9 col-8-md col-6"><code>{{ exploiter_ip }}</code></dd>
+                </dl>
+            </div>
+            <div id="wireguardConfig" data-hosting="{% if team.use_cloudhosting %}cloud{% else %}self{% endif %}"></div>
+        </div>
+    {% else %}
+        <div class="container align-items-center mt-5">
+            <div class="alert alert-info">
+                We will make the WireGuard configs available a few hours before the CTF.
+            </div>
+        </div>
+    {% endif %}
+
+    {% if player.is_at_least_technician %}
+        <div class="container align-items-center mt-5">
+            <div class="page-header">
+                <h2>Team Members</h2>
+            </div>
+            <div class="flatpage-content">
+                <p>All team members can manage their own WireGuard Keys. Technicians can edit your WireGuard and cloud hosting config.</p>
+                <p>Member join link: <code>{{ join_link }}</code></p>
+                <div class="list-group">
+                    {% for p in players %}
+                        <div class="list-group-item d-flex">
+                            <span class="flex-fill">
+                                {{ p.username }} &lt;{{ p.email }}&gt;
+                                {% if player.is_captain and p.id != player.id %}
+                                    <form class="d-inline require-confirmation" method="post" action="{% url 'player_delete' %}"
+                                        data-confirmation="Do you really want to delete user {{ player.username }}?">
+                                        <input type="hidden" name="id" value="{{ p.id }}">
+                                        <button class="btn btn-outline-danger btn-sm py-0 px-1 ml-1" title="Delete Member">&times;</button>
+                                        {% csrf_token %}
+                                    </form>
+                                {% endif %}
+                            </span>
+                            {% if p.role == 'PL' %}
+                                <div class="text-right">
+                                    <span class="badge badge-secondary">member</span>
+                                    {% if player.is_captain %}
+                                        <form method="post" action="{% url 'player_change_role' %}">
+                                            <input type="hidden" name="id" value="{{ p.id }}">
+                                            <input type="hidden" name="role" value="TE">
+                                            <button type="submit" class="btn btn-outline-secondary btn-sm py-0"
+                                                    title="Promote to technician, so that this player can edit VPN and cloud hosting config">
+                                                promote
+                                            </button>
+                                            {% csrf_token %}
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            {% elif p.role == 'TE' %}
+                                <div class="text-right">
+                                    <span class="badge badge-info">technician</span>
+                                    {% if player.is_captain %}
+                                        <form class="require-confirmation" method="post" action="{% url 'player_change_role' %}"
+                                              data-confirmation="Do you really want to demote {{ p.username }}?">
+                                            <input type="hidden" name="id" value="{{ p.id }}">
+                                            <input type="hidden" name="role" value="PL">
+                                            <button type="submit" class="btn btn-outline-secondary btn-sm py-0"
+                                                    title="Demote technician to normal player">
+                                                demote
+                                            </button>
+                                            {% csrf_token %}
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            {% elif p.role == 'CP' %}
+                                <div>
+                                    <span class="badge badge-success">captain</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</section>
+<br><br>
+{% endblock %}
+
+{% block scripts %}
+    <script src="{% static 'js/team.js' %}"></script>
+    {% vite "main.ts" %}
+{% endblock %}

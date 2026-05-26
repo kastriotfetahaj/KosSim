@@ -1,0 +1,64 @@
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: longhorn
+  namespace: kube-system
+spec:
+  targetNamespace: longhorn-system
+  createNamespace: true
+  repo: https://charts.longhorn.io
+  chart: longhorn
+  version: 1.9.0
+  valuesContent: |-
+    persistence:
+      # Default replica count for volumes created via kubernetes api
+      defaultClassReplicaCount: 2
+
+    ingress:
+      enabled: false
+
+    # TODO: Increase these replica counts for HA Controlplane
+    longhornUI:
+      replicas: 1
+    csi:
+      attacherReplicaCount: 2
+      provisionerReplicaCount: 2
+      resizerReplicaCount: 2
+      snapshotterReplicaCount: 2
+
+    global:
+      # Most components of longhorn should only run on the core nodes ...
+      tolerations:
+        - key: ctfr.attacking-lab.com/role
+          operator: Equal
+          value: core
+          effect: NoExecute
+
+    # ... but we want to use longhorn volumes on worker nodes as well, requiring manager ...
+    longhornManager:
+      tolerations:
+        - key: ctfr.attacking-lab.com/ctf # Regardless of CTF
+          operator: Exists
+          effect: NoExecute
+
+        - key: ctfr.attacking-lab.com/role
+          operator: Equal
+          value: core
+          effect: NoExecute
+
+        - key: ctfr.attacking-lab.com/role
+          operator: Equal
+          value: worker
+          effect: NoExecute
+
+    defaultSettings:
+      # ... furthermore, longhorn schedules components dynamically, which also need adequate
+      # tolerations:
+      taintToleration: >-
+        ctfr.attacking-lab.com/ctf:NoExecute; 
+        ctfr.attacking-lab.com/role=core:NoExecute; 
+        ctfr.attacking-lab.com/role=worker:NoExecute 
+
+      # Default replica count for volumes created in the longhorn ui
+      defaultReplicaCount: 2
+      replicaAutoBalance: best-effort

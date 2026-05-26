@@ -1,0 +1,256 @@
+name: firewall
+
+services:
+  init:
+    build: init
+    image: ecsc2025-service-firewall/init
+    pull_policy: never
+    container_name: firewall-init
+    hostname: init
+    volumes:
+      - type: volume
+        source: state-firewall
+        target: /state/firewall
+      - type: volume
+        source: state-snmp
+        target: /state/snmp
+      - type: volume
+        source: state-ftp
+        target: /state/ftp
+      - type: volume
+        source: state-db
+        target: /state/db
+      - type: volume
+        source: state-internal
+        target: /state/internal
+
+  routing:
+    build: routing
+    image: ecsc2025-service-firewall/routing
+    pull_policy: never
+    container_name: firewall-routing
+    network_mode: none
+    # This is the easiest way to tell Compose that we don't actually want to run this thing, just build it.
+    deploy:
+      replicas: 0
+
+  firewall:
+    build:
+      context: firewall
+      args:
+        PROFILE: release
+      additional_contexts:
+        ecsc2025-service-firewall/routing: "service:routing"
+    image: ecsc2025-service-firewall/firewall
+    pull_policy: never
+    container_name: firewall-firewall
+    restart: unless-stopped
+    hostname: firewall
+    networks:
+      default:
+      internal:
+        ipv4_address: 10.0.0.1
+        ipv6_address: fd00:ec5c::1
+    depends_on:
+      init:
+        condition: service_completed_successfully
+      db:
+        condition: service_healthy
+    volumes:
+      - type: volume
+        source: state-firewall
+        target: /state/firewall
+        read_only: true
+        volume:
+          nocopy: true
+      - type: volume
+        source: state-snmp
+        target: /state/snmp/secrets
+        read_only: true
+        volume:
+          nocopy: true
+          subpath: secrets
+      - type: volume
+        source: state-snmp
+        target: /state/snmp/data
+        volume:
+          nocopy: true
+          subpath: data
+    environment:
+      RUST_LOG: info
+      DB_PASSWORD_FILE: /state/firewall/secrets/db
+      SNMP_AUTH_COMMUNITY_FILE: /state/snmp/secrets/auth_community
+      SNMP_STORAGE_FILE: /state/snmp/data/agent
+    healthcheck:
+      test: ["CMD-SHELL", "supervisorctl -c /etc/supervisord.conf status || exit 1"]
+      start_period: 10s
+      start_interval: 1s
+    sysctls:
+      net.ipv4.conf.all.forwarding: 0
+      net.ipv6.conf.all.forwarding: 0
+      net.ipv4.conf.all.send_redirects: 0
+    ulimits:
+      nofile: 65536
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_ADMIN # Only while setting up routing
+      # These are all part of the default capability set in Docker
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - KILL
+      - NET_RAW
+      - SETUID
+      - SETGID
+      - SETPCAP
+    ports:
+      - 9100:9100
+      - 9101:9101
+
+  ftp:
+    build:
+      context: ftp
+      additional_contexts:
+        ecsc2025-service-firewall/routing: "service:routing"
+    image: ecsc2025-service-firewall/ftp
+    pull_policy: never
+    container_name: firewall-ftp
+    restart: unless-stopped
+    hostname: ftp
+    stop_signal: SIGINT
+    networks:
+      internal:
+        ipv4_address: 10.0.0.2
+        ipv6_address: fd00:ec5c::2
+    depends_on:
+      init:
+        condition: service_completed_successfully
+      db:
+        condition: service_healthy
+    ulimits:
+      nofile: 65536
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_ADMIN # Only while setting up routing
+      # These are all part of the default capability set in Docker
+      - KILL
+      - SETPCAP
+    volumes:
+      - type: volume
+        source: state-ftp
+        target: /state/ftp/data
+        volume:
+          nocopy: true
+          subpath: data
+      - type: volume
+        source: state-ftp
+        target: /state/ftp/tls
+        read_only: true
+        volume:
+          nocopy: true
+          subpath: tls
+      - type: volume
+        source: state-ftp
+        target: /state/ftp/secrets
+        read_only: true
+        volume:
+          nocopy: true
+          subpath: secrets
+
+  db:
+    build:
+      context: db
+      additional_contexts:
+        ecsc2025-service-firewall/routing: "service:routing"
+    image: ecsc2025-service-firewall/db
+    pull_policy: never
+    container_name: firewall-db
+    restart: unless-stopped
+    hostname: db
+    networks:
+      internal:
+        ipv4_address: 10.0.0.3
+        ipv6_address: fd00:ec5c::3
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      start_period: 30s
+      start_interval: 2s
+    stop_grace_period: 30s
+    stop_signal: SIGINT
+    shm_size: 1gb
+    ulimits:
+      nofile: 65536
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_ADMIN # Only while setting up routing
+      # These are all part of the default capability set in Docker
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETUID
+      - SETGID
+      - SETPCAP
+    volumes:
+      - type: volume
+        source: state-db
+        target: /var/lib/postgresql/data
+        volume:
+          nocopy: true
+          subpath: data
+      - type: volume
+        source: state-db
+        target: /state/db
+        read_only: true
+        volume:
+          nocopy: true
+    environment:
+      POSTGRES_DB: firewall
+      POSTGRES_HOST_AUTH_METHOD: password
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD_FILE: /state/db/secrets/admin
+
+networks:
+  default:
+    name: firewall
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: br-firewall
+      com.docker.network.container_iface_prefix: "wan"
+  internal:
+    name: firewall-internal
+    driver: bridge
+    enable_ipv6: true
+    internal: true
+    driver_opts:
+      com.docker.network.driver.mtu: 1500
+      com.docker.network.bridge.name: br-fw-internal
+      com.docker.network.bridge.inhibit_ipv4: "true"
+      com.docker.network.gateway_mode_ipv4: isolated
+      com.docker.network.gateway_mode_ipv6: isolated
+    ipam:
+      driver: default
+      config:
+        - subnet: "10.0.0.0/8"
+          ip_range: "10.0.0.0/24"
+          gateway: "10.0.0.254" # Not used, but don't take 10.0.0.1 from us please
+        - subnet: "fd00:ec5c::/80"
+          ip_range: "fd00:ec5c::/112"
+          gateway: "fd00:ec5c::fffe" # Not used
+
+volumes:
+  state-firewall:
+    name: "firewall-firewall"
+  state-snmp:
+    name: "firewall-snmp"
+  state-internal:
+    name: "firewall-internal"
+  state-ftp:
+    name: "firewall-ftp"
+  state-db:
+    name: "firewall-db"

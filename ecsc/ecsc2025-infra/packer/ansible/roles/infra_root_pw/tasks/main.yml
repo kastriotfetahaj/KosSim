@@ -1,0 +1,9 @@
+---
+- name: Set root pw
+  ansible.builtin.user:
+    user: root
+    password: "$y$j9T$AcVGXosUscW7b.fY/3z43/$GCHEmwNv8QNESosVm0fUVET59q4M/ta87D6rxrhFy9B"
+- name: Set debian pw
+  ansible.builtin.user:
+    user: debian
+    password: "$y$j9T$AcVGXosUscW7b.fY/3z43/$GCHEmwNv8QNESosVm0fUVET59q4M/ta87D6rxrhFy9B"

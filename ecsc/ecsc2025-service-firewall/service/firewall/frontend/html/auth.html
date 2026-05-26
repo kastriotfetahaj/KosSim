@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Electric Catfish Systems &mdash; SSO</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
+    {% if error %}
+      <style>
+        :root {
+          --highlight: red !important;
+        }
+      </style>
+    {% endif %}
+  </head>
+  <body>
+    <header>
+      <h1 class="cut-top-left cut-bottom-right cut-both">Electric Catfish Systems</h1>
+    </header>
+    <main>
+      <div class="tab-selector">
+        <input type="radio" name="tab" id="tab-login" checked hidden>
+        <label class="cut-top-left" for="tab-login">Login</label>
+        <div class="tab-separator"></div>
+        <input type="radio" name="tab" id="tab-register" hidden>
+        <label class="cut-top-left" for="tab-register">Register</label>
+      </div>
+      <div class="tab-content">
+        <form class="login" action="/login" method="POST">
+          <input type="text" name="username" id="username" placeholder="Username" required />
+          <input type="password" name="password" id="password" placeholder="Password" required />
+          <input type="submit" value="Log in" />
+        </form>
+        <form class="register" action="/register" method="POST">
+          <input type="text" name="username" id="username" placeholder="Username" required />
+          <input type="password" name="password" id="password" placeholder="Password" required />
+          <input type="submit" value="Register" />
+        </form>
+      </div>
+      {% if error %}
+        <div class="error">{{ error }}</div>
+      {% endif %}
+    </main>
+    <footer>
+      <div class="pad"></div>
+      <p>&#169; Electric Catfish Systems 2025 &mdash; Unauthorized access may be a violation of law.</p>
+      <div class="pad"></div>
+      <img src="{{ url_for('static', filename='assets/powered-by-guppy.svg') }}" alt="Powered by Guppy Networks" />
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,26 @@
+#cloud-config
+package_update: false
+package_upgrade: false
+%{ if pcaps_uuid != null }
+fs_setup:
+  - filesystem: 'ext4'
+    device: /dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_${pcaps_uuid}
+    partition: 'none'
+mounts:
+- [/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_${pcaps_uuid}, /mnt/pcaps, auto, "defaults,noexec" ]
+mount_default_fields: [None, None, auto, "defaults,nofail", "0", "2"]
+%{ endif }
+write_files:
+  - path: /etc/rancher/k3s/config.yaml
+    encoding: b64
+    content: ${base64encode(yamlencode(k3s_config))}
+  - path: /etc/netplan/60-ctf.yaml
+    permissions: '0600'
+    owner: 'root:root'
+    encoding: b64
+    content: ${base64encode(yamlencode(netplan))}
+runcmd:
+  - [sh, -c, "echo -n 'node-ip: ' >> /etc/rancher/k3s/config.yaml" ]
+  - [sh, -c, "ip -4 -j addr show ens3 | jq -r '.[0].addr_info[0].local' >> /etc/rancher/k3s/config.yaml"]
+  - netplan apply
+  - systemctl enable --now k3s-agent

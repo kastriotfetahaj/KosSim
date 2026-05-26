@@ -1,0 +1,18 @@
+# Optional
+publicScoreBoardHost:
+
+# Optional: Use a specific for tls ...
+scoreboardTlsSecret:
+# ... or requested it through a certificate for publicScoreboardHost
+createCertificate: false
+
+# 418 if false
+exposeScoreboardToTheWorld: false
+
+ctf: "gameserver-demo"
+networkIndex: 32
+
+# This is to override the chart name.
+nameOverride: ""
+fullnameOverride: ""
+

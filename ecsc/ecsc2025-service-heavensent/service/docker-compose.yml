@@ -1,0 +1,19 @@
+name: heavensent
+
+services:
+  heavensent:
+    build:
+      context: .
+    environment:
+      - AS_ENTRYPOINT=as_bin/heavensent.bin
+    volumes:
+      - ./data:/service/data
+      - ./as_bin:/service/as_bin
+    restart: unless-stopped
+    ports:
+      - 9501:9501
+      #- 8086:8086 # for tracy
+    # For Tracy
+    #privileged: true
+    #environment:
+    #  TRACY_NO_INVARIANT_CHECK: 1

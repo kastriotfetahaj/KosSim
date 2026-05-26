@@ -1,0 +1,6 @@
+diff --git a/platform/challenges/svc3-specterlog/service/src/routes.ts b/platform/challenges/svc3-specterlog/service/src/routes.ts
+--- a/platform/challenges/svc3-specterlog/service/src/routes.ts
++++ b/platform/challenges/svc3-specterlog/service/src/routes.ts
+@@
+-    const allowPrivate = filter.toLowerCase().includes("public||private");
++    const allowPrivate = false;

@@ -1,0 +1,63 @@
+defaults:
+  teams:
+    anonymization:
+      driver: netfilter
+  routers:
+    connectivity:
+      driver: hostname
+
+initialState:
+  network:
+    entities:
+      - id: 1
+        addresses:
+          - 10.0.255.0/24
+      - id: 2
+        addresses:
+          - 10.0.254.0/24
+  gates:
+    - id: shield-team-1
+      type: connection
+      connSrc: any-team
+      connDst: team-1
+
+  teams:
+    - id: 1
+      network: 10.0.1.0/24
+      gateway: 10.0.1.254
+      vulnbox: 10.0.1.3
+      meta:
+        name: NOP
+        ctftest/endpoint: 10.43.2.21:50051
+      connectivity:
+        driver: wireguard
+        publicKey: 04imYC7Ed2zEKZiiED5PT7mTkf2gMJXF9HO2hdcvp2U=
+        privateKey: qHp4n/BedZ74okmRrkUD88av/uAUiPuRuNbX0b7J1Vo=
+        port: 50001
+        peers:
+          - allowedIps: 10.0.1.3/32
+            publicKey: Bk3wiHED8fuJ8u4h7/FZUBPOrLqwsKpijQfdtEHduHs=
+    - id: 2
+      network: 10.0.2.0/24
+      gateway: 10.0.2.254
+      vulnbox: 10.0.2.3
+      meta:
+        name: enoflag
+        ctftest/endpoint: 10.43.2.22:50051
+      connectivity:
+        driver: wireguard
+        publicKey: 04imYC7Ed2zEKZiiED5PT7mTkf2gMJXF9HO2hdcvp2U=
+        privateKey: qHp4n/BedZ74okmRrkUD88av/uAUiPuRuNbX0b7J1Vo=
+        port: 50002
+        peers:
+          - allowedIps: 10.0.2.3/32
+            publicKey: LjyWLQSDY/DABNcITYfqC/vlx6/0GzIw5Eym+u4ATCk=
+
+  routers:
+    - id: 1
+      host: router1.mesh.local
+      teams: [ 1 ]
+
+    - id: 2
+      host: router2.mesh.local
+      teams: [ 2 ]

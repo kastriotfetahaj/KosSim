@@ -1,0 +1,24 @@
+//------------------------------------------------
+//--- 010 Editor v15.0.2 Binary Template
+//
+//      File: Heavensent Ground Station file
+//   Authors: Julian
+//   Version: 0.1
+//   Purpose: ECSC 2025 Heavenset service
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+typedef struct BroadcastMessage {
+    char message[32];
+} msg;
+
+typedef struct GroundStation {
+    uint64 password <format=hex, bgcolor=cRed>;
+    BroadcastMessage msgs[8];
+    uint64 op_id<format=hex, bgcolor=cBlue>;
+} gs;
+
+gs ground_station;

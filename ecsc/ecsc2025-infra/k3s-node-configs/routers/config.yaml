@@ -1,0 +1,10 @@
+node-name: ...
+server: https://gartenverein-tackenberg.de:6443
+node-label:
+  - ctfr.attacking-lab.com/role=router
+  # TODO: Adjust for the ctf for which the router is used
+  # - ctfr.attacking-lab.com/ctf=ecsc-staging
+node-taint:
+  - ctfr.attacking-lab.com/role=router:NoExecute
+  # TODO: Adjust for the ctf for which the router is used
+  # - ctfr.attacking-lab.com/ctf=ecsc-staging:NoExecute

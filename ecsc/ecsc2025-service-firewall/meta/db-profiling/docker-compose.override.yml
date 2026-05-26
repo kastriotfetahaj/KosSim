@@ -1,0 +1,11 @@
+services:
+  db:
+    volumes:
+      - type: bind
+        # This should be chmod 777
+        source: ../meta/db-profiling/logs/
+        target: /var/log/postgresql/
+      - type: bind
+        source: ../meta/db-profiling/postgresql.override.conf
+        target: /etc/postgres/overrides.conf
+        read_only: true

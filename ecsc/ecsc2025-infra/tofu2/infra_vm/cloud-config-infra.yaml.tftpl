@@ -1,0 +1,17 @@
+#cloud-config
+package_update: false
+package_upgrade: false
+write_files:
+  - path: /etc/rancher/k3s/config.yaml
+    encoding: b64
+    content: ${base64encode(yamlencode(k3s_config))}
+  - path: /etc/netplan/60-ctf.yaml
+    permissions: '0600'
+    owner: 'root:root'
+    encoding: b64
+    content: ${base64encode(yamlencode(netplan))}
+runcmd:
+  - [sh, -c, "echo -n 'node-ip: ' >> /etc/rancher/k3s/config.yaml" ]
+  - [sh, -c, "ip -4 -j addr show ens3 | jq -r '.[0].addr_info[0].local' >> /etc/rancher/k3s/config.yaml"]
+  - netplan apply
+  - systemctl enable --now k3s-agent

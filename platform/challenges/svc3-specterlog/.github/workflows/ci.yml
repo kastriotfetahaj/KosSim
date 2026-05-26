@@ -1,0 +1,127 @@
+name: specterlog
+
+on:
+  push:
+    paths:
+      - "platform/challenges/svc3-specterlog/**"
+      - ".github/workflows/specterlog-ci.yml"
+  pull_request:
+    paths:
+      - "platform/challenges/svc3-specterlog/**"
+
+defaults:
+  run:
+    working-directory: platform/challenges/svc3-specterlog
+
+jobs:
+  bun-typecheck-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: 1.1.x
+      - working-directory: platform/challenges/svc3-specterlog/service
+        run: bun install --frozen-lockfile=false
+      - working-directory: platform/challenges/svc3-specterlog/service
+        run: bun --bun tsc --noEmit
+      - working-directory: platform/challenges/svc3-specterlog/service
+        run: bun test
+
+  docker-checker-baseline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build service image
+        working-directory: platform/challenges
+        run: docker build -t specterlog-service -f svc3-specterlog/service/Dockerfile .
+      - name: Run service
+        run: |
+          docker run -d --rm --name slsvc \
+            -e SERVICE_PUSH_SECRET=ci-secret \
+            -e TEAM_NAME=ci \
+            -e SERVICE_NAME=svc3 \
+            -p 8080:8080 \
+            specterlog-service
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8080/health >/dev/null 2>&1; then
+              echo "service up"
+              break
+            fi
+            sleep 1
+          done
+      - name: Run sync checker
+        env:
+          SERVICE_PUSH_SECRET: ci-secret
+        run: |
+          pip install --quiet requests
+          python checker/checker.py http://127.0.0.1:8080
+      - name: Run exploits against unpatched service
+        env:
+          SERVICE_PUSH_SECRET: ci-secret
+        run: |
+          set -eux
+          ATK_FLAG="FLAG{CI_EXP_$(date +%s)}"
+          INFO0=$(curl -fsS -H "X-Checker-Secret: $SERVICE_PUSH_SECRET" \
+            -H 'Content-Type: application/json' \
+            -d "{\"method\":\"PUTFLAG\",\"current_round_id\":900,\"related_round_id\":900,\"variant_id\":0,\"flag\":\"$ATK_FLAG\"}" \
+            http://127.0.0.1:8080/ | python -c "import sys,json;print(json.load(sys.stdin)['attack_info'])")
+          python exploits/exp1.py 127.0.0.1:8080 "$INFO0" | grep -F "$ATK_FLAG"
+          ATK_FLAG1="FLAG{CI_EXP1_$(date +%s)}"
+          INFO1=$(curl -fsS -H "X-Checker-Secret: $SERVICE_PUSH_SECRET" \
+            -H 'Content-Type: application/json' \
+            -d "{\"method\":\"PUTFLAG\",\"current_round_id\":901,\"related_round_id\":901,\"variant_id\":1,\"flag\":\"$ATK_FLAG1\"}" \
+            http://127.0.0.1:8080/ | python -c "import sys,json;print(json.load(sys.stdin)['attack_info'])")
+          python exploits/exp2.py 127.0.0.1:8080 "$INFO1" | grep -F "$ATK_FLAG1"
+          ATK_FLAG2="FLAG{CI_EXP2_$(date +%s)}"
+          INFO2=$(curl -fsS -H "X-Checker-Secret: $SERVICE_PUSH_SECRET" \
+            -H 'Content-Type: application/json' \
+            -d "{\"method\":\"PUTFLAG\",\"current_round_id\":902,\"related_round_id\":902,\"variant_id\":2,\"flag\":\"$ATK_FLAG2\"}" \
+            http://127.0.0.1:8080/ | python -c "import sys,json;print(json.load(sys.stdin)['attack_info'])")
+          python exploits/exp3.py 127.0.0.1:8080 "$INFO2" | grep -F "$ATK_FLAG2"
+      - name: Stop service
+        if: always()
+        run: docker rm -f slsvc || true
+
+  sla-after-patch:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        patch:
+          - patches/flagstore-0/vuln-a-cursor-stream-override.patch
+          - patches/flagstore-0/vuln-b-search-filter-substring.patch
+          - patches/flagstore-0/vuln-c-archive-window-startswith.patch
+          - patches/flagstore-1/vuln-d-download-actor-unsigned.patch
+          - patches/flagstore-2/vuln-e-view-token-alg-none.patch
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply patch
+        run: patch -p1 < "${{ matrix.patch }}"
+      - name: Build patched service
+        working-directory: platform/challenges
+        run: docker build -t specterlog-patched -f svc3-specterlog/service/Dockerfile .
+      - name: Run patched service
+        run: |
+          docker run -d --rm --name slpatched \
+            -e SERVICE_PUSH_SECRET=ci-secret \
+            -e TEAM_NAME=ci \
+            -e SERVICE_NAME=svc3 \
+            -p 8080:8080 \
+            specterlog-patched
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8080/health >/dev/null 2>&1; then
+              echo "patched service up"
+              break
+            fi
+            sleep 1
+          done
+      - name: SLA must hold under patch
+        env:
+          SERVICE_PUSH_SECRET: ci-secret
+        run: |
+          pip install --quiet requests
+          python checker/checker.py http://127.0.0.1:8080
+      - name: Stop service
+        if: always()
+        run: docker rm -f slpatched || true

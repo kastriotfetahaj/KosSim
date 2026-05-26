@@ -1,0 +1,24 @@
+Subject: normalize path before scope check in /api/read
+
+The scope check runs on the raw query parameter while the storage lookup
+runs on the percent-decoded and dot-collapsed path. /public/%2e%2e/vault/<id>
+passes the scope check then loads from /vault/<id>. Apply the canonical form
+to both sides.
+
+--- a/service/src/routes.rs
++++ b/service/src/routes.rs
+@@ -150,11 +150,11 @@
+ async fn read_doc(Query(params): Query<ReadParams>, State(state): State<Shared>) -> impl IntoResponse {
+     let state = state.lock().await;
+     let Some(grant) = crypto::verify_grant(&state.grant_key(), &params.grant) else {
+         return (StatusCode::FORBIDDEN, Json(json!({"error": "bad_grant"})));
+     };
+-    if !params.path.starts_with(&grant.scope) {
++    let normalized = ledger::normalize_path(&params.path);
++    if !normalized.starts_with(&grant.scope) {
+         return (StatusCode::FORBIDDEN, Json(json!({"error": "scope_denied"})));
+     }
+-    let normalized = ledger::normalize_path(&params.path);
+     let Some(doc_id) = state.path_index.get(&normalized) else {
+         return (StatusCode::NOT_FOUND, Json(json!({"error": "missing", "resolved": normalized})));
+     };

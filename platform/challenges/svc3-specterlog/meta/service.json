@@ -1,0 +1,19 @@
+{
+  "name": "specterlog",
+  "slot": "svc3",
+  "categories": ["web", "protocol", "forensics"],
+  "flagstores": 3,
+  "noisestores": 3,
+  "havoc_variants": 9,
+  "difficulty": "hard-100",
+  "runtime": "typescript-bun-fastify",
+  "persistence": "sqlite",
+  "vulnerabilities": 5,
+  "rabbit_holes": 5,
+  "exploit_scripts": 3,
+  "checker": {
+    "framework": "enochecker3",
+    "sync_wrapper": "checker/checker.py",
+    "async_app": "checker/src/checker.py"
+  }
+}

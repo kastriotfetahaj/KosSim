@@ -1,0 +1,21 @@
+services:
+  client:
+    build: .
+    image: ecsc2025-service-firewall/client
+    pull_policy: never
+    hostname: client
+    # Give us network config access
+    devices:
+      - "/dev/net/tun:/dev/net/tun:rwm"
+    cap_add:
+      - NET_ADMIN
+    # sysctls we'd like to have for the VPN interface (but they're not writable inside Docker)
+    sysctls:
+      net.ipv4.conf.default.forwarding: 0
+      net.ipv4.conf.default.src_valid_mark: 1
+      net.ipv6.conf.default.forwarding: 0
+      net.ipv6.conf.default.accept_ra: 0
+      net.ipv6.conf.default.accept_redirects: 0
+    # This you should override with your actual arguments
+    # (e.g. via `docker compose run --rm client --username user --password password 10.244.244.244`)
+    command: --help

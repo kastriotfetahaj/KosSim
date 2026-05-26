@@ -1,0 +1,20 @@
+Subject: bind snapshot export to the snapshot's public label, not a claim prefix
+
+The export handler treats a query parameter that starts with "public:" as
+authorisation, so any snapshot id leaked via attack-info can be read with
+?claim=public:<doc_id>. Require the snapshot itself to be labelled
+boot-public.
+
+--- a/service/src/routes.rs
++++ b/service/src/routes.rs
+@@ -260,9 +260,9 @@
+     let Some(snapshot) = state.snapshots.get(&snap) else {
+         return (StatusCode::NOT_FOUND, Json(json!({"error": "missing_snapshot"})));
+     };
+     let claim = params.get("claim").cloned().unwrap_or_default();
+-    if !claim.starts_with("public:") && snapshot.public_label != "boot-public" {
++    if snapshot.public_label != "boot-public" {
+         return (StatusCode::FORBIDDEN, Json(json!({"error": "snapshot_scope_denied"})));
+     }
+     let wanted = claim.strip_prefix("public:").unwrap_or("");
+     let mut rows = Vec::new();

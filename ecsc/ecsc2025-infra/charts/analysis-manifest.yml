@@ -1,0 +1,524 @@
+---
+# Source: ctf-monitoring/templates/rbac.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ctf-monitoring-prometheus
+  labels:
+    helm.sh/chart: ctf-monitoring-0.1.0
+    app.kubernetes.io/name: ctf-monitoring
+    app.kubernetes.io/instance: ctf-monitoring
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+---
+# Source: ctf-monitoring/templates/grafana-oauth.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    helm.sh/chart: ctf-monitoring-0.1.0
+    app.kubernetes.io/name: ctf-monitoring
+    app.kubernetes.io/instance: ctf-monitoring
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+  name: oauth2-proxy-grafana
+data:
+  oauth2_proxy.cfg: |
+    upstreams = [
+                "http://ctf-grafana-service.demo-1.svc.cluster.local:3000"
+    ]
+    provider = "keycloak-oidc"
+    oidc_issuer_url = "https://auth.attacking-lab.com/realms/master"
+    redirect_url = "https://grafana-demo-1.gartenverein-tackenberg.de/oauth2/callback"
+    allowed_groups = "admin"
+    code_challenge_method = "S256"
+    email_domains = "*"
+---
+# Source: ctf-monitoring/templates/rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ctf-monitoring
+  labels:
+    helm.sh/chart: ctf-monitoring-0.1.0
+    app.kubernetes.io/name: ctf-monitoring
+    app.kubernetes.io/instance: ctf-monitoring
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  # Is created by the kube-prometheus chart
+  name: kube-prometheus-kube-prome-prometheus
+subjects:
+  - kind: ServiceAccount
+    name: ctf-monitoring-prometheus
+---
+# Source: ctf-monitoring/templates/grafana-oauth.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: grafana-oauth2-proxy
+    helm.sh/chart: ctf-monitoring-0.1.0
+    app.kubernetes.io/name: ctf-monitoring
+    app.kubernetes.io/instance: ctf-monitoring
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+  name: grafana-oauth2-proxy
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      appProtocol: http
+      name: http
+    - port: 44180
+      protocol: TCP
+      appProtocol: http
+      targetPort: metrics
+      name: metrics
+  selector:
+    app: grafana-oauth2-proxy
+    app.kubernetes.io/name: ctf-monitoring
+    app.kubernetes.io/instance: ctf-monitoring
+---
+# Source: ctf-monitoring/templates/grafana-oauth.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: grafana-oauth2-proxy
+    helm.sh/chart: ctf-monitoring-0.1.0
+    app.kubernetes.io/name: ctf-monitoring
+    app.kubernetes.io/instance: ctf-monitoring
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+  name: grafana-oauth2-proxy
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: grafana-oauth2-proxy
+      app.kubernetes.io/name: ctf-monitoring
+      app.kubernetes.io/instance: ctf-monitoring
+  template:
+    metadata:
+      labels:
+        app: grafana-oauth2-proxy
+        app.kubernetes.io/name: ctf-monitoring
+        app.kubernetes.io/instance: ctf-monitoring
+    spec:
+      containers:
+        - name: oauth2-proxy
+          image: "quay.io/oauth2-proxy/oauth2-proxy:v7.12.0"
+          imagePullPolicy: IfNotPresent
+          args:
+            - --http-address=0.0.0.0:4180
+            - --https-address=0.0.0.0:4443
+            - --metrics-address=0.0.0.0:44180
+            - --config=/etc/oauth2_proxy/oauth2_proxy.cfg
+          env:
+            - name: OAUTH2_PROXY_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: oauth2-proxy-grafana
+                  key: client-id
+            - name: OAUTH2_PROXY_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: oauth2-proxy-grafana
+                  key: client-secret
+            - name: OAUTH2_PROXY_COOKIE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: oauth2-proxy-grafana
+                  key: cookie-secret
+          ports:
+            - containerPort: 4180
+              name: http
+              protocol: TCP
+            - containerPort: 44180
+              protocol: TCP
+              name: metrics
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 0
+            timeoutSeconds: 1
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 0
+            timeoutSeconds: 5
+            successThreshold: 1
+            periodSeconds: 10
+          resources:
+            { }
+          volumeMounts:
+            - mountPath: /etc/oauth2_proxy/oauth2_proxy.cfg
+              name: config
+              subPath: oauth2_proxy.cfg
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsGroup: 2000
+            runAsNonRoot: true
+            runAsUser: 2000
+            seccompProfile:
+              type: RuntimeDefault
+      volumes:
+        - configMap:
+            defaultMode: 420
+            name: oauth2-proxy-grafana
+          name: config
+---
+# Source: ctf-monitoring/templates/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grafana-oauth2-proxy
+  labels:
+    helm.sh/chart: ctf-monitoring-0.1.0
+    app.kubernetes.io/name: ctf-monitoring
+    app.kubernetes.io/instance: ctf-monitoring
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - grafana-demo-1.gartenverein-tackenberg.de
+  rules:
+    - host: grafana-demo-1.gartenverein-tackenberg.de
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: grafana-oauth2-proxy
+                port:
+                  name: http
+---
+# Source: ctf-monitoring/templates/monitoring-config.yml
+# DO NOT SCRAPE IN ANALYSIS MODE!
+---
+# Source: ctf-monitoring/templates/grafana.yaml
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: ctf-grafana
+  labels:
+    helm.sh/chart: ctf-monitoring-0.1.0
+    app.kubernetes.io/name: ctf-monitoring
+    app.kubernetes.io/instance: ctf-monitoring
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+    dashboards: ctf-grafana
+    datasources: ctf-grafana
+spec:
+  config:
+    auth:
+      disable_login_form: "true"
+    auth.basic:
+      enabled: "false"
+    auth.anonymous:
+      enabled: "true"
+      org_name: Main Org.
+      org_role: Admin
+  deployment:
+    spec:
+      replicas: 1
+      template:
+        spec:
+          nodeSelector:
+            ctfr.attacking-lab.com/role: worker
+            ctfr.attacking-lab.com/ctf: demo-1
+          tolerations:
+            - key: ctfr.attacking-lab.com/role
+              operator: Equal
+              value: worker
+              effect: NoExecute
+            - key: ctfr.attacking-lab.com/ctf
+              operator: Equal
+              value: demo-1
+              effect: NoExecute
+---
+# Source: ctf-monitoring/templates/dashboards/ctfroute.yaml
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: ctfroute
+  labels:
+    helm.sh/chart: ctf-monitoring-0.1.0
+    app.kubernetes.io/name: ctf-monitoring
+    app.kubernetes.io/instance: ctf-monitoring
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  instanceSelector:
+    matchLabels:
+      name: ctf-grafana
+  json: |
+    {
+      "annotations": {
+        "list": [
+          {
+            "builtIn": 1,
+            "datasource": {
+              "type": "grafana",
+              "uid": "-- Grafana --"
+            },
+            "enable": true,
+            "hide": true,
+            "iconColor": "rgba(0, 211, 255, 1)",
+            "name": "Annotations & Alerts",
+            "type": "dashboard"
+          }
+        ]
+      },
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 0,
+      "id": 1,
+      "links": [],
+      "panels": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "9797e491-bdb7-48e3-a4c4-f00197eb2bcd"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "axisPlacement": "auto",
+                "fillOpacity": 70,
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineWidth": 0,
+                "spanNulls": false
+              },
+              "mappings": [
+                {
+                  "options": {
+                    "connected": {
+                      "color": "green",
+                      "index": 0
+                    },
+                    "degraded": {
+                      "color": "dark-orange",
+                      "index": 3
+                    },
+                    "disconnected": {
+                      "color": "red",
+                      "index": 2
+                    },
+                    "unknown": {
+                      "color": "super-light-orange",
+                      "index": 1
+                    }
+                  },
+                  "type": "value"
+                }
+              ],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "transparent",
+                    "value": 0
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 0
+          },
+          "id": 2,
+          "options": {
+            "alignValue": "left",
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "mergeValues": true,
+            "rowHeight": 0.9,
+            "showValue": "auto",
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "12.1.0",
+          "targets": [
+            {
+              "disableTextWrap": false,
+              "editorMode": "code",
+              "expr": "label_replace(label_join(router_connection > 0, \"connection\", \" -> \", \"instance\",\"other_router\"), \"connection\", \"$1->$2\", \"connection\", \"([A-Za-z0-9-]+).* -> ([A-Za-z0-9-]+)\")",
+              "format": "table",
+              "fullMetaSearch": false,
+              "includeNullMetadata": true,
+              "legendFormat": "__auto",
+              "range": true,
+              "refId": "A",
+              "useBackend": false
+            }
+          ],
+          "title": "New panel",
+          "transformations": [
+            {
+              "id": "groupingToMatrix",
+              "options": {
+                "columnField": "connection",
+                "rowField": "Time",
+                "valueField": "router_connection"
+              }
+            },
+            {
+              "id": "convertFieldType",
+              "options": {
+                "conversions": [
+                  {
+                    "destinationType": "time",
+                    "targetField": "Time\\connection"
+                  }
+                ],
+                "fields": {}
+              }
+            }
+          ],
+          "type": "state-timeline"
+        }
+      ],
+      "preload": false,
+      "schemaVersion": 41,
+      "tags": [],
+      "templating": {
+        "list": []
+      },
+      "time": {
+        "from": "now-30m",
+        "to": "now"
+      },
+      "timepicker": {},
+      "timezone": "browser",
+      "title": "Ctfroute",
+      "uid": "67629c06-c426-40a7-841a-cf4fd4e54293",
+      "version": 4
+    }
+---
+# Source: ctf-monitoring/templates/dashboards/public.yml
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: node-exporter-full
+spec:
+  instanceSelector:
+    matchLabels:
+      name: cluster-grafana
+  folder: ""
+  grafanaCom:
+    id: 1860
+---
+# Source: ctf-monitoring/templates/grafana.yaml
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  name: ctf-prometheus
+  labels:
+    helm.sh/chart: ctf-monitoring-0.1.0
+    app.kubernetes.io/name: ctf-monitoring
+    app.kubernetes.io/instance: ctf-monitoring
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  instanceSelector:
+    matchLabels:
+      datasources: ctf-grafana
+  datasource:
+    access: proxy
+    name: ctf-prometheus
+    type: prometheus
+    url: http://prometheus-operated.demo-1.svc.cluster.local:9090
+    isDefault: true
+    jsonData:
+      "tlsSkipVerify": true
+      "timeInterval": "5s"
+---
+# Source: ctf-monitoring/templates/prometheus.yml
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  name: ctf-prometheus
+  labels:
+    helm.sh/chart: ctf-monitoring-0.1.0
+    app.kubernetes.io/name: ctf-monitoring
+    app.kubernetes.io/instance: ctf-monitoring
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 2
+  serviceAccountName: ctf-monitoring-prometheus
+  # Target all config resources in the namespace
+  serviceMonitorSelector:
+    matchLabels: { }
+  scrapeConfigSelector:
+    matchLabels: { }
+  podMonitorSelector:
+    matchLabels: { }
+  ruleSelector:
+    matchLabels: { }
+  probeSelector:
+    matchLabels: { }
+  # Needed because the ctfroute service only has EndpointSlices, no Endpoints
+  serviceDiscoveryRole: EndpointSlice
+  # We have to set either size or duration to override the default "24h"
+  retentionSize: 99GiB
+  nodeSelector:
+    ctfr.attacking-lab.com/role: core
+  tolerations:
+    - key: ctfr.attacking-lab.com/role
+      operator: Equal
+      value: core
+      effect: NoExecute
+  securityContext:
+    fsGroup: 2000
+    runAsGroup: 2000
+    runAsNonRoot: true
+    runAsUser: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  storage:
+    volumeClaimTemplate:
+      spec:
+        resources:
+          requests:
+            storage: 20Gi
+        storageClassName: longhorn-zone-replicated

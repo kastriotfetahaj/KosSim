@@ -1,0 +1,11 @@
+imagePullSecrets:
+  - name: ci-attacking-lab-cr
+
+ctf: ecsc
+
+networkIndex: 42
+
+elasticsearch:
+  storage:
+    className: longhorn-ha-databases
+    request: 20Gs

@@ -1,0 +1,31 @@
+# This is a compose override that you symlink to 
+# service/docker-compose.override.yml during development so you 
+# can conveniently rebuild everythin from one place
+
+# The symlink should be gitignored of course
+
+services:
+  # This service builds the binary and is NOT given to players
+  ssh-build:
+    build: ../meta/gitter-shell
+    # Running the service will make it write the  
+    # binary to the service dir
+    # > docker compose run --rm --build ssh-build
+    volumes:
+      - ./:/service
+    command: /bin/cp /build/bin/gitter-shell /service/ssh/gitter-shell
+    profiles:
+      - donotstart # Service doesn't start with docker-compose up
+      
+  ssh:
+    volumes:
+      - ./ssh/gitter-shell:/opt/gitter-shell # mount the gitter-shell binary into the running container
+
+
+  postgres:
+    ports:
+      - 5432:5432
+
+  internal:
+    ports:
+      - 3000:3000

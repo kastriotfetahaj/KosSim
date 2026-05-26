@@ -1,0 +1,4 @@
+---
+profile: safety
+exclude_paths:
+    - services/

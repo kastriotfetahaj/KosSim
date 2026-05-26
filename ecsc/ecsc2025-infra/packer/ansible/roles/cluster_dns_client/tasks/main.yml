@@ -1,0 +1,25 @@
+---
+- name: "Checkout network-provider"
+  ansible.builtin.stat:
+    path: "/etc/resolv.conf"
+  register: cluster_dns_client_resolve_st
+
+- name: "Assert systemd-resolved"
+  ansible.builtin.assert:
+    fail_msg: "System is not using systemd-resolved"
+    that:
+      - "'systemd/resolve' in cluster_dns_client_resolve_st.stat.lnk_target"
+
+- name: "Ensure systemd-resolved config dir exists"
+  ansible.builtin.file:
+    state: directory
+    dest: "/etc/systemd/resolved.conf.d"
+    mode: "0755"
+
+- name: "Template resolved override config"
+  ansible.builtin.template:
+    src: "80-use-cluster-dns.conf.j2"
+    dest: "/etc/systemd/resolved.conf.d/80-use-cluster-dns.conf"
+    mode: "0644"
+  notify:
+    - "Restart systemd-resolved"

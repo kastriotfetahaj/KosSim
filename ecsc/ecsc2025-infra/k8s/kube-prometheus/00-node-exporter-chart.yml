@@ -1,0 +1,26 @@
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: node-exporter
+  namespace: kube-system
+spec:
+  targetNamespace: kube-prometheus
+  createNamespace: true
+  repo: https://prometheus-community.github.io/helm-charts
+  chart: prometheus-node-exporter
+  version: 4.47.3
+  valuesContent: |-
+    kubeRBACProxy:
+      enabled: false 
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: ctfr.attacking-lab.com/role
+                  operator: In
+                  values: [ core, control-plane ]
+    tolerations:
+      - operator: Exists
+---

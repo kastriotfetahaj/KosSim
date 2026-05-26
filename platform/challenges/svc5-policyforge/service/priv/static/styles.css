@@ -1,0 +1,53 @@
+:root {
+  color-scheme: dark;
+  --bg: #17110d;
+  --panel: #261b14;
+  --panel-2: #332419;
+  --line: #6b4d35;
+  --text: #fff6ea;
+  --muted: #c6a98e;
+  --accent: #f1b864;
+  --green: #9be28f;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #120d0a, var(--bg));
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+.policy-shell { max-width: 1340px; margin: 0 auto; padding: 26px; }
+.policy-head {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 20px;
+  align-items: end;
+  min-height: 190px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 22px;
+}
+.policy-head p { margin: 0 0 8px; color: var(--green); text-transform: uppercase; letter-spacing: .18em; font-size: 12px; font-weight: 800; }
+h1 { margin: 0; font-size: 64px; letter-spacing: 0; }
+h2 { margin: 0 0 14px; font-size: 18px; }
+.toolbar { display: flex; gap: 10px; }
+button { min-height: 42px; border: 1px solid var(--line); background: var(--panel-2); color: var(--text); padding: 8px 14px; font-weight: 800; cursor: pointer; }
+button:hover { border-color: var(--accent); color: var(--accent); }
+.policy-grid { display: grid; grid-template-columns: 330px minmax(0, 1fr) 380px; gap: 16px; margin-top: 18px; align-items: start; }
+.objects, .matrix, .review { border: 1px solid var(--line); background: rgba(38, 27, 20, .92); padding: 16px; min-height: 560px; }
+.object { border: 1px solid #5c422e; background: var(--panel-2); padding: 12px; margin-bottom: 10px; cursor: pointer; }
+.object.active { border-color: var(--accent); box-shadow: inset 4px 0 0 var(--accent); }
+.object strong { color: var(--accent); }
+.object span { display: block; color: var(--muted); margin-top: 6px; }
+.object code { display: block; color: var(--green); margin-top: 6px; overflow-wrap: anywhere; font-size: 12px; }
+.matrix-grid { display: grid; grid-template-columns: repeat(4, minmax(90px, 1fr)); gap: 10px; }
+.cell { min-height: 92px; border: 1px solid var(--line); background: #1b130f; padding: 10px; display: grid; align-content: space-between; }
+.cell b { color: var(--green); font-size: 22px; }
+.cell span { color: var(--muted); font-size: 12px; }
+textarea, pre { width: 100%; background: #120d0a; border: 1px solid var(--line); color: var(--text); padding: 12px; }
+textarea { min-height: 120px; resize: vertical; }
+pre { min-height: 360px; white-space: pre-wrap; overflow: auto; }
+@media (max-width: 1100px) {
+  .policy-head, .policy-grid { grid-template-columns: 1fr; }
+  .toolbar { flex-wrap: wrap; }
+}

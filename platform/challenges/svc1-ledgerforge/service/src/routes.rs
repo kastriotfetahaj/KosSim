@@ -1,0 +1,276 @@
+use axum::{
+    extract::{Path, Query, State},
+    http::{HeaderMap, StatusCode},
+    response::{Html, IntoResponse},
+    routing::{get, post},
+    Json, Router,
+};
+use serde::Deserialize;
+use serde_json::{json, Value};
+use std::{collections::HashMap, fs, sync::Arc};
+use tokio::sync::Mutex;
+use tower::ServiceBuilder;
+use tower_http::services::ServeDir;
+
+use crate::{
+    accounts, admin, apitokens, audit_log, crypto, eno, indexer, ledger, ops, policies, query,
+    ratelimit, replicas, settlements, state::AppState, treasury,
+};
+
+type Shared = Arc<Mutex<AppState>>;
+
+const STATIC_INDEX: &str = "/app/static/index.html";
+
+pub fn router(state: Shared) -> Router {
+    let rate_layer = axum::middleware::from_fn_with_state(state.clone(), ratelimit::middleware);
+
+    let core = Router::new()
+        .route("/", get(index))
+        .route("/health", get(health))
+        .route("/health/db", get(ops::health_db))
+        .route("/whoami", get(whoami))
+        .route("/service", get(service_info))
+        .route("/", post(eno_task))
+        .route("/api/grants/:label", get(grant))
+        .route("/api/read", get(read_doc))
+        .route("/api/docs", get(list_docs))
+        .route("/api/query", post(run_query))
+        .route("/api/v1/branches", get(cli_branches))
+        .route("/api/v1/commit", post(cli_commit))
+        .route("/api/v1/proof/:doc", get(cli_proof))
+        .route("/api/snapshots/:snap/export", get(snapshot_export))
+        .route("/api/rate-limit/status", get(ratelimit::status))
+        .route("/api/indexer/stats", get(ops::indexer_stats))
+        .route("/debug/merkle", get(ops::merkle_debug))
+        .with_state(state.clone());
+
+    core.merge(accounts::router(state.clone()))
+        .merge(settlements::router(state.clone()))
+        .merge(treasury::router(state.clone()))
+        .merge(policies::router(state.clone()))
+        .merge(replicas::router(state.clone()))
+        .merge(apitokens::router(state.clone()))
+        .merge(admin::router(state.clone()))
+        .nest_service("/static", ServeDir::new("/app/static"))
+        .layer(ServiceBuilder::new().layer(rate_layer))
+}
+
+async fn index() -> Html<String> {
+    Html(
+        fs::read_to_string(STATIC_INDEX)
+            .unwrap_or_else(|_| "<!doctype html><title>LedgerForge</title><h1>LedgerForge</h1>".to_string()),
+    )
+}
+
+async fn health(State(state): State<Shared>) -> Json<Value> {
+    let state = state.lock().await;
+    Json(json!({
+        "status": "up",
+        "service": format!("{}/{}", state.team, state.service),
+        "name": "ledgerforge"
+    }))
+}
+
+async fn whoami(State(state): State<Shared>) -> Json<Value> {
+    let state = state.lock().await;
+    Json(json!({"team": state.team, "service": state.service, "runtime": "rust-axum"}))
+}
+
+async fn service_info(headers: HeaderMap, State(state): State<Shared>) -> impl IntoResponse {
+    let state = state.lock().await;
+    if !eno::authorized(&headers, &state) {
+        return (StatusCode::FORBIDDEN, Json(json!({"error": "forbidden"})));
+    }
+    (
+        StatusCode::OK,
+        Json(json!({
+            "serviceName": "ledgerforge",
+            "flagVariants": 3,
+            "noiseVariants": 3,
+            "havocVariants": 9
+        })),
+    )
+}
+
+async fn eno_task(headers: HeaderMap, State(state): State<Shared>, Json(task): Json<eno::Task>) -> impl IntoResponse {
+    let mut state = state.lock().await;
+    if !eno::authorized(&headers, &state) {
+        return (StatusCode::FORBIDDEN, Json(json!({"error": "forbidden"})));
+    }
+    let method = task.method.unwrap_or_default().to_ascii_uppercase();
+    let tick = task.related_round_id.or(task.current_round_id).unwrap_or(0);
+    let payload = task.variant_id.unwrap_or(0);
+    match method.as_str() {
+        "PUTFLAG" => {
+            let Some(flag) = task.flag else {
+                return (StatusCode::OK, Json(json!({"result": "INTERNAL_ERROR", "message": "missing flag"})));
+            };
+            let info = state.put_flag(tick, payload, &flag);
+            (StatusCode::OK, Json(json!({"result": "OK", "attack_info": info})))
+        }
+        "GETFLAG" => {
+            let ok = task.flag.as_deref().map(|f| state.get_flag(tick, payload, f)).unwrap_or(false);
+            (StatusCode::OK, Json(json!({"result": if ok { "OK" } else { "MUMBLE" }})))
+        }
+        "PUTNOISE" => {
+            state.put_noise(tick, payload);
+            (StatusCode::OK, Json(json!({"result": "OK"})))
+        }
+        "GETNOISE" => {
+            let ok = state.get_noise(tick, payload);
+            (StatusCode::OK, Json(json!({"result": if ok { "OK" } else { "MUMBLE" }})))
+        }
+        "HAVOC" => {
+            let ok = state.havoc(tick, payload);
+            (StatusCode::OK, Json(json!({"result": if ok { "OK" } else { "MUMBLE" }})))
+        }
+        _ => (StatusCode::OK, Json(json!({"result": "MUMBLE", "message": "unknown method"}))),
+    }
+}
+
+async fn grant(Path(label): Path<String>, State(state): State<Shared>) -> Json<Value> {
+    let state = state.lock().await;
+    let token = crypto::sign_grant(&state.grant_key(), "/public", &label);
+    Json(json!({"label": label, "scope": "/public", "grant": token}))
+}
+
+#[derive(Deserialize)]
+struct ReadParams {
+    path: String,
+    grant: String,
+}
+
+#[derive(Deserialize)]
+struct CommitReq {
+    branch: String,
+    body: String,
+    signer: Option<String>,
+}
+
+async fn read_doc(Query(params): Query<ReadParams>, State(state): State<Shared>) -> impl IntoResponse {
+    let state = state.lock().await;
+    let Some(grant) = crypto::verify_grant(&state.grant_key(), &params.grant) else {
+        return (StatusCode::FORBIDDEN, Json(json!({"error": "bad_grant"})));
+    };
+    if !params.path.starts_with(&grant.scope) {
+        return (StatusCode::FORBIDDEN, Json(json!({"error": "scope_denied"})));
+    }
+    let normalized = ledger::normalize_path(&params.path);
+    let Some(doc_id) = state.path_index.get(&normalized) else {
+        return (StatusCode::NOT_FOUND, Json(json!({"error": "missing", "resolved": normalized})));
+    };
+    let doc = &state.docs[doc_id];
+    (
+        StatusCode::OK,
+        Json(json!({
+            "id": doc.id,
+            "path": normalized,
+            "body": doc.body,
+            "root": ledger::merkle_root(&state.docs)
+        })),
+    )
+}
+
+async fn list_docs(State(state): State<Shared>) -> Json<Value> {
+    let state = state.lock().await;
+    let docs: Vec<Value> = state.docs.values().map(ledger::public_projection).collect();
+    let count = docs.len();
+    Json(json!({"docs": docs, "count": count}))
+}
+
+async fn run_query(State(state): State<Shared>, Json(body): Json<Value>) -> Json<Value> {
+    let state = state.lock().await;
+    let script = body.get("script").and_then(Value::as_str).unwrap_or("");
+    Json(query::execute(&state, script))
+}
+
+async fn cli_branches(State(state): State<Shared>) -> Json<Value> {
+    let state = state.lock().await;
+    let rows: Vec<Value> = state
+        .docs
+        .values()
+        .map(|doc| {
+            json!({
+                "branch": doc.class_name,
+                "tip": doc.id,
+                "owner": doc.owner,
+                "public": doc.public
+            })
+        })
+        .collect();
+    Json(json!({"branches": rows, "root": ledger::merkle_root(&state.docs)}))
+}
+
+async fn cli_commit(
+    State(state): State<Shared>,
+    headers: HeaderMap,
+    Json(body): Json<CommitReq>,
+) -> impl IntoResponse {
+    let mut state = state.lock().await;
+    let user = match accounts::current_user(&state, &headers) {
+        Some(u) => u,
+        None => return (StatusCode::UNAUTHORIZED, Json(json!({"error": "auth_required"}))),
+    };
+    let id = crypto::short_hash(&format!("{}:{}:{}", body.branch, body.body, state.docs.len()));
+    let path = format!(
+        "/public/branch/{}/{}",
+        ledger::normalize_path(&body.branch).trim_matches('/'),
+        id
+    );
+    let signer = body.signer.unwrap_or(user.username.clone());
+    let doc = crate::state::Doc {
+        id: id.clone(),
+        path: path.clone(),
+        class_name: body.branch.clone(),
+        owner: signer.clone(),
+        body: body.body,
+        public: true,
+        snapshot: "cli".to_string(),
+    };
+    state.upsert_doc_external(&doc, 0);
+    audit_log::record(&state.db, &user.username, "branch.commit", &id, &body.branch);
+    let root = ledger::merkle_root(&state.docs);
+    (StatusCode::OK, Json(json!({"id": id, "root": root, "signer": signer})))
+}
+
+async fn cli_proof(Path(doc): Path<String>, State(state): State<Shared>) -> impl IntoResponse {
+    let state = state.lock().await;
+    let Some(item) = state.docs.get(&doc) else {
+        return (StatusCode::NOT_FOUND, Json(json!({"error": "missing"})));
+    };
+    let path = ledger::merkle_path(&state.docs, &item.id).unwrap_or_default();
+    (
+        StatusCode::OK,
+        Json(json!({
+            "leaf": item.id,
+            "root": ledger::merkle_root(&state.docs),
+            "path": item.path,
+            "proof": path,
+        })),
+    )
+}
+
+async fn snapshot_export(
+    Path(snap): Path<String>,
+    Query(params): Query<HashMap<String, String>>,
+    State(state): State<Shared>,
+) -> impl IntoResponse {
+    let state = state.lock().await;
+    let Some(snapshot) = state.snapshots.get(&snap) else {
+        return (StatusCode::NOT_FOUND, Json(json!({"error": "missing_snapshot"})));
+    };
+    let claim = params.get("claim").cloned().unwrap_or_default();
+    if !claim.starts_with("public:") && snapshot.public_label != "boot-public" {
+        return (StatusCode::FORBIDDEN, Json(json!({"error": "snapshot_scope_denied"})));
+    }
+    let wanted = claim.strip_prefix("public:").unwrap_or("");
+    let mut rows = Vec::new();
+    for doc_id in &snapshot.doc_ids {
+        if wanted.is_empty() || wanted == doc_id {
+            if let Some(doc) = state.docs.get(doc_id) {
+                rows.push(json!({"id": doc.id, "body": doc.body, "snapshot": snapshot.id}));
+            }
+        }
+    }
+    (StatusCode::OK, Json(json!({"rows": rows, "label": snapshot.public_label})))
+}

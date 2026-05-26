@@ -1,0 +1,67 @@
+@use "aug";
+@use "vars";
+
+.btn {
+  background-color: var(--accent);
+  border-radius: var(--standard-border-radius);
+  border: var(--border-width) solid var(--accent);
+  box-shadow: none;
+  color: var(--accent-text);
+  display: inline-block;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: normal;
+  margin-bottom: .5rem;
+  max-width: 100%;
+  padding: .5rem;
+  text-decoration: none;
+  text-align: center;
+
+  &:hover {
+    background-color: var(--accent-hover);
+    border-color: var(--accent-hover);
+    cursor: pointer;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+}
+
+input[type="submit"], button, .btn {
+  &[data-augmented-ui] {
+    font-variant: small-caps;
+    border-radius: 0;
+    padding-left: 2rem;
+    padding-right: 2rem;
+    @include aug.corner-clip(tl);
+    @include aug.corner-clip(br);
+  }
+
+  &.btn-lg {
+    padding: 1rem 3rem;
+  }
+}
+
+.btn-secondary {
+  background-color: vars.$secondary;
+  border-color: vars.$secondary;
+
+  &:hover {
+    background-color: vars.$secondary-hover;
+    border-color: vars.$secondary-hover;
+  }
+
+  &:focus-visible {
+    outline-color: vars.$secondary;
+  }
+}
+
+.label {
+  background-color: vars.$label-bg;
+  color: vars.$label-text;
+  border-radius: var(--standard-border-radius);
+  padding: .15rem .25rem;
+  font-size: 85%;
+}

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NanoFleet</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <main class="fleet-shell">
+    <section class="map">
+      <header>
+        <p>fleet telemetry exchange</p>
+        <h1>NanoFleet</h1>
+      </header>
+      <div id="nodes" class="nodes"></div>
+    </section>
+    <aside class="control">
+      <h2>Route Control</h2>
+      <button id="token">Issue diagnostic token</button>
+      <button id="tlv">Decode selected TLV</button>
+      <button id="firmware">Open firmware manifest</button>
+      <form id="cli" class="prompt">
+        <label for="cmd">nf$</label>
+        <input id="cmd" autocomplete="off" spellcheck="false" value="help">
+        <button>run</button>
+      </form>
+      <pre id="out">select a node</pre>
+    </aside>
+  </main>
+  <script src="/static/app.js"></script>
+</body>
+</html>

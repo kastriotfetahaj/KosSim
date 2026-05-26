@@ -1,0 +1,8 @@
+apiVersion: ctfroute.attacking-lab.com/v1
+kind: Gate
+metadata:
+  name: pre-game-gate
+spec:
+  type: connection
+  connSrc: any-team
+  connDst: other-team

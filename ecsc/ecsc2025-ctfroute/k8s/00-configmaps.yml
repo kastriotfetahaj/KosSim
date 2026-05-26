@@ -1,0 +1,205 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vulnbox-wireguard-confs
+data:
+  client1.conf: |
+    [Interface]
+    PrivateKey = wLmP7si4Ytzq7AF+zwx5aUt7libdb1Cp5/TzuNOsmGE=
+    Address = 10.0.1.3/16
+    
+    [Peer]
+    Endpoint = router-1.router.github-runner.svc.cluster.local:50001
+    PublicKey = 04imYC7Ed2zEKZiiED5PT7mTkf2gMJXF9HO2hdcvp2U=
+    AllowedIPs = 10.0.0.0/16
+    PersistentKeepalive = 1
+  client2.conf: |
+    [Interface]
+    PrivateKey = INNPijh5wkwrBNVM3lYwIBlrOfJ9wLahtr1h91/ZV3g=
+    Address = 10.0.2.3/16
+    
+    [Peer]
+    Endpoint = router-2.router.github-runner.svc.cluster.local:50002
+    PublicKey = 04imYC7Ed2zEKZiiED5PT7mTkf2gMJXF9HO2hdcvp2U=
+    AllowedIPs = 10.0.0.0/16
+    PersistentKeepalive = 1
+
+  client3.conf: |
+    [Interface]
+    PrivateKey = sI3sgMDc0wdMY2MYoSzYCzlO/J27JjQMowqXA1aKS24=
+    Address = 10.0.3.3/16
+    
+    [Peer]
+    PublicKey = 04imYC7Ed2zEKZiiED5PT7mTkf2gMJXF9HO2hdcvp2U=
+    Endpoint = router-3.router.github-runner.svc.cluster.local:50003
+    AllowedIPs = 10.0.0.0/16
+    PersistentKeepalive = 1
+
+  client4.conf: |
+    [Interface]
+    PrivateKey = yDrrbuOExuLz3je/XWlLD1+4od6iTonnI2GbGxjAx0g=
+    Address = 10.0.4.3/16
+    
+    [Peer]
+    PublicKey = QBVE5EJD0nMgh1MJfD4ZUJ+rXB8+AifjadRLoTCgBko=
+    Endpoint = router-3.router.github-runner.svc.cluster.local:50004
+    AllowedIPs = 10.0.0.0/16
+    PersistentKeepalive = 1
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ctfroute-yml
+data:
+  ctfroute.yml: |
+    instance:
+      # https://docs.python.org/3/library/logging.config.html#dictionary-schema-details
+      metrics: /var/ctfroute/metrics/metrics
+      logging:
+        version: 1
+        incremental: true
+        loggers:
+          ctfroute.nft:
+            level: INFO
+          ctfroute.__main__:
+            level: INFO
+          ctfroute.adapters.kubernetes:
+            level: INFO
+          ctfroute.controllers.metrologist:
+            level: INFO
+          ctfroute.debug:
+            level: INFO
+    
+    defaults:
+      teams:
+        anonymization:
+          driver: netfilter
+    
+    adapters:
+      - type: "kubernetes"
+        namespace: github-runner
+    
+    initialState:
+      gates:
+        - id: block-ssh
+          type: connection
+          connSrc: any-team
+          connDst: other-team
+          expression: "tcp dport 22"
+        
+        - id: shield-team-1-port-2000
+          type: connection
+          connSrc: any-team
+          connDst: team-1
+          expression: "tcp dport 2000"
+          period:
+            fromTime: 2025-08-22T17:43:29+02:00
+        
+        # Created with 01-gates.yml
+        # - id: block-team-2-port-2000
+        
+        - id: old-gate
+          type: connection
+          connSrc: any-team
+          period:
+            fromTime: 0
+            toTime: 1755876776
+        
+        # Doesn't exist in kubernetes (if you use the default gates)
+        - id: gate-that-will-be-deleted
+          type: connection
+          connSrc: any-team
+          connDst: team-1
+          expression: "tcp dport 2000"
+      
+      routers:
+        - id: 1
+          host: router-1.router.github-runner.svc.cluster.local
+          teams: [ 1 ]
+          connectivity:
+            driver: wireguard
+            port: 40000
+            privateKey: QDFL+IGY2ROgX9Pj+sZ0IdccOpJdeJBwOPDmtCQGsmk=
+            publicKey: AoHGD5N6Tk4bipYdLmV88PKdd38esPS/Oln/PV3A8Ws=
+        
+        - id: 2
+          host: router-2.router.github-runner.svc.cluster.local
+          teams: [ 2 ]
+          connectivity:
+            driver: wireguard
+            port: 40000
+            privateKey: aOpWz4NoZGbKFF2mnoK56tPMb5cpOPv97gbn2CXBn1I=
+            publicKey: Kf+iWMitCCMyYAVVng/0F8aR5EQCcvsD+eVry2fgBwM=
+        
+        - id: 3
+          host: router-3.router.github-runner.svc.cluster.local
+          teams: [ 3, 4 ]
+          connectivity:
+            driver: wireguard
+            port: 40000
+            privateKey: AItR2eNZ/azgGRnAN/cf3M8SlU3jnyrREyBxdTuxxms=
+            publicKey: JHlRtRJQ1unOCBLH+YpRP2P9lQfInwXdx3Bd22hazGw=
+      
+      teams:
+        - id: 1
+          network: 10.0.1.0/24
+          gateway: 10.0.1.254
+          vulnbox: 10.0.1.3
+          meta:
+            name: NOP
+            ctftest/endpoint: vulnbox-1.vulnbox.github-runner.svc.cluster.local:50051
+          connectivity:
+            driver: wireguard
+            publicKey: 04imYC7Ed2zEKZiiED5PT7mTkf2gMJXF9HO2hdcvp2U=
+            privateKey: qHp4n/BedZ74okmRrkUD88av/uAUiPuRuNbX0b7J1Vo=
+            port: 50001
+            peers:
+              - allowedIps: 10.0.1.3/32
+                publicKey: Bk3wiHED8fuJ8u4h7/FZUBPOrLqwsKpijQfdtEHduHs=
+        - id: 2
+          network: 10.0.2.0/24
+          gateway: 10.0.2.254
+          vulnbox: 10.0.2.3
+          meta:
+            name: enoflag
+            ctftest/endpoint: vulnbox-2.vulnbox.github-runner.svc.cluster.local:50051
+          connectivity:
+            driver: wireguard
+            publicKey: 04imYC7Ed2zEKZiiED5PT7mTkf2gMJXF9HO2hdcvp2U=
+            privateKey: qHp4n/BedZ74okmRrkUD88av/uAUiPuRuNbX0b7J1Vo=
+            port: 50002
+            peers:
+              - allowedIps: 10.0.2.3/32
+                publicKey: LjyWLQSDY/DABNcITYfqC/vlx6/0GzIw5Eym+u4ATCk=
+        - id: 3
+          network: 10.0.3.0/24
+          gateway: 10.0.3.254
+          vulnbox: 10.0.3.3
+          meta:
+            name: saarsec
+            ctftest/endpoint: vulnbox-3.vulnbox.github-runner.svc.cluster.local:50051
+          connectivity:
+            driver: wireguard
+            publicKey: 04imYC7Ed2zEKZiiED5PT7mTkf2gMJXF9HO2hdcvp2U=
+            privateKey: qHp4n/BedZ74okmRrkUD88av/uAUiPuRuNbX0b7J1Vo=
+            port: 50003
+            peers:
+              - allowedIps: 10.0.3.3/32
+                publicKey: DeruoVQ/xsHhCsSw3rm434cSkGpEIKYBgvlTRFRbHRc=
+         
+        - id: 4
+          network: 10.0.4.0/24
+          gateway: 10.0.4.254
+          vulnbox: 10.0.4.3
+          meta:
+            name: organizers
+            ctftest/endpoint: vulnbox-4.vulnbox.github-runner.svc.cluster.local:50051
+          connectivity:
+            driver: wireguard
+            privateKey: CEL7u2Cz6uemx/iEvlKf/wW050JVoYar9foRb0uPfnc=
+            publicKey: QBVE5EJD0nMgh1MJfD4ZUJ+rXB8+AifjadRLoTCgBko=
+            port: 50004
+            peers:
+              - allowedIps: 10.0.4.3/32
+                privateKey: yDrrbuOExuLz3je/XWlLD1+4od6iTonnI2GbGxjAx0g=
+                publicKey: V5yGr3Zptqv9Z1S8APJzs0MzqCOldhADY7lw/q5LHTo=

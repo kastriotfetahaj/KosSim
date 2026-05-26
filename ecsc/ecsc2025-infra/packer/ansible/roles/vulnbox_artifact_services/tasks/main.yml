@@ -1,0 +1,151 @@
+---
+# - name: Create /services
+#   ansible.builtin.file:
+#     path: /services
+#     state: directory
+#     mode: "0755"
+
+- name: "Template vulnbox-artifacts path"
+  ansible.builtin.set_fact:
+    vulnbox_artifact_services_local_repo_path: "./services/{{ inventory_hostname }}/vulnbox_artifacts"
+
+- name: Clean local services cache
+  become: false
+  ansible.builtin.file:
+    path: "{{ vulnbox_artifact_services_local_repo_path }}"
+    state: absent
+    mode: "0755"
+  delegate_to: localhost
+
+- name: "Pull vulnbox-repo"
+  become: false
+  ansible.builtin.git: # noqa: latest
+    repo: "{{ vulnbox_artifact_services_repo_url }}"
+    dest: "{{ vulnbox_artifact_services_local_repo_path }}"
+  delegate_to: localhost
+
+- name: 'Log builder into "artifact" registry'
+  ansible.builtin.command:
+    argv:
+      - docker
+      - login
+      - "--username"
+      - "{{ vulnbox_artifact_services_registry.username }}"
+      - "--password-stdin"
+      - "{{ vulnbox_artifact_services_registry.server }}"
+    stdin: "{{ vulnbox_artifact_services_registry.password }}\n"
+  delegate_to: localhost
+
+- name: "Run build step"
+  become: false
+  ansible.builtin.command:
+    chdir: "{{ vulnbox_artifact_services_local_repo_path }}"
+    argv: ["bash", "build_artifacts.sh"]
+  delegate_to: localhost
+  changed_when: true
+
+# ### ENRYPTED SERVICE ZIP
+# - name: "Deploy Services (Encrypted)"
+#   when: "vulnbox_services_repo_encryption_pw != None"
+#   block:
+#     - name: Create repo/tmp
+#       become: false
+#       delegate_to: localhost
+#       ansible.builtin.file:
+#         path: "{{ vulnbox_artifact_services_local_repo_path }}/tmp"
+#         state: directory
+#         mode: "0755"
+
+#     - name: "Copy services into temporary directory"
+#       become: false
+#       ansible.builtin.command:
+#         argv: ["mv", "vulnbox", "tmp/services"]
+#         chdir: "{{ vulnbox_artifact_services_local_repo_path }}"
+#       delegate_to: localhost
+#       changed_when: true
+
+#     - name: "Pack services into .tar.gz"
+#       become: false
+#       ansible.builtin.command:
+#         chdir: "{{ vulnbox_artifact_services_local_repo_path }}/tmp"
+#         argv: ["tar", "-cvzf", "-r", "services.tar.gz", "services"]
+#       delegate_to: localhost
+#       changed_when: true
+
+#     - name: "Encrypt services into encrypted .tar.gz.gpg"
+#       become: false
+#       ansible.builtin.command:
+#         chdir: "{{ vulnbox_artifact_services_local_repo_path }}/tmp"
+#         argv: ["gpg", "--batch", "--passphrase", "{{ vulnbox_services_repo_encryption_pw }}", "-c", "services.tar.gz"]
+#       delegate_to: localhost
+#       changed_when: true
+
+#     - name: "Copy services to vulnbox"
+#       ansible.posix.synchronize:
+#         src: "{{ vulnbox_artifact_services_local_repo_path }}/tmp/services.tar.gz.gpg"
+#         dest: "/root/services.tar.gz.gpg"
+#         rsync_path: "sudo rsync"
+
+#     - name: "Copy decryption script to vulnbox"
+#       ansible.builtin.copy:
+#         src: "decrypt-services.sh"
+#         dest: "/root/decrypt-services.sh"
+#         mode: "0755"
+
+### LIVE SERVICES AUTOSTART
+- name: "Deploy Services (Autostart)"
+  # when: "vulnbox_services_repo_encryption_pw == None"
+  block:
+    - name: "Copy services to vulnbox"
+      ansible.posix.synchronize:
+        src: "{{ vulnbox_artifact_services_local_repo_path }}/vulnbox/"
+        dest: "/root/services"
+        rsync_path: "sudo rsync"
+
+    - name: "Find services on vulnbox"
+      ansible.builtin.find:
+        paths: "/root/services"
+        recurse: false
+        file_type: directory
+      register: vulnbox_artifact_services_service_directories
+
+    - name: "Load all provided docker images"
+      ansible.builtin.shell:
+        executable: /usr/bin/bash
+        cmd: |
+          shopt -s nullglob
+          for image_tar in images/*; do
+            echo "Loading image tar $image_tar";
+            docker load -i "$image_tar";
+          done
+        chdir: "{{ item.path }}"
+      with_items: "{{ vulnbox_artifact_services_service_directories.files }}"
+
+    - name: "Pull images"
+      ansible.builtin.command:
+        argv: ["docker", "compose", "pull", "--ignore-buildable", "--include-deps"]
+        chdir: "{{ item.path }}"
+      with_items: "{{ vulnbox_artifact_services_service_directories.files }}"
+
+    - name: "Build service"
+      ansible.builtin.command:
+        argv: ["docker", "compose", "build"]
+        chdir: "{{ item.path }}"
+      with_items: "{{ vulnbox_artifact_services_service_directories.files }}"
+
+    # Only build DO NOT START! (secrets are generated in this step)
+    # - name: "Pre-Start services"
+    #   ansible.builtin.command:
+    #     argv: ["docker", "compose", "up", "--build", "-d"]
+    #     chdir: "{{ item.path }}"
+    #   with_items: "{{ vulnbox_artifact_services_service_directories.files }}"
+
+    - name: "Set up systemd unit"
+      ansible.builtin.copy:
+        src: start-vulnservices.service
+        dest: /etc/systemd/system/start-vulnservices.service
+        mode: "0644"
+
+    - name: "Pre-Start services"
+      ansible.builtin.command:
+        argv: ["systemctl", "enable", "start-vulnservices.service"]

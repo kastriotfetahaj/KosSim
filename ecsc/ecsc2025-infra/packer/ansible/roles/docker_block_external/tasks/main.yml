@@ -1,0 +1,26 @@
+---
+- name: "Allow related/established traffic from the external interface to allow the containers to access the internet"
+  ansible.builtin.iptables:
+    chain: DOCKER-USER
+    ctstate: [RELATED, ESTABLISHED]
+    in_interface: "{{ item }}"
+    jump: ACCEPT
+  loop: "{{ docker_block_external_interfaces }}"
+
+- name: "Prevent access to docker services from the external interface"
+  ansible.builtin.iptables:
+    chain: DOCKER-USER
+    in_interface: "{{ item }}"
+    jump: DROP
+  loop: "{{ docker_block_external_interfaces }}"
+
+- name: "Delete RETURN rule in DOCKER-USER"
+  ansible.builtin.iptables:
+    chain: DOCKER-USER
+    jump: RETURN
+    state: absent
+  loop: "{{ docker_block_external_interfaces }}"
+
+- name: Persist iptables config
+  ansible.builtin.include_role:
+    name: "iptables_persistent"

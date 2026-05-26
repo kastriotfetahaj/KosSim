@@ -1,0 +1,64 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: ctf-metrics
+  labels:
+    {{ include "ctf-monitoring.labels" . | nindent 4}}
+  annotations:
+    "helm.sh/resource-policy": keep
+spec:
+  managed:
+    services:
+      additional:
+        - selectorType: rw
+          serviceTemplate:
+            metadata:
+              name: ctf-metrics-nodeport
+              labels:
+                {{ include "ctf-monitoring.labels" . | nindent 16}}
+            spec:
+              type: NodePort
+              ports:
+                - name: postgres
+                  port: 5432
+                  targetPort: 5432
+                  nodePort: {{ .Values.timescaleNodePort }}
+  imageName: ghcr.io/imusmanmalik/timescaledb-postgis:14-3.3
+  bootstrap:
+    initdb:
+      postInitTemplateSQL:
+        - CREATE EXTENSION timescaledb;
+  postgresql:
+    shared_preload_libraries:
+      - timescaledb
+  instances: {{ .Values.replicaCounts.timescale }}
+  affinity:
+    topologyKey: kubernetes.io/hostname
+    podAntiAffinityType: required
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: ctfr.attacking-lab.com/role
+                operator: In
+                values: [ 'worker' ]
+              - key: ctfr.attacking-lab.com/ctf
+                operator: In
+                values: [{{ .Values.ctf }}]
+    tolerations:
+      - key: ctfr.attacking-lab.com/role
+        operator: Equal
+        value: worker
+        effect: NoExecute
+      - key: ctfr.attacking-lab.com/ctf
+        operator: Equal
+        value: {{ .Values.ctf }}
+        effect: NoExecute
+  storage:
+    storageClass: longhorn-ha-postgres
+    size: 4Gi
+    pvcTemplate:
+      volumeMode: Filesystem
+
+
+---

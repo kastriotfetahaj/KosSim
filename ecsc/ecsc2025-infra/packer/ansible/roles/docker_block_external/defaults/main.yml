@@ -1,0 +1,2 @@
+---
+docker_block_external_interfaces: ["{{ ansible_default_ipv4.interface }}"]

@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: arkime-oauth2-proxy
+  labels:
+    app: oauth2-proxy
+    {{- include "arkime.labels" . | nindent 4 }}
+data:
+  oauth2_proxy.cfg: |
+    upstreams = [
+      "http://arkime-multiplexer.{{ .Release.Namespace }}.svc.cluster.local"
+    ]
+    provider = "keycloak-oidc"
+    oidc_issuer_url = "https://auth.attacking-lab.com/realms/master"
+    redirect_url = "https://arkime-{{ .Values.ctf }}.gartenverein-tackenberg.de/oauth2/callback"
+    allowed_groups = "admin"
+    code_challenge_method = "S256"
+    email_domains = "*"

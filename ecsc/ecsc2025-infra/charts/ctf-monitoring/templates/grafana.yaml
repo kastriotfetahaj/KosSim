@@ -1,0 +1,148 @@
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: ctf-grafana
+  labels:
+    {{- include "ctf-monitoring.labels" . | nindent 4 }}
+    dashboards: ctf-grafana
+    datasources: ctf-grafana
+spec:
+  config:
+    auth:
+      disable_login_form: "true"
+    auth.basic:
+      enabled: "false"
+    auth.anonymous:
+      enabled: "true"
+      org_name: Main Org.
+      org_role: Admin
+  deployment:
+    spec:
+      replicas: {{ .Values.replicaCounts.grafana }}
+      {{- if (gt (add (len .Values.podAnnotations) (len .Values.podLabels)) 0)}}
+      template:
+        metadata:
+          {{- with .Values.podAnnotations }}
+          annotations:
+          {{- toYaml . | nindent 10 }}
+          {{- end }}
+          {{- with .Values.podLabels }}
+          labels:
+          {{- toYaml . | nindent 10 }}
+          {{- end }}
+          {{- end }}
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  name: ctf-prometheus
+  labels:
+    {{- include "ctf-monitoring.labels" . | nindent 4 }}
+spec:
+  instanceSelector:
+    matchLabels:
+      datasources: ctf-grafana
+  datasource:
+    access: proxy
+    name: ctf-prometheus
+    type: prometheus
+    url: http://prometheus-operated.{{ .Release.Namespace }}.svc.cluster.local:9090
+    isDefault: true
+    jsonData:
+      "tlsSkipVerify": true
+      "timeInterval": "10s"
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  name: gameserver-db
+  labels:
+    {{- include "ctf-monitoring.labels" . | nindent 4 }}
+spec:
+  instanceSelector:
+    matchLabels:
+      datasources: ctf-grafana
+  valuesFrom:
+    # WRONG Value????
+    - targetPath: "secureJsonData.password"
+      valueFrom:
+        secretKeyRef:
+          name: "gameserver-postgres-app"
+          key: "password"
+  datasource:
+    access: proxy
+    name: gameserver-db
+    type: postgres
+    url: gameserver-postgres-ro.{{ .Release.Namespace }}.svc.cluster.local
+    user: app
+    database: app
+    isDefault: false
+    basicAuth: false
+    jsonData:
+      postgresVersion: 1700
+      sslmode: disable
+    secureJsonData:
+      password: '${password}'
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  name: ctf-metrics
+  labels:
+    {{- include "ctf-monitoring.labels" . | nindent 4 }}
+spec:
+  instanceSelector:
+    matchLabels:
+      datasources: ctf-grafana
+  valuesFrom:
+    - targetPath: "secureJsonData.password"
+      valueFrom:
+        secretKeyRef:
+          name: "ctf-metrics-app"
+          key: "password"
+  datasource:
+    access: proxy
+    name: ctf-metrics
+    type: postgres
+    url: ctf-metrics-ro.{{ .Release.Namespace }}.svc.cluster.local
+    user: app
+    database: app
+    isDefault: false
+    basicAuth: false
+    jsonData:
+      sslmode: disable
+      timescaledb: true
+      postgresVersion: 1400
+    secureJsonData:
+      password: '${password}'
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  name: ctf-es
+  labels:
+    {{- include "ctf-monitoring.labels" . | nindent 4 }}
+spec:
+  instanceSelector:
+    matchLabels:
+      datasources: ctf-grafana
+  datasource:
+    name: ctf-es
+    type: elasticsearch
+    access: proxy
+    url: https://ctf-es-http.{{ .Values.ctf }}.svc.cluster.local:9200
+    user: ''
+    database: ''
+    basicAuth: true
+    isDefault: false
+    jsonData:
+      includeFrozen: false
+      logLevelField: ''
+      logMessageField: ''
+      maxConcurrentShardRequests: 5
+      oauthPassThru: false
+      pdcInjected: false
+      sigV4Auth: false
+      timeField: '@timestamp'
+      timeInterval: 5s
+      tlsSkipVerify: true

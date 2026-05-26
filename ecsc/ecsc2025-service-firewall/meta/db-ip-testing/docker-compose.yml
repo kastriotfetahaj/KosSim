@@ -1,0 +1,32 @@
+services:
+  db:
+    build: ../../service/db
+    image: ecsc2025-service-firewall/db-test
+    pull_policy: never
+    container_name: firewall-db-test
+    hostname: db
+    stop_signal: SIGINT
+    volumes:
+      - type: bind
+        source: ./data
+        target: /var/lib/postgresql/data
+      - type: bind
+        source: ./secrets
+        target: /state/db/secrets
+        read_only: true
+      - type: bind
+        source: ../../service/db/init.sql
+        target: /docker-entrypoint-initdb.d/init.sql
+        read_only: true
+      - type: bind
+        source: postgresql.override.conf
+        target: /etc/postgres/overrides.conf
+        read_only: true
+    environment:
+      POSTGRES_DB: firewall
+      POSTGRES_HOST_AUTH_METHOD: password
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD_FILE: /state/db/secrets/admin
+    ports:
+      - "5432:5432"
+

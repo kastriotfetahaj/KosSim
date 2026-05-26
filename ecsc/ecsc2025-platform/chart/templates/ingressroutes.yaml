@@ -1,0 +1,65 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: xforwarded-header
+spec:
+  headers:
+    customRequestHeaders:
+      X-Forwarded-Proto: "https"
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: platform-https-redirect
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: platform-web
+  labels:
+    {{ include "platform.labels" . | nindent 4}}
+
+spec:
+  entryPoints:
+    - web
+  routes:
+    - kind: Rule
+      match: Host(`{{ .Values.host }}`) || Host(`images.{{ .Values.host }}`)
+      middlewares:
+        - name: platform-https-redirect
+      services:
+        - kind: TraefikService
+          name: noop@internal
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: platform-websecure
+  labels:
+    {{ include "platform.labels" . | nindent 4}}
+
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`{{ .Values.host }}`) || Host(`images.{{ .Values.host }}`)
+      middlewares:
+        - name: xforwarded-header 
+      services:
+        - kind: Service
+          name: platform
+          passHostHeader: true
+          port: 80
+  tls:
+    domains:
+      - main: {{ .Values.host }}
+        sans: 
+          - "images.{{ .Values.host }}"
+    {{- with .Values.tlsSecret }}
+    secretName: {{ . }}
+    {{- end }}

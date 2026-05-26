@@ -1,0 +1,9 @@
+database = "postgresql://authentication:__PASSWORD__@db/firewall?sslmode=verify-full&sslrootcert=/state/firewall/tls/ca.crt"
+ipv4 = ["10.0.1.0", "10.255.255.254"]
+ipv6 = ["fd00:ec5c::1:0", "fd00:ec5c::ffff:ffff:fffe"]
+account-lifetime = 3900 # DB account expiry plus cleanup timer
+
+[manager]
+path = "/manager"
+auth-community = "__COMMUNITY__"
+default-community = "firewall"

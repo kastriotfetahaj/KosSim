@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: arkime-config
+  labels:
+    {{- include "arkime.labels" . | nindent 4 }}
+data:
+  config.ini: |
+    [default]
+    interface = {{ .Values.arkime.interface }}
+    bpf = net 10.{{ required "values.networkIndexis required" .Values.networkIndex }}.0.0/16
+    authMode = anonymous
+    cronQueries = auto
+    rotateIndex = daily
+    passwordSecret = aiDeiVooc2zuqu5ooth4
+    httpRealm = Moloch
+    pcapDir = /opt/arkime/raw
+    maxFileSizeG = 10
+    tcpTimeout = 600
+    tcpSaveTimeout = 720
+    udpTimeout = 30
+    icmpTimeout = 10
+    maxStreams = 1000000
+    maxPackets = 10000
+    freeSpaceG = 5%
+    viewPort = 8005
+    rirFile = /opt/arkime/etc/ipv4-address-space.csv
+    ouiFile = /opt/arkime/etc/oui.txt
+    dropUser = nobody
+    dropGroup = daemon
+    parseSMTP = true
+    parseSMB = true
+    parseQSValue = false
+    supportSha256 = false
+    maxReqBody = 64
+    config.reqBodyOnlyUtf8 = true
+    smtpIpHeaders = X-Originating-IP:;X-Barracuda-Apparent-Source-IP:
+    parsersDir = /opt/arkime/parsers
+    pluginsDir = /opt/arkime/plugins
+    spiDataMaxIndices = 4
+    packetThreads = 2
+    pcapWriteMethod = simple
+    pcapWriteSize = 262143
+    dbBulkSize = 300000
+    compressES = false
+    maxESConns = 30
+    maxESRequests = 500
+    packetsPerPoll = 50000
+    antiSynDrop = true
+    logEveryXPackets = 100000
+    logUnknownProtocols = false
+    logESRequests = true
+    logFileCreation = true
+
+    [headers-http-request]
+    referer = type:string;count:true;unique:true
+    authorization = type:string;count:true
+    content-type = type:string;count:true
+    origin = type:string
+
+    [headers-http-response]
+    location = type:string
+    server = type:string
+    content-type = type:string;count:true
+
+    [headers-email]
+    x-priority = type:integer
+    authorization = type:string
+    {{- with .Values.arkime.configExtra }}
+    {{ . | indent 4 }}
+    {{- end }}

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block customization %}
+  h2:first-child {
+    margin-top: 0;
+  }
+{% endblock %}
+{% block content %}
+  <h2>{{ name }}</h2>
+
+  <p>{{ message }}</p>
+{% endblock %}

@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KosSim Local Runbook</title>
+  <style>
+    :root {
+      --bg-a: #091427;
+      --bg-b: #12355f;
+      --card: #0d203ddb;
+      --line: #2f5184;
+      --text: #e9f2ff;
+      --muted: #afc4e8;
+      --accent: #ffd56b;
+      --ok: #6bd8a1;
+      --warn: #ffd166;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background:
+        radial-gradient(circle at 10% 8%, #1f447b 0, transparent 30%),
+        radial-gradient(circle at 92% 16%, #2a5088 0, transparent 32%),
+        linear-gradient(154deg, var(--bg-a), var(--bg-b));
+      padding: 22px;
+      line-height: 1.58;
+    }
+    main { max-width: 1140px; margin: 0 auto; display: grid; gap: 14px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: 0 14px 34px rgba(0,0,0,0.34);
+      backdrop-filter: blur(8px);
+      padding: 18px;
+    }
+    h1, h2, h3 { margin: 0 0 8px; line-height: 1.23; }
+    h1 { font-size: 32px; }
+    h2 { font-size: 24px; }
+    p { margin: 0 0 10px; }
+    .muted { color: var(--muted); }
+    nav { display: flex; flex-wrap: wrap; gap: 10px; }
+    nav a {
+      border: 1px solid #496ca8;
+      border-radius: 999px;
+      background: #16325e;
+      padding: 6px 11px;
+      color: #dbe9ff;
+      text-decoration: none;
+      font-size: 13px;
+    }
+    nav a:hover { text-decoration: underline; }
+    table { width: 100%; border-collapse: collapse; margin-top: 9px; }
+    th, td {
+      border: 1px solid #35598f;
+      padding: 9px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: #17335f; }
+    td { background: #102649; }
+    code {
+      background: #13294d;
+      border: 1px solid #3a5f98;
+      border-radius: 6px;
+      color: #ffe8ad;
+      padding: 0.12em 0.38em;
+    }
+    pre {
+      background: #071226;
+      border: 1px solid #2f4f84;
+      color: #e7f3ff;
+      border-radius: 10px;
+      padding: 13px;
+      overflow-x: auto;
+      margin: 8px 0;
+    }
+    ol, ul { margin: 0; padding-left: 20px; }
+    li { margin: 6px 0; }
+    .step {
+      border: 1px solid #355a90;
+      border-radius: 12px;
+      background: #11294d;
+      padding: 12px;
+      margin-top: 10px;
+    }
+    .step h3 { margin-bottom: 6px; color: var(--accent); }
+    .hint {
+      border-left: 3px solid var(--warn);
+      border-radius: 8px;
+      background: #132a4d;
+      padding: 10px 12px;
+    }
+    .ok { color: var(--ok); }
+    .warn { color: var(--warn); }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="card">
+      <h1>Local Runbook (Docker)</h1>
+      <p class="muted">This runbook is for fast local testing of the full A/D lifecycle: rotate, attack, submit, score, and leaderboard refresh.</p>
+      <nav>
+        <a href="../README.html">Overview</a>
+        <a href="architecture.html">Architecture</a>
+        <a href="challenges.html">Challenges</a>
+        <a href="schema.html">Data Schema</a>
+        <a href="local-runbook.html">Local Runbook</a>
+        <a href="hetzner-runbook.html">Hetzner Runbook</a>
+      </nav>
+    </section>
+
+    <section class="card">
+      <h2>Before You Start</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Requirement</th>
+            <th>Why It Is Needed</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Docker + Docker Compose</td>
+            <td>Runs full control plane and all team services in one machine.</td>
+          </tr>
+          <tr>
+            <td><code>python3</code></td>
+            <td>Runs helper scripts for compose generation and attack automation.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>Step-by-Step</h2>
+
+      <div class="step">
+        <h3>1) Generate and Start Stack</h3>
+        <p><strong>What:</strong> Build compose file for 3 teams and start all components.</p>
+        <p><strong>Why:</strong> You need multiple teams for real attack/defense scoring behavior.</p>
+        <pre><code class="language-bash">export POSTGRES_PASSWORD="$(openssl rand -hex 16)"
+export SERVICE_PUSH_SECRET="$(openssl rand -hex 32)"
+export SECRET_FLAG_KEY="$(openssl rand -hex 32)"
+export ADMIN_PASSWORD="$(openssl rand -base64 24)"
+export ADMIN_SESSION_SECRET="$(openssl rand -hex 32)"
+export GAME_ADMIN_TOKEN="$(openssl rand -hex 32)"
+python3 scripts/generate_compose.py --team-count 3 --output docker-compose.generated.yml
+docker compose -f docker-compose.generated.yml up -d --build</code></pre>
+      </div>
+
+      <div class="step">
+        <h3>2) Verify Leaderboard and API</h3>
+        <p><strong>What:</strong> Open human dashboard and machine-readable JSON feed.</p>
+        <p><strong>Why:</strong> Confirms control plane is healthy and scoring fields are available.</p>
+        <ul>
+          <li><code>http://localhost:8088/scoreboard</code></li>
+          <li><code>http://localhost:8088/api/v1/scoreboard</code></li>
+        </ul>
+        <p>Expected behavior: live countdown, automatic refresh at each tick reset, and round counter displayed as <code>1,2,3,...</code>. Local compose defaults to <code>ROTATION_SECONDS=120</code>.</p>
+      </div>
+
+      <div class="step">
+        <h3>3) Confirm Flag Rotation</h3>
+        <p><strong>What:</strong> Query current flag for one team/service before and after one tick.</p>
+        <p><strong>Why:</strong> Validates per-round flag freshness.</p>
+        <pre><code class="language-bash">curl -H "Authorization: Bearer $GAME_ADMIN_TOKEN" \
+  http://localhost:8088/api/v1/flags/current/team2/svc1
+sleep 125
+curl -H "Authorization: Bearer $GAME_ADMIN_TOKEN" \
+  http://localhost:8088/api/v1/flags/current/team2/svc1</code></pre>
+      </div>
+
+      <div class="step">
+        <h3>4) Submit Flag by Script</h3>
+        <p><strong>What:</strong> Submit candidate flags with team token.</p>
+        <p><strong>Why:</strong> Emulates real team automation clients.</p>
+        <pre><code class="language-bash">python3 scripts/submit_flags.py \
+  --endpoint http://localhost:8088/api/v1/flags/submit \
+  --team-token submit-team1 \
+  --flags FLAG{example}</code></pre>
+      </div>
+
+      <div class="step">
+        <h3>5) Validate NAT Source Behavior</h3>
+        <p><strong>What:</strong> Reach team2 service through team1 NAT gateway.</p>
+        <p><strong>Why:</strong> Confirms targets identify NAT source, not internal attacker IP.</p>
+        <pre><code class="language-bash">curl --get "http://localhost:18081/fetch" \
+  --data-urlencode "url=http://team2-svc1:8080/whoami"</code></pre>
+      </div>
+
+      <div class="step">
+        <h3>6) Run Full Attack Loop (Team1 -> Team2,Team3)</h3>
+        <p><strong>What:</strong> Automatically hack targets and submit every tick.</p>
+        <p><strong>Why:</strong> End-to-end simulation of competition behavior.</p>
+        <pre><code class="language-bash">python3 scripts/team1_attack_loop.py \
+  --targets team2,team3 \
+  --team-token submit-team1</code></pre>
+        <p>One-round test:</p>
+        <pre><code class="language-bash">python3 scripts/team1_attack_loop.py --once --targets team2,team3</code></pre>
+      </div>
+
+      <div class="step">
+        <h3>7) Stop and Clean</h3>
+        <p><strong>What:</strong> Tear down containers and volumes.</p>
+        <p><strong>Why:</strong> Resets state for repeatable tests.</p>
+        <pre><code class="language-bash">docker compose -f docker-compose.generated.yml down -v</code></pre>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Scoring and Tick Notes</h2>
+      <ul>
+        <li>Attack points use ECSC-style jeopardy scoring: a captured flag starts at <code>10</code> points and decays as more teams submit that same flag.</li>
+        <li>Defense points reward teams whose flags remain retrievable across the retention window while other teams are compromised.</li>
+        <li>SLA points are based on checker health and retained flag availability for each service.</li>
+        <li>Accepted cap defaults to unlimited when <code>MAX_ACCEPTED_PER_TEAM_PER_ROUND=0</code>.</li>
+      </ul>
+      <div class="hint">If round appears high or unexpected, check <code>raw_round_id</code> and <code>first_round_id</code> in scoreboard JSON. Display round is computed for human readability.</div>
+    </section>
+  </main>
+</body>
+</html>

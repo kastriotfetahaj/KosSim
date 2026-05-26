@@ -1,0 +1,20 @@
+[package]
+name = "dbengine"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+interface = { version = "0.1.0", path = "../interface" }
+tokio = { version = "1", features = ["full"] }
+unshare = { git = "https://github.com/MarkusBauer/unshare.git", features = ["async"] }
+nix = { version = ">=0.29.0", features = ["default", "fs", "mount", "resource", "signal", "user"] }
+lazy_static = "1.5.0"
+tokio-util = "0.7.13"
+serde_json = "1.0.140"
+serde = { version = "1.0.219", features = ["derive"] }
+sha2 = "0.10.8"
+hex = "0.4.3"
+regex = "1.11.1"

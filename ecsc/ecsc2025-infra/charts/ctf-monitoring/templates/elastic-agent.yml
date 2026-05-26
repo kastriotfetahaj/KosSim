@@ -1,0 +1,67 @@
+{{- if not .Values.analysisMode }}
+apiVersion: agent.k8s.elastic.co/v1alpha1
+kind: Agent
+metadata:
+  name: infra-hosts
+spec:
+  version: 9.0.0
+  elasticsearchRefs:
+    - name: ctf
+  daemonSet:
+    podTemplate:
+      spec:
+        tolerations:
+          - key: ctfr.attacking-lab.com/role
+            operator: Equal
+            value: infra
+            effect: NoExecute
+          - key: ctfr.attacking-lab.com/ctf
+            operator: Equal
+            value: {{ .Values.ctf }}
+            effect: NoExecute
+        nodeSelector:
+          ctfr.attacking-lab.com/ctf: {{ .Values.ctf }}
+          ctfr.attacking-lab.com/role: infra
+        volumes:
+          - name: docker-containers
+            hostPath:
+              path: /var/lib/docker/containers
+          - name: docker-sock
+            hostPath:
+              path: /var/run
+        containers:
+          - name: agent
+            securityContext:
+              runAsUser: 0
+            resources:
+              limits:
+                cpu: 500m
+                memory: 1G
+              requests:
+                cpu: 500m
+                memory: 1G
+            env:
+              - name: NODE_NAME
+                valueFrom:
+                  fieldRef:
+                    fieldPath: spec.nodeName
+            volumeMounts:
+              - mountPath: /var/lib/docker/containers
+                name: docker-containers
+              - mountPath: /var/run/docker.sock
+                name: docker-sock
+                subPath: docker.sock
+  config:
+    inputs:
+      - id: 'docker-container-logs-${docker.container.id}'
+        type: filestream
+        pipeline: enolog-pipeline
+        data_stream:
+          namespace: {{ .Values.ctf }}
+        parsers:
+          - container:
+              stream: stdout
+              format: docker
+        paths:
+          - '/var/lib/docker/containers/${docker.container.id}/*-json.log'
+{{- end }}

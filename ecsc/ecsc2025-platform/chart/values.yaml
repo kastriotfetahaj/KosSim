@@ -1,0 +1,18 @@
+imagePullSecrets:
+  - name: ci-attacking-lab-cr
+
+ctf: demo-platform
+
+host: demo-platform.gartenverein-tackenberg.de
+tlsSecret: {}
+
+platform:
+  image: ci.attacking-lab.com/ad-platform/django
+  settingsModule: mainpage.deployment_settings
+
+mailWorker:
+  mailHost: todo
+  mailUser: todo
+  mailPassword: todo
+
+hostingToken: todo

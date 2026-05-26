@@ -1,0 +1,15 @@
+diff --git a/platform/challenges/svc1-ledgerforge/service/src/routes.rs b/platform/challenges/svc1-ledgerforge/service/src/routes.rs
+--- a/platform/challenges/svc1-ledgerforge/service/src/routes.rs
++++ b/platform/challenges/svc1-ledgerforge/service/src/routes.rs
+@@
+-    if !params.path.starts_with(&grant.scope) {
+-        return (StatusCode::FORBIDDEN, Json(json!({"error": "scope_denied"})));
+-    }
+     let normalized = ledger::normalize_path(&params.path);
++    let scope = ledger::normalize_path(&grant.scope);
++    if !normalized.starts_with(&scope) {
++        return (StatusCode::FORBIDDEN, Json(json!({"error": "scope_denied"})));
++    }
+@@
+-            if let Some(doc) = state.docs.get(doc_id) {
++            if let Some(doc) = state.docs.get(doc_id).filter(|doc| doc.public) {

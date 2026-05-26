@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: arkime-oauth2-proxy
+  labels:
+    app: oauth2-proxy
+    {{- include "arkime.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    app: oauth2-proxy
+    {{- include "arkime.selectorLabels" . | nindent 4 }}
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+    - name: metrics
+      port: 44180
+      targetPort: metrics
+      protocol: TCP
+

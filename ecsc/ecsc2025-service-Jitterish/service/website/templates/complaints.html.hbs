@@ -1,0 +1,28 @@
+{{#*inline "page"}}
+    <h1>Support</h1>
+
+    <div data-augmented-ui class="content-card-1">
+        <p>Facing problems? Our competent staff is working day and night to resolve your issues as fast as possible.</p>
+
+        <form action="/support" method="post" accept-charset="utf-8">
+            <div class="row">
+                <div class="col">
+                    <label for="target_user">Database</label>
+                    <input type="text" name="target_user" id="target_user" value=""/>
+                </div>
+                <div class="col">
+                    <label for="description">Description</label>
+                    <input type="text" name="description" id="description" value="" placeholder="describe your issue here..."/>
+                </div>
+            </div>
+            <br/>
+            <p><input data-augmented-ui type="submit" value="request support"></p>
+        </form>
+    </div>
+
+    <div data-augmented-ui class="content-card-2">
+        <p>You have <strong class="text-secondary">{{user_status.num_reports}}</strong> open support tickets on {{reported_targets}} databases.</p>
+        {{#if user_status.num_reports}}<p>We'll get back to you soon.</p>{{/if}}
+    </div>
+{{/inline}}
+{{> default title="Support" pagename="support"}}

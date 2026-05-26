@@ -1,0 +1,44 @@
+services:
+  router1:
+    # ctftest image has additinal dependencies for debugging
+    image: ci.attacking-lab.com/ctf-route/ctftest
+    command: python -m ctfroute --debug --debug-server 10.43.2.1:42424 ./ctfroute.yml
+    volumes:
+      - ../ctfroute/ctfroute:/opt/ctfroute/ctfroute/ctfroute
+      - ../ctfroute-k8s/ctfroute_k8s:/opt/ctfroute/ctfroute-k8s/ctfroute_k8s
+
+  router2:
+    volumes:
+      - ../ctfroute/ctfroute:/opt/ctfroute/ctfroute/ctfroute
+      - ../ctfroute-k8s/ctfroute_k8s:/opt/ctfroute/ctfroute-k8s/ctfroute_k8s
+
+  router3:
+    volumes:
+      - ../ctfroute/ctfroute:/opt/ctfroute/ctfroute/ctfroute
+      - ../ctfroute-k8s/ctfroute_k8s:/opt/ctfroute/ctfroute-k8s/ctfroute_k8s
+
+  router-infra:
+    volumes:
+      - ../ctfroute/ctfroute:/opt/ctfroute/ctfroute/ctfroute
+      - ../ctfroute-k8s/ctfroute_k8s:/opt/ctfroute/ctfroute-k8s/ctfroute_k8s
+
+  vulnbox1:
+    command: -c "wg-quick up client1 && ctftest-agent --debug --debug-server 10.43.2.1:42425 & iperf3 -s -p 1999"
+    volumes:
+      - ../ctfroute/ctfroute:/opt/ctfroute/ctfroute/ctfroute
+      - ../ctftest/ctftest:/opt/ctfroute/ctftest/ctftest
+
+  vulnbox2:
+    volumes:
+      - ../ctfroute/ctfroute:/opt/ctfroute/ctfroute/ctfroute
+      - ../ctftest/ctftest:/opt/ctfroute/ctftest/ctftest
+
+  vulnbox3:
+    volumes:
+      - ../ctfroute/ctfroute:/opt/ctfroute/ctfroute/ctfroute
+      - ../ctftest/ctftest:/opt/ctfroute/ctftest/ctftest
+
+  vulnbox4:
+    volumes:
+      - ../ctfroute/ctfroute:/opt/ctfroute/ctfroute/ctfroute
+      - ../ctftest/ctftest:/opt/ctfroute/ctftest/ctftest

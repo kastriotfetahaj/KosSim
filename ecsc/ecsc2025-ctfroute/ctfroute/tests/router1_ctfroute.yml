@@ -1,0 +1,84 @@
+instance:
+  routerId: 1
+
+templates:
+  team:
+    network: "10.0.{{ team.id }}.0/24"
+    gateway: "10.0.{{ team.id }}.254"
+    vulnbox: "10.0.{{ team.id }}.3"
+
+defaults:
+  teams:
+    anonymization:
+      driver: netfilter
+  routers:
+    connectivity:
+      driver: hostname
+      
+adapters:
+  - type: "http"
+    url: "http://foobar:30001"
+    pollInterval: 5
+    entityTypes:
+      - router
+      - team
+      - gate
+      #- throttle
+
+initialState:
+  teams:
+    - id: 1
+      network: 10.0.1.0/24
+      gateway: 10.0.1.254
+      vulnbox: 10.0.1.3
+      meta:
+        name: NOP
+      connectivity:
+        driver: wireguard
+        publicKey: 04imYC7Ed2zEKZiiED5PT7mTkf2gMJXF9HO2hdcvp2U=
+        privateKey: qHp4n/BedZ74okmRrkUD88av/uAUiPuRuNbX0b7J1Vo=
+        port: 50001
+        peers:
+          - allowedIps: 10.0.1.3/32
+            publicKey: Bk3wiHED8fuJ8u4h7/FZUBPOrLqwsKpijQfdtEHduHs=
+    - id: 2
+      network: 10.0.2.0/24
+      gateway: 10.0.2.254
+      vulnbox: 10.0.2.3
+      meta:
+        name: enoflag
+      connectivity:
+        driver: wireguard
+        publicKey: 04imYC7Ed2zEKZiiED5PT7mTkf2gMJXF9HO2hdcvp2U=
+        privateKey: qHp4n/BedZ74okmRrkUD88av/uAUiPuRuNbX0b7J1Vo=
+        port: 50002
+        peers:
+          - allowedIps: 10.0.2.3/32
+            publicKey: LjyWLQSDY/DABNcITYfqC/vlx6/0GzIw5Eym+u4ATCk=
+    - id: 3
+      network: 10.0.3.0/24
+      gateway: 10.0.3.254
+      vulnbox: 10.0.3.3
+      meta:
+        name: saarsec
+      connectivity:
+        driver: wireguard
+        publicKey: 04imYC7Ed2zEKZiiED5PT7mTkf2gMJXF9HO2hdcvp2U=
+        privateKey: qHp4n/BedZ74okmRrkUD88av/uAUiPuRuNbX0b7J1Vo=
+        port: 50003
+        peers:
+          - allowedIps: 10.0.3.3/32
+            publicKey: DeruoVQ/xsHhCsSw3rm434cSkGpEIKYBgvlTRFRbHRc=
+
+  routers:
+    - id: 1
+      host: router1
+      teams: [ 1 ]
+
+    - id: 2
+      host: router2
+      teams: [ 2 ]
+
+    - id: 3
+      host: router3
+      teams: [ 3 ]

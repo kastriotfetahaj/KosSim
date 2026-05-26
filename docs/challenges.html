@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KosSim Challenge Pack</title>
+  <style>
+    :root {
+      --bg-a: #091327;
+      --bg-b: #11345f;
+      --card: #0d203ed9;
+      --line: #2f5286;
+      --text: #e9f2ff;
+      --muted: #afc4e8;
+      --accent: #ffd66a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 10% 8%, #1f447b 0, transparent 30%),
+        radial-gradient(circle at 92% 18%, #2a4f88 0, transparent 32%),
+        linear-gradient(155deg, var(--bg-a), var(--bg-b));
+      padding: 22px;
+      line-height: 1.58;
+    }
+    main { max-width: 1140px; margin: 0 auto; display: grid; gap: 14px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.34);
+      backdrop-filter: blur(8px);
+      padding: 18px;
+    }
+    h1, h2, h3 { margin: 0 0 8px; line-height: 1.23; }
+    h1 { font-size: 32px; }
+    h2 { font-size: 24px; }
+    h3 { font-size: 18px; }
+    p { margin: 0 0 10px; }
+    .muted { color: var(--muted); }
+    nav { display: flex; flex-wrap: wrap; gap: 10px; }
+    nav a {
+      border: 1px solid #496da8;
+      border-radius: 999px;
+      background: #16325e;
+      padding: 6px 11px;
+      color: #dbe9ff;
+      text-decoration: none;
+      font-size: 13px;
+    }
+    nav a:hover { text-decoration: underline; }
+    table { width: 100%; border-collapse: collapse; margin-top: 9px; }
+    th, td {
+      border: 1px solid #35598f;
+      padding: 9px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: #17335f; }
+    td { background: #102649; }
+    code {
+      background: #13294d;
+      border: 1px solid #3a5f98;
+      border-radius: 6px;
+      color: #ffe8ad;
+      padding: 0.12em 0.38em;
+    }
+    pre {
+      background: #071226;
+      border: 1px solid #2f4f84;
+      color: #e7f3ff;
+      border-radius: 10px;
+      padding: 13px;
+      overflow-x: auto;
+      margin: 8px 0;
+    }
+    .grid { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .tile {
+      border: 1px solid #35598f;
+      border-radius: 12px;
+      background: #122a4e;
+      padding: 12px;
+    }
+    .tile strong { color: var(--accent); }
+    ul { margin: 0; padding-left: 20px; }
+    li { margin: 5px 0; }
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+      h1 { font-size: 29px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="card">
+      <h1>Challenge Pack (<code>svc1..svc5</code>)</h1>
+      <p class="muted">All teams get the exact same service set. This keeps the game fair while testing different vulnerability categories.</p>
+      <nav>
+        <a href="../README.html">Overview</a>
+        <a href="architecture.html">Architecture</a>
+        <a href="challenges.html">Challenges</a>
+        <a href="schema.html">Data Schema</a>
+        <a href="local-runbook.html">Local Runbook</a>
+        <a href="hetzner-runbook.html">Hetzner Runbook</a>
+      </nav>
+    </section>
+
+    <section class="card">
+      <h2>Shared Service Contract</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Endpoint</th>
+            <th>What It Does</th>
+            <th>Why It Exists</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>POST /internal/set_flag</code></td>
+            <td>Sets current active flag in service state. Requires <code>X-Service-Secret</code>.</td>
+            <td>Allows central rotator to publish synchronized flags every tick.</td>
+          </tr>
+          <tr>
+            <td><code>GET /health</code></td>
+            <td>Returns service health status.</td>
+            <td>Feeds uptime scoring and operational checks.</td>
+          </tr>
+          <tr>
+            <td><code>GET /whoami</code></td>
+            <td>Returns request source details.</td>
+            <td>Used to verify NAT source identity behavior.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>Service Roster</h2>
+      <p>
+        Every team runs the same five services in identical containers.
+        Source code is published; vulnerability classes are not documented
+        here.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Service</th>
+            <th>Codename</th>
+            <th>Surface (cover story)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>svc1</code></td>
+            <td>LEDGERFORGE</td>
+            <td>Merkle-backed document ledger with scoped read capabilities.</td>
+          </tr>
+          <tr>
+            <td><code>svc2</code></td>
+            <td>VAULTGRID</td>
+            <td>Erasure-coded object vault with repair grants and shard recovery.</td>
+          </tr>
+          <tr>
+            <td><code>svc3</code></td>
+            <td>SPECTERLOG</td>
+            <td>Cursor-signed replay service for public and private event streams.</td>
+          </tr>
+          <tr>
+            <td><code>svc4</code></td>
+            <td>NANOFLEET</td>
+            <td>Drone telemetry orchestrator with signed diagnostic routes.</td>
+          </tr>
+          <tr>
+            <td><code>svc5</code></td>
+            <td>POLICYFORGE</td>
+            <td>ABAC policy engine for incident objects and cached decisions.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card grid">
+      <article class="tile">
+        <h3><code>svc1</code> LEDGERFORGE</h3>
+        <p><strong>Path:</strong> <code>platform/challenges/svc1-ledgerforge</code></p>
+      </article>
+      <article class="tile">
+        <h3><code>svc2</code> VAULTGRID</h3>
+        <p><strong>Path:</strong> <code>platform/challenges/svc2-vaultgrid</code></p>
+      </article>
+      <article class="tile">
+        <h3><code>svc3</code> SPECTERLOG</h3>
+        <p><strong>Path:</strong> <code>platform/challenges/svc3-specterlog</code></p>
+      </article>
+      <article class="tile">
+        <h3><code>svc4</code> NANOFLEET</h3>
+        <p><strong>Path:</strong> <code>platform/challenges/svc4-nanofleet</code></p>
+      </article>
+      <article class="tile">
+        <h3><code>svc5</code> POLICYFORGE</h3>
+        <p><strong>Path:</strong> <code>platform/challenges/svc5-policyforge</code></p>
+      </article>
+      <article class="tile">
+        <h3>Why equal challenges</h3>
+        <ul>
+          <li>Identical services remove hardware or challenge-diff bias.</li>
+          <li>Score reflects exploitation and defense quality, not luck.</li>
+          <li>Organizers can benchmark checker behavior uniformly.</li>
+        </ul>
+      </article>
+    </section>
+  </main>
+</body>
+</html>

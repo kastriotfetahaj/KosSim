@@ -1,0 +1,19 @@
+{
+  "name": "nanofleet",
+  "slot": "svc4",
+  "categories": ["web", "protocol", "iot", "crypto"],
+  "flagstores": 3,
+  "noisestores": 3,
+  "havoc_variants": 6,
+  "difficulty": "hard-100",
+  "runtime": "go-net-http",
+  "persistence": "json-on-disk",
+  "vulnerabilities": 5,
+  "rabbit_holes": 5,
+  "exploit_scripts": 3,
+  "checker": {
+    "framework": "enochecker3",
+    "sync_wrapper": "checker/checker.py",
+    "async_app": "checker/src/checker.py"
+  }
+}

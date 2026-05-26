@@ -1,0 +1,11 @@
+diff --git a/platform/challenges/svc1-ledgerforge/service/src/routes.rs b/platform/challenges/svc1-ledgerforge/service/src/routes.rs
+--- a/platform/challenges/svc1-ledgerforge/service/src/routes.rs
++++ b/platform/challenges/svc1-ledgerforge/service/src/routes.rs
+@@
+-        if wanted.is_empty() || wanted == doc_id {
+-            if let Some(doc) = state.docs.get(doc_id) {
++        if wanted.is_empty() || wanted == doc_id {
++            if let Some(doc) = state.docs.get(doc_id).filter(|doc| doc.public) {
+                 rows.push(json!({"id": doc.id, "body": doc.body, "snapshot": snapshot.id}));
+             }
+         }

@@ -1,0 +1,29 @@
+[project]
+name = "ctfroute-k8s"
+version = "0.4.0"
+description = "Add your description here"
+license = "MIT"
+license-files = ["LICENSE"]
+readme = "README.md"
+authors = [{ name = "no.shoes", email = "no.shoes@posteo.net" }]
+requires-python = ">=3.13"
+dependencies = [
+    "cloudcoil>=0.5.8",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["ctfroute_k8s"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "ctfroute_k8s/**/*.py"
+]
+
+[[tool.cloudcoil.codegen.models]]
+namespace = "ctfroute_k8s.models"
+crd-namespace = "com.attacking-lab.ctfroute"
+input = "crds.yaml"

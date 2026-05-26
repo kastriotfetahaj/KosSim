@@ -1,0 +1,85 @@
+name: gitter
+
+services:
+  postgres:
+    image: postgres:17.2-alpine@sha256:7e5df973a74872482e320dcbdeb055e178d6f42de0558b083892c50cda833c96
+    restart: always
+    shm_size: 128mb
+    environment:
+      POSTGRES_PASSWORD_FILE: /init-config/postgress-password
+    networks:
+      - db
+    volumes:
+      - ./db:/docker-entrypoint-initdb.d
+      - init-config:/init-config
+      - db:/var/lib/postgresql/data
+
+  internal:
+    build: internal
+    volumes:
+      - repositories:/home/git/
+      - init-config:/init-config
+    networks:
+      - api
+      - db
+    restart: always
+    depends_on:
+      init:
+        condition: service_completed_successfully
+
+  frontend:
+    build: frontend
+    volumes:
+      - repositories:/home/node/git/
+      - init-config:/init-config
+    restart: always
+    networks:
+      - default
+      - db
+    ports:
+      - 9200:3000
+    depends_on:
+      init:
+        condition: service_completed_successfully
+
+  ssh:
+    build: ssh
+    restart: always
+    ports:
+      - 9201:22
+    networks:
+      - default
+      - api
+    volumes:
+      - repositories:/home/git/
+      - ./ssh/hooks:/opt/hooks
+    depends_on:
+      init:
+        condition: service_completed_successfully
+
+  init:
+    build: init-config
+    volumes:
+      - repositories:/home/git/
+      - init-config:/init-config
+
+  cleanup:
+    restart: always
+    build: cleanup
+    networks:
+      - db
+    volumes:
+      - repositories:/home/git/
+      - init-config:/init-config
+
+volumes:
+  repositories:
+  init-config:
+  db:
+
+networks:
+  default:
+  db:
+    internal: true
+  api:
+    internal: true

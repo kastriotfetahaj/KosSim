@@ -1,0 +1,15 @@
+---
+argument_specs:
+  main:
+    short_description: "Install netfilter"
+    author:
+      - "Marc Munier"
+    options:
+      nft_remove_iptables:
+        type: bool
+        required: false
+        default: false
+
+      nft_package_version:
+        type: str
+        required: false

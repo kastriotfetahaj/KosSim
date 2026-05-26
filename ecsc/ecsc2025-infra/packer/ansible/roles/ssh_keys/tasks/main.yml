@@ -1,0 +1,16 @@
+---
+- name: Pull authkeys from github (ANSIBLE_USER)
+  ansible.posix.authorized_key:
+    user: "{{ ansible_user }}"
+    state: present
+    key: "https://github.com/{{ item }}.keys"
+  become: false
+  with_items: "{{ github_ssh_keys }}"
+  when: "ansible_user != 'root'"
+
+- name: Pull authkeys from github (ROOT)
+  ansible.posix.authorized_key:
+    user: root
+    state: present
+    key: "https://github.com/{{ item }}.keys"
+  with_items: "{{ github_ssh_keys }}"

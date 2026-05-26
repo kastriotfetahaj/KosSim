@@ -1,0 +1,6 @@
+networkIndex: 42
+ctf: logs-demo
+
+elasticsearch:
+  userSecret: ctf-es-elastic-user
+  caSecret: ctf-es-http-certs-public

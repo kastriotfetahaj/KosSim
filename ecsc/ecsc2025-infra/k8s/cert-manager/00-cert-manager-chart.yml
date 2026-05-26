@@ -1,0 +1,56 @@
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: cert-manager
+  namespace: kube-system
+spec:
+  targetNamespace: cert-manager
+  createNamespace: true
+  repo: https://charts.jetstack.io
+  chart: cert-manager
+  version: 1.18.2
+  valuesContent: |-
+    crds:
+      enabled: true
+
+    # Secrets will be automatically removed when the certificate resource is deleted.
+    enableCertificateOwnerRef: true
+
+    nodeSelector:
+      ctfr.attacking-lab.com/role: core
+      kubernetes.io/os: linux
+    tolerations:
+      - key: ctfr.attacking-lab.com/role
+        operator: Equal
+        value: core
+        effect: NoExecute
+
+    webhook:
+      nodeSelector:
+        ctfr.attacking-lab.com/role: core
+        kubernetes.io/os: linux
+      tolerations:
+        - key: ctfr.attacking-lab.com/role
+          operator: Equal
+          value: core
+          effect: NoExecute
+
+    cainjector:
+      nodeSelector:
+        ctfr.attacking-lab.com/role: core
+        kubernetes.io/os: linux
+      tolerations:
+        - key: ctfr.attacking-lab.com/role
+          operator: Equal
+          value: core
+          effect: NoExecute
+
+    startupapicheck:
+      nodeSelector:
+        ctfr.attacking-lab.com/role: core
+        kubernetes.io/os: linux
+      tolerations:
+        - key: ctfr.attacking-lab.com/role
+          operator: Equal
+          value: core
+          effect: NoExecute

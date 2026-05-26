@@ -1,0 +1,13 @@
+analysisMode: false
+ctf: ecsc
+elastic:
+  resources:
+    requests:
+      limits:
+        memory: 5Gi
+  storage:
+    className: longhorn-ha-databases
+    request: 20Gi
+prometheus:
+  storage:
+    request: 10Gi

@@ -1,0 +1,41 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: https-redirect
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: platform-noop-web
+spec:
+  entryPoints:
+    - web
+  routes:
+    - kind: Rule
+      match: Host(`platform.ad.ecsc2025.pl`) || Host(`images.platform.ad.ecsc2025.pl`) || Host(`scoreboard.ad.ecsc2025.pl`)
+      middlewares:
+        - name: https-redirect
+      services:
+        - name: noop@internal
+          kind: TraefikService
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: platform-noop-websecure
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`platform.ad.ecsc2025.pl`) || Host(`images.platform.ad.ecsc2025.pl`) || Host(`scoreboard.ad.ecsc2025.pl`)
+      services:
+        - name: noop@internal
+          kind: TraefikService
+  tls:
+    secretName: platform-tls

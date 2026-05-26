@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load mainpage %}
+{% block content %}
+<br>
+<section>
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-12 order-lg-1">
+                <div class="page-header">
+                    <h1>Setup</h1>
+                </div>
+                <hr>
+                <div class="flatpage-content col-xs-12">
+                    <h2>Summary</h2>
+                    <p></p>
+                    <ul>
+                        <li>CTF starts <span class=hltext>{% date_full config.TIME_START %}</span>. Network opens <span class=hltext>{% date_time config.TIME_NETWORK_OPEN %}</span>. Game ends <span class=hltext>{% date_time  config.TIME_END %}</span>.</li>
+                        <li>A round is <span class=hltext>{{ ctf.round_time }} seconds</span>, flags are valid and checked for <span class=hltext>5 rounds</span>.</li>
+                        <li>Flag format: <code>{{ ctf.flag_regex }}</code></li>
+                        <li>Public scoreboard at <a href="{{ config.URL_SCOREBOARD }}"><code>{{ config.URL_SCOREBOARD }}</code></a>, internal at <code>{{ ctf.submission_host }}</code> <b>(vpn only)</b></li>
+                        <li>Submit flags: <code>nc {{ ctf.submission_host }} {{ ctf.submission_port }}</code> <b>(vpn only)</b></li>
+                        <li>Attack info at <a href="{{ ctf.attackinfo_url }}"><code>{{ ctf.attackinfo_url }}</code></a> <b>(vpn only)</b></li>
+                        <li>What is <i>attack info</i>? Read <a href="https://wiki.attacking-lab.com/attack-defense">this</a>.</li>
+                    </ul>
+                    <br>
+                    <dl class="row" id="setup-summary">
+                        <dt class="col-md-3">Game network</dt>
+                        <dd class="col-md-3"><code>{% game_addr ctf.game_network %}</code></dd>
+                        <dt class="col-md-3">Team Network</dt>
+                        <dd class="col-md-3"><code>{% game_addr ctf.team_network %}</code></dd>
+                        <dt class="col-md-3">Vulnbox IP</dt>
+                        <dd class="col-md-3"><code>{% game_addr ctf.vulnbox_ip %}</code></dd>
+                        <dt class="col-md-3">Game Router IP </dt>
+                        <dd class="col-md-3"><code>{% game_addr ctf.router_ip %}</code></dd>
+                        {% if team_id %}
+                            <dt class="col-md-3">Your Team ID</dt>
+                            <dd class="col-md-3"><code>{{ team_id }}</code></dd>
+                        {% endif %}
+                    </dl>
+                    <br>
+                    <h4><span class="oi oi-cloud"></span> Cloud-hosted Setup</h4>
+                    <p>
+                        We host a vulnbox and an exploiter for you. You need to enter the ssh keys we should deploy to them on this page.
+                    </p>
+                    <strong><span class="oi oi-wrench"></span> Captains:</strong>
+                    <ol>
+                        <li>Sign onto the platform with the credentials you received via E-Mail (along with Discord auth tokens).</li>
+                        <li>Let your teammates register by giving them the magic <i>join link</i> from the profile page.</li>
+                        <li>You can <i>promote</i> members of your team to <i>technician</i> give them control over VMs and SSH keys.</li>
+                        <li>When the game starts, go to your team page start the cloud-hosted VMs are running.</li>
+                    </ol>
+                    <strong><span class="oi oi-person"></span> Players:</strong>
+                    <ol>
+                        <li>Use the <em>join link</em> from your captain to register yourself.</li>
+                        <li>
+                            In your team profile you should see at least one WireGuard config. <br>These configs are assigned to you. Hover a key to download it.</li>
+                        <li>Use the downloaded config to connect to the WireGuard VPN: <code>sudo wg-quick up ./ctf-vpn.conf</code></li>
+                        <li>
+                            Check that you can <code>ping {{ ctf.submission_host }}</code> - if so, the VPN connection works.
+                        </li>
+                    </ol>
+                    <strong>Some Hints:</strong>
+                    <ul>
+                        <li>Each player needs their own configuration file - it is not possible to use the same configuration across machines.</li>
+                        <li>Changes to the SSH Keys will <b>not</b> be propagated to the Exploiter / Vulnbox after they were created.</li>
+                    </ul>
+                    <br/>
+                    <br/>
+                    <h4>A few words about WireGuard</h4>
+                    All machines are connected to the game network using WireGuard. <br>
+                    Thus, there are a few fundamental aspects of our setup relating to WireGuard, that everyone should be aware of:<br><br>
+                    <ol>
+                        <li>
+                            <b>One key-pair - One connection:</b> You can <b>not</b> simultaneously connect from 
+                            multiple machines using the same key-pair. If you want to connect multiple machines, you 
+                            need to create multiple key-pairs and enter the public keys on this webpage.
+                        </li>
+                        <li>
+                            <b>wg-quick and configuration files:</b> The fastest way of setting up a WireGuard connection
+                            is downloading the configuration file and running
+                            <code>wg-quick up ./ctf-vpn.conf</code>.
+                        </li>
+                        <li>
+                            <b>Disconnecting:</b> wg-quick will create a network interface with the same name as the config
+                            file by default. To disconnect, run a matching <code>wg-quick down ./ctf-vpn.conf</code> or simply delete the interface: 
+                            <code>ip link del &lt;IFACE&gt;</code>.
+                        </li>
+                        <li>
+                            <b>Checking connection status:</b> Simply run: <code>sudo wg</code>
+                        </li>
+                        <li>
+                            <b>No automatic reconfiguration of clients:</b> Key-pairs are assigned to ip-addresses. If
+                            for some reason the configuration changes, you also need to adjust the configration
+                            on the client - manually or by downloading the config file again.
+                        </li>
+                        <li>
+                            <b>Troubling ISPs (Infra Demo):</b> It seems that there are occasional misconfigurations from ISPs 
+                            causing very elusive problems with WireGuard connections, especially common with DSL 
+                            Internet connections. A typical manifestation is: HTTP works but SSH doesn't, or the
+                            connection over the VPN is simply slow. These problems can usually be resolved by adding
+                            <code>MTU=1300</code> to the <code>[Interface]</code> section of your config file and
+                            re-connecting. It might also be necessary to set the MTU even lower.
+                        </li>
+                    </ol>
+                    <br/>
+                    <h4>Service status</h4>
+                    <p>Every tick the checkers tests your services and returns one of the following statuses:</p>
+                    <ul>
+                        <li><span class="text-success">SUCCESS</span> &mdash; Service is working, you receive SLA points.</li>
+                        <li><span class="text-info">RECOVERING</span> &mdash; Service is working, but flags from a previous round are missing.</li>
+                        <li><span class="text-warning">MUMBLE</span> &mdash; Service is accessible but non-functional. </li>
+                        <li><span class="text-danger">OFFLINE</span> &mdash; Service can't be accessed, error on network layer.</li>
+                        <li><span class="text-muted">ERROR</span> &mdash; The checker was unable to establish a connection.</li>
+                    </ul>
+                    <p>If your service is broken, you can see more details in the scoreboard.</p>
+                    <br/>
+                    <br/>
+                    <h4>Dont forget to read the <a href="https://wiki.ad.ecsc2025.pl">wiki</a>!</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<br><br>
+{% endblock %}
+{% block scripts %}
+    <script src="{% static 'js/setup.js' %}"></script>
+{% endblock %}

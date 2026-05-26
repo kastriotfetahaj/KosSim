@@ -1,0 +1,34 @@
+Subject: bind ?id= to the signed snapshot on share-token reads
+
+The share-token read handler accepted any object id after verifying the
+token's signature. Require the supplied id to be listed in the snapshot
+the token authorizes, so a share token for the public snapshot can only
+ever expose the public objects sealed inside it.
+
+--- a/service/lib/policy_forge/router.ex
++++ b/service/lib/policy_forge/router.ex
+@@ -173,10 +173,20 @@
+     info = PolicyForge.State.info()
+ 
+     case PolicyForge.Share.verify(info.secret, token) do
+-      {:ok, _snap_id} ->
+-        case PolicyForge.State.object(id) do
+-          nil -> conn |> put_status(404) |> json(%{error: "missing"})
+-          obj -> json(conn, obj)
++      {:ok, snap_id} ->
++        case PolicyForge.State.snapshot(snap_id) do
++          %{objects: object_ids} ->
++            if id in object_ids do
++              case PolicyForge.State.object(id) do
++                nil -> conn |> put_status(404) |> json(%{error: "missing"})
++                obj -> json(conn, obj)
++              end
++            else
++              conn |> put_status(403) |> json(%{error: "object_not_in_snapshot"})
++            end
++
++          _ ->
++            conn |> put_status(404) |> json(%{error: "missing_snapshot"})
+         end
+ 
+       :error ->

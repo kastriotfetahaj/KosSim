@@ -1,0 +1,105 @@
+---
+- name: Allow all loopback traffic
+  ansible.builtin.iptables:
+    chain: INPUT
+    in_interface: lo
+    jump: ACCEPT
+
+- name: Allow related/established input traffic
+  ansible.builtin.iptables:
+    chain: INPUT
+    ctstate: [RELATED, ESTABLISHED]
+    jump: ACCEPT
+
+- name: Allow SSH traffic
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: "22"
+    ctstate: NEW
+    syn: match
+    jump: ACCEPT
+
+- name: Allow ICMP ping requests
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: icmp
+    icmp_type: "8"
+    jump: ACCEPT
+
+- name: Drop all input by default
+  ansible.builtin.iptables:
+    chain: INPUT
+    policy: DROP
+
+- name: Drop all forward by default
+  ansible.builtin.iptables:
+    chain: FORWARD
+    policy: DROP
+
+- name: Allow IPv6 loopback traffic
+  ansible.builtin.iptables:
+    chain: INPUT
+    in_interface: lo
+    jump: ACCEPT
+    ip_version: ipv6
+
+- name: Allow IPv6 related/established input traffic
+  ansible.builtin.iptables:
+    chain: INPUT
+    ctstate: [RELATED, ESTABLISHED]
+    jump: ACCEPT
+    ip_version: ipv6
+
+- name: Allow SSH traffic
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: "22"
+    ctstate: NEW
+    syn: match
+    jump: ACCEPT
+    ip_version: ipv6
+
+- name: Permit needed ICMPv6 packet types (IPv6)
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: ipv6-icmp
+    icmp_type: "{{ item }}"
+    jump: ACCEPT
+    ip_version: ipv6
+  loop: ["1", "2", "3", "4", "133", "134", "135", "136", "137", "141", "142", "148", "149"]
+
+- name: Permit needed ICMPv6 packet types from local addresses (IPv6)
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: ipv6-icmp
+    icmp_type: "{{ item }}"
+    source: fe80::/10
+    jump: ACCEPT
+    ip_version: ipv6
+  loop: ["130", "131", "132", "143", "151", "152", "153"]
+
+- name: Allow ICMPv6 ping requests (IPv6)
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: ipv6-icmp
+    icmp_type: "128"
+    jump: ACCEPT
+    ip_version: ipv6
+
+- name: Disable IPv6 input
+  ansible.builtin.iptables:
+    chain: INPUT
+    policy: DROP
+    ip_version: ipv6
+
+- name: Disable IPv6 forward
+  ansible.builtin.iptables:
+    chain: FORWARD
+    policy: DROP
+    ip_version: ipv6
+
+- name: Persist iptables config
+  ansible.builtin.include_role:
+    name: "iptables_persistent"

@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load mainpage %}
+{% block content %}
+<br>
+<section>
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-12 order-lg-1">
+                <div class="page-header">
+                    <h1>Rules:</h1>
+                </div>
+                <hr>
+                <div class="flatpage-content col-xs-12">
+                    <h2>Summary</h2>
+                    <ul>
+                        <li>CTF starts {% date_full config.TIME_START %}. Network opens {% date_time config.TIME_START %}. Game ends {% date_time config.TIME_END %}.</li>
+                        <li>A round is {{ ctf.round_time }} seconds, flags are valid for 5 rounds.</li>
+                        <li>Flag format: <code>{{ ctf.flag_regex }}</code></li>
+                        <li>Submit flags: <code>nc {{ ctf.submission_host }} {{ ctf.submission_port }}</code></li>
+                        <li>Attack info at <a href="{{ ctf.scoreboard_url }}/attack.json"><code>/attack.json</code></a></li>
+                        <li>What is <i>attack info</i>? Read <a href="https://wiki.attacking-lab.com/attack-defense">this</a>.</li>
+                    </ul>
+                <br>
+
+                <h2>Schedule</h2>
+                <p>The event will take place on {% date_day config.TIME_START %}. You will be able to spawn your vulnbox at {% date_time config.TIME_START %} through the team profile page. Network connections between teams are enabled at {% date_time config.TIME_NETWORK_OPEN %}, at which point the gameserver and scoring starts as well. The CTF ends at {% date_time config.TIME_END %}.</p>
+
+                <h2>Social Conduct</h2>
+                <p>We want the competition to be a pleasant experience for all participants, regardless of their
+                    gender, sexual orientation, race, religion, skill level, personal background or any other
+                    criteria. Therefore, we do not tolerate harassment in any form.</p>
+                <p>We ask that all participants speak English in the public channel, to allow the most amount of  people to take part in the conversation.</p>
+                <p>Teams are prohibited from collaborating with eachother (e.g. share flags, information on
+                    vulnerabilities and exploits, or similar). Every individual participant must only be member of one
+                    team.</p>
+
+                <h2>Technical Behavior</h2>
+                <p>The vulnboxes of other teams are the sole target for exploitation, attacks against competition
+                    infrastructure or any other portion of a team's network (inside or outside of the VPN) are
+                    forbidden.</p>
+                <p>Causing unnecessarily high loads for CPU, traffic, memory, I/O, etc. ("denial of service") on our
+                    infrastructure, other teams (including vulnboxes) or any other party is also strictly
+                    prohibited. Breaking a service of another team through sheer amount of requests is forbidden,
+                    breaking it through a vulnerability is OK as long as it does not lead to resource spikes.</p>
+
+                <h2>Rule Enforcement</h2>
+                <p>Violation of these rules or any other hostile behavior may lead to deduction of points, temporary
+                    or permanent exclusion from the competition, or any other measure deemed appropriate by us.</p>
+                <p>We suggest every team to have at least one representative in the Discord server with a nickname stating
+                    their CTF team. In case of problems this will be our first point of contact. If we fail to reach you this way,
+                    we might temporarily kill your VPN connection in order to get
+                    your attention.</p>
+
+            </div>
+        </div>
+    </div>
+</section>
+<br><br>
+{% endblock %}
+

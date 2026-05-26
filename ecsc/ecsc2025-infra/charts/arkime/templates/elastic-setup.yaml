@@ -1,0 +1,50 @@
+kind: Job
+apiVersion: batch/v1
+metadata:
+  name: arkime-elastic-setup
+  labels:
+    {{- include "arkime.labels" . | nindent 4 }}
+spec:
+  template:
+    metadata:
+      labels:
+        {{- include "arkime.labels" . | nindent 8}}
+    spec:
+      restartPolicy: OnFailure
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{ toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: arkime-config
+          configMap:
+            name: arkime-config
+      containers:
+        - name: setup-arkime
+          image: "{{ .Values.arkime.image.repository }}{{- if .Values.arkime.image.tag }}:{{ .Values.arkime.image.tag }}{{- end }}"
+          imagePullPolicy: Always
+          command:
+            - bash
+            - ./elasticsearch_init.sh
+          securityContext:
+            runAsNonRoot: false
+          volumeMounts:
+            - mountPath: /opt/arkime/etc/config.ini
+              subPath: config.ini
+              name: arkime-config
+          env:
+            - name: ELASTIC_URL
+              value: "elasticsearch-arkime-es-default.{{ .Release.Namespace }}.svc.cluster.local:9200"
+            - name: ELASTIC_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: elasticsearch-arkime-es-elastic-user
+                  key: elastic
+      {{- with .Values.elasticSetup.nodeSelector }}
+      nodeSelector:
+        {{ toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.elasticSetup.tolerations }}
+      tolerations:
+        {{ toYaml . | nindent 8 }}
+      {{- end }}

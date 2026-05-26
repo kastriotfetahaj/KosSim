@@ -1,0 +1,15 @@
+{{- if not .Values.analysisMode }}
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: vulnbox-node-exporter
+  labels:
+    {{- include "ctf-monitoring.labels" . | nindent 4 }}
+spec:
+  scrapeInterval: 10s
+  scrapeClass: vulnbox
+  dnsSDConfigs:
+    - names:
+        - vulnboxes.{{ .Release.Namespace }}.svc.cluster.local
+      port: 8999
+{{- end }}

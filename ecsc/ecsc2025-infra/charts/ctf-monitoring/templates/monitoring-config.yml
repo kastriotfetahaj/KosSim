@@ -1,0 +1,65 @@
+# DO NOT SCRAPE IN ANALYSIS MODE!
+{{- if not .Values.analysisMode }}
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: ctfroute-metrics
+  labels:
+    {{- include "ctf-monitoring.labels" . | nindent 4 }}
+spec:
+  scrapeInterval: 10s
+  scrapeClass: router
+  dnsSDConfigs:
+    - names:
+        - routers.{{ .Release.Namespace }}.svc.cluster.local
+---
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: node-exporter-router
+  labels:
+    {{- include "ctf-monitoring.labels" . | nindent 4 }}
+    cluster-prometheus: "true"
+spec:
+  scrapeInterval: 10s
+  scrapeClass: router
+  dnsSDConfigs:
+    - names:
+        # This Service is being set up in the ctfroute chart, since there we have the
+        # overlay network addresses. The DaemonSet for node-exporter is being set up
+        # in this chart (see below)
+        - routers-node-metrics.{{ .Release.Namespace }}.svc.cluster.local
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: node-exporter-nonrouter
+  labels:
+    {{- include "ctf-monitoring.labels" . | nindent 4 }}
+    cluster-prometheus: "true"
+spec:
+  endpoints:
+    - targetPort: 9100
+      interval: 10s
+  scrapeClass: daemonset
+  selector:
+    matchLabels:
+      app: node-exporter-nonrouter
+      {{- include "ctf-monitoring.selectorLabels" . | nindent 6 }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: longhorn
+  labels:
+    {{- include "ctf-monitoring.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app: longhorn-manager
+  namespaceSelector:
+    matchNames:
+      - longhorn-system
+  endpoints:
+    - port: manager
+{{- end }}

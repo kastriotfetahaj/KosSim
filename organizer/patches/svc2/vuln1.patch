@@ -1,0 +1,8 @@
+diff --git a/platform/challenges/svc2-vaultgrid/service/src/routes.cpp b/platform/challenges/svc2-vaultgrid/service/src/routes.cpp
+--- a/platform/challenges/svc2-vaultgrid/service/src/routes.cpp
++++ b/platform/challenges/svc2-vaultgrid/service/src/routes.cpp
+@@
+-        if (view == "truncated" && limit > 4096) {
+-            return json(200, "{\"meta\":\"" + obj.meta_id + "\",\"overflow_hex\":\"" + to_hex(obj.flag) + "\"}");
+-        }
++        if (view == "truncated" && limit > 4096) return json(200, "{\"error\":\"limit\"}");

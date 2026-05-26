@@ -1,0 +1,7 @@
+apiVersion: v2
+name: ctfroute
+description: Declarative networking for A/D CTFs
+
+type: application
+version: 0.1.0
+appVersion: "0.0.1"

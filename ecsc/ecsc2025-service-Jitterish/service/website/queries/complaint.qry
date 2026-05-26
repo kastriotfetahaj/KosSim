@@ -1,0 +1,48 @@
+func get_complaints_about_target(entry, target_user) {
+    if entry["target_user"]["username"] == target_user  return entry;
+}
+
+func get_reported_complaints(entry, reporter) {
+    if entry["reporting_user"]["username"] == reporter return entry;
+}
+
+func count(entry, acc) {
+    return (acc ?: 0) + 1;
+}
+
+func get_updated_user(entry, target_user) {
+    if entry["username"] == target_user {
+        entry["status"]["num_reports"] = get_num_reports(target_user) ?: 0;
+        return entry;
+    }
+}
+
+func deduplicate_targets(entry, acc) {
+    if !defined acc acc={};
+    if !defined acc[entry["target_user"]["username"]] {
+        target = entry["target_user"];
+        target["status"]["num_reports"] = target["status"]["num_reports"] + get_num_reported(target["username"]);
+        print(target);
+        acc[entry["target_user"]["username"]] = 1;
+    }
+    return acc;
+}
+
+func get_reported_users(reporter_username) {
+    get_reported_users_helper(reporter_username);
+}
+
+query get_reported_users_helper on complaints
+filter get_reported_complaints
+reduce deduplicate_targets;
+
+query get_num_reports on complaints
+filter get_reported_complaints
+reduce count;
+
+query get_num_reported on complaints
+filter get_complaints_about_target
+reduce count;
+
+query get_user_numreports on users
+filter get_updated_user;

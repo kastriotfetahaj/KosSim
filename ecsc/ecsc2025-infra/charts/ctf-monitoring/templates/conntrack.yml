@@ -1,0 +1,130 @@
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: router-conntrack
+  labels:
+    app: router-conntrack
+    {{- include "ctf-monitoring.labels" . | nindent 4 }}
+spec:
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 100%
+  selector:
+    matchLabels:
+      app: router-conntrack
+      {{- include "ctf-monitoring.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        app: router-conntrack
+        {{- include "ctf-monitoring.selectorLabels" . | nindent 8 }}
+    spec:
+      hostNetwork: true
+      tolerations:
+        - key: node.kubernetes.io/not-ready
+          operator: "Exists"
+          effect: NoSchedule
+        - key: ctfr.attacking-lab.com/role
+          operator: Equal
+          value: router
+          effect: NoExecute
+        - key: ctfr.attacking-lab.com/role
+          operator: Equal
+          value: worker
+          effect: NoExecute
+        - key: ctfr.attacking-lab.com/ctf
+          operator: Equal
+          value: {{ .Values.ctf }}
+          effect: NoExecute
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: ctfr.attacking-lab.com/ctf
+                    operator: In
+                    values:
+                      - {{ .Values.ctf }}
+                  - key: ctfr.attacking-lab.com/role
+                    operator: In
+                    values:
+                      - worker
+                      - router
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range .}}
+        - name: {{ . }}
+        {{- end}}
+      {{- end }}
+      volumes:
+        - name: conntrack-ports
+          configMap:
+            name: conntrack-ports
+        - name: data
+          emptyDir: { }
+      terminationGracePeriodSeconds: 15
+      containers:
+        - name: conntrack-accounting
+          image: "markusbauer/conntrack_accounting:latest"
+          imagePullPolicy: Always
+          command:
+            - conntrack_accounting
+            - "-output=/data/new"
+            - "-ports=/etc/conntrack/ports.conf"
+            - "-track-open"
+            - "-include-icmp"
+            - "-interval=15"
+            - "-src=10.{{ $.Values.networkIndex }}.0.0/16"
+            - "-src-group-mask=255.255.255.0"
+            - "-dst=10.{{ $.Values.networkIndex }}.0.0/16"
+            - "-dst-group-mask=255.255.255.0"
+            # - "-exclude-ip=10.32.250.1"
+          volumeMounts:
+            - name: conntrack-ports
+              mountPath: /etc/conntrack/
+            - name: data
+              mountPath: /data
+          securityContext:
+            privileged: true
+            capabilities:
+              add:
+                - "NET_ADMIN"
+        - name: psql-insert
+          image: "markusbauer/conntrack_accounting:latest"
+          imagePullPolicy: Always
+          command:
+            - psql_insert
+            - "-watch=/data/new"
+            - "-move=/data/complete"
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          env:
+            - name: PSQL_HOST
+              value: "10.233.{{ .Values.networkIndex }}.101:{{ .Values.timescaleNodePort }}"
+            - name: PSQL_DB
+              valueFrom:
+                secretKeyRef:
+                  key: dbname
+                  name: ctf-metrics-app
+            - name: PSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  key: user
+                  name: ctf-metrics-app
+            - name: PSQL_PASS
+              valueFrom:
+                secretKeyRef:
+                  key: password
+                  name: ctf-metrics-app
+---

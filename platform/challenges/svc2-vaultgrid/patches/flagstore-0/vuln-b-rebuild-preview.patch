@@ -1,0 +1,18 @@
+Subject: rebuild preview returns a digest, not the reconstructed bytes
+
+The /api/rebuild handler reassembles the object from its shards and emits
+the raw XOR result as preview_hex. For a flagstore-0 object this hex is
+the flag in cleartext. Replace the preview body with a short digest that
+proves consistency without exposing content.
+
+--- a/service/src/routes.cpp
++++ b/service/src/routes.cpp
+@@ -165,9 +165,9 @@
+     if (req.path == "/api/rebuild" && req.method == "POST") {
+         std::lock_guard<std::mutex> guard(state.db.mu);
+         auto object_id = json_string(req.body, "object");
+         auto it = state.objects.find(object_id);
+         if (it == state.objects.end()) return json(404, "{\"error\":\"missing\"}");
+-        return json(200, "{\"preview_hex\":\"" + to_hex(xor_shards(it->second.shards)) + "\",\"mode\":\"quorum-preview\"}");
++        return json(200, "{\"checksum\":\"" + short_hash(to_hex(xor_shards(it->second.shards))) + "\",\"mode\":\"quorum-preview\"}");
+     }

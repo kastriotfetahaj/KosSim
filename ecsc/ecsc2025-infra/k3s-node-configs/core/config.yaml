@@ -1,0 +1,5 @@
+# these run in hetzner, where we just align it with hostnames
+# node-name: ...
+server: https://gartenverein-tackenberg.de:6443
+node-label:
+  - ctfr.attacking-lab.com/role=core

@@ -1,0 +1,63 @@
+{
+  "apiVersion": "v1",
+  "kind": "Namespace",
+  "metadata": {
+    "annotations": {
+      "meta.helm.sh/release-name": "cilium",
+      "meta.helm.sh/release-namespace": "kube-system"
+    },
+    "creationTimestamp": "2025-08-20T18:14:25Z",
+    "deletionTimestamp": "2025-08-20T18:18:36Z",
+    "labels": {
+      "app.kubernetes.io/managed-by": "Helm",
+      "app.kubernetes.io/part-of": "cilium",
+      "kubernetes.io/metadata.name": "cilium-secrets"
+    },
+    "name": "cilium-secrets",
+    "resourceVersion": "12782",
+    "uid": "50f623db-2846-4380-8659-6da7d1f42928"
+  },
+  "spec": {
+    "finalizers": []
+  },
+  "status": {
+    "conditions": [
+      {
+        "lastTransitionTime": "2025-08-20T18:18:41Z",
+        "message": "Discovery failed for some groups, 1 failing: unable to retrieve the complete list of server APIs: hetzner.cert-mananger-webhook.noshoes.xyz/v1alpha1: stale GroupVersion discovery: hetzner.cert-mananger-webhook.noshoes.xyz/v1alpha1",
+        "reason": "DiscoveryFailed",
+        "status": "True",
+        "type": "NamespaceDeletionDiscoveryFailure"
+      },
+      {
+        "lastTransitionTime": "2025-08-20T18:18:41Z",
+        "message": "All legacy kube types successfully parsed",
+        "reason": "ParsedGroupVersions",
+        "status": "False",
+        "type": "NamespaceDeletionGroupVersionParsingFailure"
+      },
+      {
+        "lastTransitionTime": "2025-08-20T18:18:41Z",
+        "message": "All content successfully deleted, may be waiting on finalization",
+        "reason": "ContentDeleted",
+        "status": "False",
+        "type": "NamespaceDeletionContentFailure"
+      },
+      {
+        "lastTransitionTime": "2025-08-20T18:18:41Z",
+        "message": "All content successfully removed",
+        "reason": "ContentRemoved",
+        "status": "False",
+        "type": "NamespaceContentRemaining"
+      },
+      {
+        "lastTransitionTime": "2025-08-20T18:18:41Z",
+        "message": "All content-preserving finalizers finished",
+        "reason": "ContentHasNoFinalizers",
+        "status": "False",
+        "type": "NamespaceFinalizersRemaining"
+      }
+    ],
+    "phase": "Terminating"
+  }
+}
