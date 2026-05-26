@@ -89,13 +89,13 @@ function ScheduleForm({
   timer: TimerSnapshot;
   onSaved: (msg: string) => void;
 }) {
-  const [start, setStart] = useState<string>(timer.start_at?.toString() ?? "");
+  const [start, setStart] = useState<string>(unixToLocalInput(timer.start_at));
   const [stopT, setStopT] = useState<string>(timer.stop_after_tick?.toString() ?? "");
   const [freeze, setFreeze] = useState<string>(timer.scoreboard_freeze_tick?.toString() ?? "");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    setStart(timer.start_at?.toString() ?? "");
+    setStart(unixToLocalInput(timer.start_at));
     setStopT(timer.stop_after_tick?.toString() ?? "");
     setFreeze(timer.scoreboard_freeze_tick?.toString() ?? "");
   }, [timer.start_at, timer.stop_after_tick, timer.scoreboard_freeze_tick]);
@@ -112,7 +112,7 @@ function ScheduleForm({
     setBusy(true);
     try {
       await admin.gameSchedule({
-        start_at: parse(start),
+        start_at: localInputToUnix(start),
         stop_after_tick: parse(stopT),
         scoreboard_freeze_tick: parse(freeze),
       });
@@ -129,8 +129,17 @@ function ScheduleForm({
       <h2>Schedule</h2>
       <form onSubmit={submit}>
         <label className="field">
-          <span>Start at (unix ts)</span>
-          <input type="number" value={start} onChange={(e) => setStart(e.target.value)} />
+          <span>Start at</span>
+          <input
+            type="datetime-local"
+            value={start}
+            onChange={(e) => setStart(e.target.value)}
+          />
+          <small className="field-hint">
+            {start
+              ? `Local time · ${localInputToUnix(start)} (unix ts)`
+              : "Leave empty to clear the scheduled start."}
+          </small>
         </label>
         <label className="field">
           <span>Stop after tick</span>
@@ -146,6 +155,24 @@ function ScheduleForm({
       </form>
     </section>
   );
+}
+
+// The API stores `start_at` as a unix timestamp in seconds. The
+// <input type="datetime-local"> works with a local "YYYY-MM-DDTHH:mm"
+// string, so convert between the two at the form boundary.
+function unixToLocalInput(secs: number | null | undefined): string {
+  if (secs == null) return "";
+  const d = new Date(secs * 1000);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function localInputToUnix(value: string): number | null {
+  const t = value.trim();
+  if (!t) return null;
+  const ms = new Date(t).getTime();
+  return Number.isFinite(ms) ? Math.floor(ms / 1000) : null;
 }
 
 function Stat({ value, label }: { value: number | string; label: string }) {
