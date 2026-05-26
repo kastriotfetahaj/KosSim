@@ -12,11 +12,14 @@ export default function Observability() {
     [ticks],
   );
 
+  // Hooks must run unconditionally and in a stable order, so compute the
+  // memoised chart before any early return below.
+  const slaChart = useSlaChart(data);
+
   if (error) return <div className="msg error">{error}</div>;
   if (!data && loading) return <div className="msg">Loading observability...</div>;
   if (!data) return <div className="msg">No observability data available.</div>;
 
-  const slaChart = useSlaChart(data);
   const submissions = data.submission_rates.reduce((sum, row) => sum + Number(row.n || 0), 0);
   const failures = data.failed_checks.length;
 
@@ -105,17 +108,19 @@ export default function Observability() {
   );
 }
 
-function useSlaChart(data: ObservabilityResponse): ChartData {
+function useSlaChart(data: ObservabilityResponse | null): ChartData {
+  const slaRows = data?.sla_rows;
   return useMemo(() => {
+    const rows = slaRows ?? [];
     const labels = Array.from(
-      new Set(data.sla_rows.map((row) => String(row.tick))),
+      new Set(rows.map((row) => String(row.tick))),
     ).sort((a, b) => Number(a) - Number(b));
-    const services = Array.from(new Set(data.sla_rows.map((row) => row.service)));
+    const services = Array.from(new Set(rows.map((row) => row.service)));
     return {
       labels,
       datasets: services.map((service, index) => {
         const byTick = new Map(
-          data.sla_rows
+          rows
             .filter((row) => row.service === service)
             .map((row) => [String(row.tick), Number(row.sla)]),
         );
@@ -126,7 +131,7 @@ function useSlaChart(data: ObservabilityResponse): ChartData {
         };
       }),
     };
-  }, [data.sla_rows]);
+  }, [slaRows]);
 }
 
 function Stat({ label, value }: { label: string; value: number | string }) {
