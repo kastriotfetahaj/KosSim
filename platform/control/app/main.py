@@ -278,7 +278,7 @@ def _per_service_stats(include_nop: bool = False) -> Dict[int, Dict[int, Dict[st
                         AND s.service_id = h.service_id
                         AND s.round_id = h.round_id
                   )
-                GROUP BY h.team_id, h.service_id
+                GROUP BY h.team_id, h.service_id, svc.flags_per_tick
             ),
             sla_agg AS (
                 SELECT team_id,
