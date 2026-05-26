@@ -22,7 +22,6 @@ runcmd:
     cat > /opt/${competition_name}/infra/compose/.env.${team_name} << 'EOF'
     TEAM_NAME=${team_name}
     SERVICE_PUSH_SECRET=${service_push_secret}
-    NAT_GATEWAY_PORT=${nat_gateway_port}
     TEAM_SERVICE_1_PORT=${service_1_port}
     TEAM_SERVICE_2_PORT=${service_2_port}
     TEAM_SERVICE_3_PORT=${service_3_port}

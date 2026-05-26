@@ -1,21 +1,4 @@
 services:
-  nat-gateway:
-    build:
-      context: ../../platform/nat-gateway
-    restart: unless-stopped
-    environment:
-      NAT_TEAM: ${TEAM_NAME}
-    ports:
-      - "${NAT_GATEWAY_PORT:-18081}:8080"
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=2).read()"]
-      interval: 10s
-      timeout: 3s
-      retries: 6
-      start_period: 10s
-    mem_limit: 192m
-    cpus: 0.35
-
   svc1:
     build:
       context: ../../platform/challenges

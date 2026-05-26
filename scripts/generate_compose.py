@@ -26,18 +26,6 @@ def _team_names(args: argparse.Namespace) -> List[str]:
     return [f"team{i}" for i in range(1, args.team_count + 1)]
 
 
-def _python_healthcheck(port: int = 8080, indent: int = 2) -> str:
-    pad = " " * indent
-    child = " " * (indent + 2)
-    return f"""{pad}healthcheck:
-{child}test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:{port}/health', timeout=2).read()"]
-{child}interval: 10s
-{child}timeout: 3s
-{child}retries: 6
-{child}start_period: 10s
-"""
-
-
 def _curl_healthcheck(port: int = 8080, indent: int = 2) -> str:
     pad = " " * indent
     child = " " * (indent + 2)
@@ -62,16 +50,6 @@ def _svc_anchor(num: int, dockerfile: str) -> str:
   cpus: 0.75
 {_curl_healthcheck(8080, 2)}  networks:
     - ctf_net
-"""
-
-
-def _team_nat_block(team: str, nat_port: int) -> str:
-    return f"""  {team}-nat:
-    <<: *nat-gateway
-    environment:
-      NAT_TEAM: {team}
-    ports:
-      - "{nat_port}:8080"
 """
 
 
@@ -169,7 +147,7 @@ def _nop_service_block(svc_num: int) -> str:
 {_service_volume_block(svc_num, "nop")}"""
 
 
-def _render_compose(teams: List[str], nat_base_port: int, include_nop: bool) -> str:
+def _render_compose(teams: List[str], include_nop: bool) -> str:
     teams_csv = ",".join(teams)
     svc_dockerfiles = {
         1: "svc1-ledgerforge/service/Dockerfile",
@@ -224,16 +202,7 @@ x-control-env: &control-env
         parts.append(_svc_anchor(svc_num, svc_dockerfiles[svc_num]))
 
     parts.append(
-        f"""x-nat-gateway: &nat-gateway
-  build:
-    context: ./platform/nat-gateway
-  restart: unless-stopped
-  mem_limit: 192m
-  cpus: 0.35
-{_python_healthcheck(8080, 2)}  networks:
-    - ctf_net
-
-services:
+        f"""services:
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped
@@ -350,8 +319,7 @@ services:
 """
     )
 
-    for idx, team in enumerate(teams, start=1):
-        parts.append(_team_nat_block(team, nat_base_port + idx))
+    for team in teams:
         for svc_num in range(1, 6):
             parts.append(_team_service_block(team, svc_num))
 
@@ -399,12 +367,6 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Explicit team names as CSV (example: team1,team2,team3).",
     )
     parser.add_argument(
-        "--nat-base-port",
-        type=int,
-        default=18080,
-        help="Team NAT host port is nat_base_port + team_index.",
-    )
-    parser.add_argument(
         "--without-nop",
         action="store_true",
         help="Do not include nop service stack.",
@@ -428,7 +390,7 @@ def main() -> int:
         raise SystemExit("No teams resolved from --team-count/--teams")
 
     output_path = Path(args.output)
-    content = _render_compose(teams, args.nat_base_port, not args.without_nop)
+    content = _render_compose(teams, not args.without_nop)
     output_path.write_text(content, encoding="utf-8")
 
     print(f"Generated {output_path} for teams: {', '.join(teams)}")

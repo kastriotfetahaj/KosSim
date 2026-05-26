@@ -124,12 +124,6 @@ variable "nop_service_base_port" {
   default     = 23000
 }
 
-variable "team_nat_base_port" {
-  description = "Team NAT gateway host port becomes base+teamIndex."
-  type        = number
-  default     = 18080
-}
-
 variable "ssh_public_keys" {
   description = "SSH public keys allowed on servers."
   type        = list(string)

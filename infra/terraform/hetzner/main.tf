@@ -193,7 +193,6 @@ resource "hcloud_server" "team" {
     team_name           = local.team_names[count.index]
     private_cidr        = var.private_cidr
     team_private_ip     = local.team_host_map[local.team_names[count.index]]
-    nat_gateway_port    = var.team_nat_base_port + count.index + 1
     service_1_port      = var.team_service_base_port + 1
     service_2_port      = var.team_service_base_port + 2
     service_3_port      = var.team_service_base_port + 3

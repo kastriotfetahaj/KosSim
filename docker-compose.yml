@@ -125,21 +125,6 @@ x-svc5: &svc5
   networks:
     - ctf_net
 
-x-nat-gateway: &nat-gateway
-  build:
-    context: ./platform/nat-gateway
-  restart: unless-stopped
-  mem_limit: 192m
-  cpus: 0.35
-  healthcheck:
-    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=2).read()"]
-    interval: 10s
-    timeout: 3s
-    retries: 6
-    start_period: 10s
-  networks:
-    - ctf_net
-
 services:
   postgres:
     image: postgres:16-alpine
@@ -255,13 +240,6 @@ services:
     networks:
       - ctf_net
 
-  team1-nat:
-    <<: *nat-gateway
-    environment:
-      NAT_TEAM: team1
-    ports:
-      - "18081:8080"
-
   team1-svc1:
     <<: *svc1
     environment:
@@ -352,13 +330,6 @@ services:
       BOOT_FLAG: FLAG{BOOT_team1_svc5}
       SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
 
-  team2-nat:
-    <<: *nat-gateway
-    environment:
-      NAT_TEAM: team2
-    ports:
-      - "18082:8080"
-
   team2-svc1:
     <<: *svc1
     environment:
@@ -448,13 +419,6 @@ services:
       SERVICE_NAME: svc5
       BOOT_FLAG: FLAG{BOOT_team2_svc5}
       SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
-
-  team3-nat:
-    <<: *nat-gateway
-    environment:
-      NAT_TEAM: team3
-    ports:
-      - "18083:8080"
 
   team3-svc1:
     <<: *svc1
