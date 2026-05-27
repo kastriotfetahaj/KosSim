@@ -7,10 +7,12 @@ unauth) instead of redirects.
 
 from __future__ import annotations
 
+import csv
+import datetime as dt
 import json
 import os
 import zipfile
-from io import BytesIO
+from io import BytesIO, StringIO
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -740,6 +742,258 @@ def api_submissions(
             for r in cur.fetchall()
         ]
     return {"rows": rows, "chart": _submission_chart_data(12)}
+
+
+# ---------------------------------------------------------------------------
+# Exports
+# ---------------------------------------------------------------------------
+
+
+def _download_response(content: bytes, filename: str, media_type: str) -> StreamingResponse:
+    return StreamingResponse(
+        BytesIO(content),
+        media_type=media_type,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+def _csv_download(filename: str, headers: List[str], rows: List[List[Any]]) -> StreamingResponse:
+    out = StringIO()
+    writer = csv.writer(out)
+    writer.writerow(headers)
+    writer.writerows(rows)
+    return _download_response(out.getvalue().encode("utf-8"), filename, "text/csv; charset=utf-8")
+
+
+@router.get("/export/submissions.csv")
+def api_export_submissions(_: str = Depends(require_admin)) -> StreamingResponse:
+    with get_cursor(commit=False) as (_conn, cur):
+        cur.execute(
+            """
+            SELECT sub.id,
+                   sub.submitted_at,
+                   attacker.name AS submitter,
+                   victim.name AS target,
+                   COALESCE(NULLIF(svc.display_name, ''), svc.name) AS service,
+                   svc.name AS service_slug,
+                   sub.result,
+                   sub.tick_issued,
+                   sub.payload,
+                   sub.points_awarded,
+                   sub.is_firstblood,
+                   sub.source_ip
+            FROM submissions sub
+            JOIN teams attacker ON attacker.id = sub.submitter_team_id
+            LEFT JOIN teams victim ON victim.id = sub.target_team_id
+            LEFT JOIN services svc ON svc.id = sub.service_id
+            ORDER BY sub.submitted_at DESC, sub.id DESC
+            LIMIT 50000;
+            """
+        )
+        rows = [
+            [
+                int(r["id"]),
+                r["submitted_at"].isoformat() if r["submitted_at"] else "",
+                r["submitter"],
+                r["target"] or "",
+                r["service"] or "",
+                r["service_slug"] or "",
+                r["result"],
+                r["tick_issued"] if r["tick_issued"] is not None else "",
+                r["payload"] if r["payload"] is not None else "",
+                r["points_awarded"],
+                bool(r["is_firstblood"]),
+                r["source_ip"] or "",
+            ]
+            for r in cur.fetchall()
+        ]
+    return _csv_download(
+        "kossim-submissions.csv",
+        [
+            "id",
+            "submitted_at",
+            "submitter",
+            "target",
+            "service",
+            "service_slug",
+            "result",
+            "tick_issued",
+            "payload",
+            "points_awarded",
+            "is_firstblood",
+            "source_ip",
+        ],
+        rows,
+    )
+
+
+@router.get("/export/checker-failures.csv")
+def api_export_checker_failures(_: str = Depends(require_admin)) -> StreamingResponse:
+    with get_cursor(commit=False) as (_conn, cur):
+        cur.execute(
+            """
+            SELECT cj.id,
+                   cj.tick,
+                   t.name AS team,
+                   COALESCE(NULLIF(s.display_name, ''), s.name) AS service,
+                   s.name AS service_slug,
+                   cj.host,
+                   cj.port,
+                   cj.status,
+                   cj.result_status,
+                   cj.attempts,
+                   cj.max_attempts,
+                   cj.last_error,
+                   cj.queued_at,
+                   cj.started_at,
+                   cj.finished_at,
+                   cj.runtime_seconds
+            FROM checker_jobs cj
+            JOIN teams t ON t.id = cj.team_id
+            JOIN services s ON s.id = cj.service_id
+            WHERE (cj.finished_at IS NOT NULL AND cj.status NOT IN ('SUCCESS', 'RECOVERING'))
+               OR cj.last_error IS NOT NULL
+            ORDER BY cj.tick DESC, cj.finished_at DESC NULLS LAST, cj.id DESC
+            LIMIT 50000;
+            """
+        )
+        rows = [
+            [
+                int(r["id"]),
+                r["tick"],
+                r["team"],
+                r["service"],
+                r["service_slug"],
+                r["host"],
+                r["port"],
+                r["status"],
+                r["result_status"] or "",
+                r["attempts"],
+                r["max_attempts"],
+                r["last_error"] or "",
+                r["queued_at"].isoformat() if r["queued_at"] else "",
+                r["started_at"].isoformat() if r["started_at"] else "",
+                r["finished_at"].isoformat() if r["finished_at"] else "",
+                r["runtime_seconds"] if r["runtime_seconds"] is not None else "",
+            ]
+            for r in cur.fetchall()
+        ]
+    return _csv_download(
+        "kossim-checker-failures.csv",
+        [
+            "id",
+            "tick",
+            "team",
+            "service",
+            "service_slug",
+            "host",
+            "port",
+            "status",
+            "result_status",
+            "attempts",
+            "max_attempts",
+            "last_error",
+            "queued_at",
+            "started_at",
+            "finished_at",
+            "runtime_seconds",
+        ],
+        rows,
+    )
+
+
+@router.get("/export/scoreboard.json")
+def api_export_scoreboard(_: str = Depends(require_admin)) -> StreamingResponse:
+    with get_cursor(commit=False) as (_conn, cur):
+        cur.execute(
+            """
+            SELECT t.id,
+                   t.name,
+                   t.nat_alias,
+                   t.country_code,
+                   t.is_nop,
+                   COALESCE(s.attack_points, 0) AS attack_points,
+                   COALESCE(s.defense_points, 0) AS defense_points,
+                   COALESCE(s.uptime_points, 0) AS uptime_points,
+                   COALESCE(s.challenge_points, 0) AS challenge_points,
+                   COALESCE(s.sla_points, 1) AS sla_points,
+                   COALESCE(s.total, 0) AS total,
+                   s.updated_at
+            FROM teams t
+            LEFT JOIN scores s ON s.team_id = t.id
+            ORDER BY t.is_nop ASC, COALESCE(s.total, 0) DESC, t.name ASC;
+            """
+        )
+        teams = [
+            {
+                "rank": idx + 1,
+                "id": int(r["id"]),
+                "name": r["name"],
+                "nat_alias": r["nat_alias"],
+                "country_code": (r["country_code"] or "XK").upper(),
+                "is_nop": bool(r["is_nop"]),
+                "attack_points": float(r["attack_points"] or 0),
+                "defense_points": float(r["defense_points"] or 0),
+                "uptime_points": float(r["uptime_points"] or 0),
+                "challenge_points": float(r["challenge_points"] or 0),
+                "sla_points": float(r["sla_points"] or 1),
+                "total": float(r["total"] or 0),
+                "updated_at": r["updated_at"].isoformat() if r["updated_at"] else None,
+            }
+            for idx, r in enumerate(cur.fetchall())
+        ]
+        cur.execute(
+            """
+            SELECT id, name, COALESCE(NULLIF(display_name, ''), name) AS display_name
+            FROM services
+            ORDER BY id ASC;
+            """
+        )
+        services = [
+            {"id": int(r["id"]), "name": r["name"], "display_name": r["display_name"]}
+            for r in cur.fetchall()
+        ]
+    payload = {
+        "generated_at": dt.datetime.now(dt.UTC).isoformat().replace("+00:00", "Z"),
+        "teams": teams,
+        "services": services,
+    }
+    return _download_response(
+        json.dumps(payload, indent=2, sort_keys=True).encode("utf-8"),
+        "kossim-scoreboard.json",
+        "application/json",
+    )
+
+
+@router.get("/export/logs.csv")
+def api_export_logs(_: str = Depends(require_admin)) -> StreamingResponse:
+    with get_cursor(commit=False) as (_conn, cur):
+        cur.execute(
+            """
+            SELECT created_at, component, level, title, text
+            FROM log_messages
+            ORDER BY created_at DESC, id DESC
+            LIMIT 50000;
+            """
+        )
+        rows = [
+            [
+                r["created_at"].isoformat() if r["created_at"] else "",
+                r["component"],
+                int(r["level"]),
+                LEVEL_LABELS.get(LogLevel(r["level"]), "INFO")
+                if r["level"] in [e.value for e in LogLevel]
+                else "INFO",
+                r["title"],
+                r["text"] or "",
+            ]
+            for r in cur.fetchall()
+        ]
+    return _csv_download(
+        "kossim-logs.csv",
+        ["created_at", "component", "level", "level_label", "title", "text"],
+        rows,
+    )
 
 
 # ---------------------------------------------------------------------------

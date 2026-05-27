@@ -87,11 +87,12 @@ export default function Teams() {
   };
 
   const remove = async (t: TeamRow) => {
-    const warn =
+    const typed = window.prompt(
       `Delete team "${t.name}"?\n\n` +
-      `This cascades and removes all of this team's flags, submissions, ` +
-      `service health, and score history. This cannot be undone.`;
-    if (!window.confirm(warn)) return;
+        `This cascades and removes all of this team's flags, submissions, ` +
+        `service health, and score history. Type the team name to continue.`,
+    );
+    if (typed !== t.name) return;
     setBusy(true);
     try {
       await admin.teamDelete(t.id);
@@ -104,7 +105,11 @@ export default function Teams() {
   };
 
   const rotate = async (t: TeamRow) => {
-    if (!window.confirm(`Rotate submit token for "${t.name}"?\n\nThe current token will stop working immediately.`)) return;
+    const typed = window.prompt(
+      `Rotate submit token for "${t.name}"?\n\n` +
+        `The current token will stop working immediately. Type ROTATE to continue.`,
+    );
+    if (typed !== "ROTATE") return;
     setBusy(true);
     try {
       await admin.teamRotateToken(t.id);

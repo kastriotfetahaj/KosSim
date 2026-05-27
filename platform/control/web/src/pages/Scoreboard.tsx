@@ -28,6 +28,8 @@ export default function Scoreboard({ variant }: { variant: Variant }) {
   const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
   const [refreshing, setRefreshing] = useState(false);
   const [drilldown, setDrilldown] = useState<ScoreboardRow | null>(null);
+  const [serviceDrilldown, setServiceDrilldown] = useState<Service | null>(null);
+  const [displayMode, setDisplayMode] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -114,106 +116,136 @@ export default function Scoreboard({ variant }: { variant: Variant }) {
             }
           />
           <Metric label="Teams" value={data.rows.length} />
+          {variant === "public" && (
+            <button
+              className="btn btn-ghost btn-xs display-toggle"
+              type="button"
+              onClick={() => setDisplayMode((v) => !v)}
+            >
+              {displayMode ? "Table view" : "Display mode"}
+            </button>
+          )}
         </div>
       </header>
 
       <GameStateBanner data={data} now={now} />
 
-      <div className="card no-pad sb-table-wrap">
-        <table className="sb-table">
-          <thead>
-            {showServiceTops && (
-              <tr className="sb-thead-top">
-                <th colSpan={3} className="sb-thead-spacer" />
-                {data.services.map((svc) => {
-                  const top = data.service_tops[svc.id];
-                  const firstBlood = top?.first_blood;
-                  return (
-                    <th key={svc.id} className="sb-svc-top">
-                      {top ? (
-                        <>
-                          <div className="sb-svc-leader">
-                            <span
-                              className="flag-mini"
-                              title={top.country_code.toUpperCase()}
-                            >
-                              <span aria-hidden>
-                                {flagEmoji(top.country_code)}
+      {variant === "public" && displayMode ? (
+        <PublicDisplay data={data} secondsLeft={secondsLeft} />
+      ) : (
+        <div className="card no-pad sb-table-wrap">
+          <table className="sb-table">
+            <thead>
+              {showServiceTops && (
+                <tr className="sb-thead-top">
+                  <th colSpan={3} className="sb-thead-spacer" />
+                  {data.services.map((svc) => {
+                    const top = data.service_tops[svc.id];
+                    const firstBlood = top?.first_blood;
+                    return (
+                      <th key={svc.id} className="sb-svc-top">
+                        <button
+                          className="sb-svc-top-btn"
+                          type="button"
+                          onClick={() => setServiceDrilldown(svc)}
+                        >
+                          {top ? (
+                            <>
+                              <span className="sb-svc-leader">
+                                <span
+                                  className="flag-mini"
+                                  title={top.country_code.toUpperCase()}
+                                >
+                                  <span aria-hidden>
+                                    {flagEmoji(top.country_code)}
+                                  </span>
+                                </span>
+                                <strong>{top.team_name}</strong>
+                                <span className="sb-svc-leader-pts">
+                                  {fmtPoints(top.service_total)}
+                                  <span className="svc-score-unit">pts</span>
+                                </span>
                               </span>
-                            </span>
-                            <strong>{top.team_name}</strong>
-                            <span className="sb-svc-leader-pts">
-                              {fmtPoints(top.service_total)}
-                              <span className="svc-score-unit">pts</span>
-                            </span>
-                          </div>
-                          <div className="sb-svc-stats">
-                            {firstBlood && (
-                              <span className="sb-svc-firstblood">
-                                <StarIcon size={11} /> first blood:{" "}
-                                {firstBlood.attacker_team}
-                                {firstBlood.victim_team
-                                  ? ` -> ${firstBlood.victim_team}`
-                                  : ""}
+                              <span className="sb-svc-stats">
+                                {firstBlood && (
+                                  <span className="sb-svc-firstblood">
+                                    <StarIcon size={11} /> first blood:{" "}
+                                    {firstBlood.attacker_team}
+                                    {firstBlood.victim_team
+                                      ? ` -> ${firstBlood.victim_team}`
+                                      : ""}
+                                  </span>
+                                )}
+                                <span>
+                                  <SwordIcon size={11} /> {top.attackers_count}{" "}
+                                  attackers
+                                </span>
+                                <span className="sb-svc-divider">·</span>
+                                <span>
+                                  <TargetIcon size={11} /> {top.victims_count}{" "}
+                                  victims
+                                </span>
                               </span>
-                            )}
-                            <span>
-                              <SwordIcon size={11} /> {top.attackers_count}{" "}
-                              attackers
-                            </span>
-                            <span className="sb-svc-divider">·</span>
-                            <span>
-                              <TargetIcon size={11} /> {top.victims_count}{" "}
-                              victims
-                            </span>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="sb-svc-leader muted">
-                            <span className="flag-mini">—</span>
-                            <strong>No leader yet</strong>
-                          </div>
-                          <div className="sb-svc-stats muted">
-                            Awaiting first capture
-                          </div>
-                        </>
-                      )}
-                    </th>
-                  );
-                })}
-              </tr>
-            )}
-            <tr className="sb-thead-main">
-              <th className="rank-h">#</th>
-              <th>Team</th>
-              <th>
-                <TrophyIcon size={11} /> Score
-              </th>
-              {data.services.map((svc) => (
-                <th key={svc.id} className="sb-svc-name">
-                  <TrophyIcon size={11} /> {serviceLabel(svc)}
+                            </>
+                          ) : (
+                            <>
+                              <span className="sb-svc-leader muted">
+                                <span className="flag-mini">—</span>
+                                <strong>No leader yet</strong>
+                              </span>
+                              <span className="sb-svc-stats muted">
+                                Awaiting first capture
+                              </span>
+                            </>
+                          )}
+                        </button>
+                      </th>
+                    );
+                  })}
+                </tr>
+              )}
+              <tr className="sb-thead-main">
+                <th className="rank-h">#</th>
+                <th>Team</th>
+                <th>
+                  <TrophyIcon size={11} /> Score
                 </th>
+                {data.services.map((svc) => (
+                  <th key={svc.id} className="sb-svc-name">
+                    <button
+                      className="sb-svc-header-btn"
+                      type="button"
+                      onClick={() => setServiceDrilldown(svc)}
+                    >
+                      <TrophyIcon size={11} /> {serviceLabel(svc)}
+                    </button>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {data.rows.map((row) => (
+                <TeamRow
+                  key={row.team_id}
+                  row={row}
+                  services={data.services}
+                  onSelect={() => setDrilldown(row)}
+                />
               ))}
-            </tr>
-          </thead>
-          <tbody>
-            {data.rows.map((row) => (
-              <TeamRow
-                key={row.team_id}
-                row={row}
-                services={data.services}
-                onSelect={() => setDrilldown(row)}
-              />
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <footer className="sb-footer">
-        Scoring: service score = (attack + defense) × SLA.
+        Scoring: service score = (attack + defense) x SLA.
       </footer>
       <TeamHistoryModal team={drilldown} onClose={() => setDrilldown(null)} />
+      <ServiceDetailModal
+        service={serviceDrilldown}
+        data={data}
+        onClose={() => setServiceDrilldown(null)}
+      />
     </div>
   );
 }
@@ -345,10 +377,249 @@ function TeamRow({
                 style={{ width: `${slaClamped}%` }}
               />
             </div>
+            <div className="svc-formula">
+              ({fmtPoints(cell.attack_points)} + {fmtPoints(cell.defense_points)}) x{" "}
+              {cell.sla_pct.toFixed(1)}% = {fmtPoints(cell.service_total)}
+            </div>
           </td>
         );
       })}
     </tr>
+  );
+}
+
+function PublicDisplay({
+  data,
+  secondsLeft,
+}: {
+  data: ScoreboardResponse;
+  secondsLeft: number;
+}) {
+  const leader = data.rows[0];
+  const podium = data.rows.slice(0, 3);
+  const serviceLeaders = data.services.map((svc) => ({
+    service: svc,
+    top: data.service_tops[svc.id],
+  }));
+  const events = [
+    ...(data.tick_activity?.first_bloods ?? []),
+    ...(data.tick_activity?.captures ?? []),
+  ].slice(0, 8);
+
+  return (
+    <section className="public-display" aria-label="Public display scoreboard">
+      <div className="display-hero">
+        <div>
+          <span className="display-kicker">Current leader</span>
+          <h2>
+            {leader ? (
+              <>
+                <span aria-hidden>{flagEmoji(leader.country_code)}</span>{" "}
+                {leader.team_name}
+              </>
+            ) : (
+              "No teams yet"
+            )}
+          </h2>
+          <p>
+            {leader
+              ? `${fmtPoints(leader.total)} points · ${leader.totals.flags_captured} captures`
+              : "Waiting for the first score snapshot."}
+          </p>
+        </div>
+        <div className="display-clock">
+          <span>Next tick</span>
+          <strong>{fmtCountdown(secondsLeft)}</strong>
+        </div>
+      </div>
+
+      <div className="display-grid">
+        <section className="display-section podium-section">
+          <h3>Top teams</h3>
+          <div className="podium-list">
+            {podium.map((row) => (
+              <div key={row.team_id} className={`podium-row rank-${row.rank}`}>
+                <span className="podium-rank">#{row.rank}</span>
+                <span className="podium-flag" aria-hidden>
+                  {flagEmoji(row.country_code)}
+                </span>
+                <strong>{row.team_name}</strong>
+                <span>{fmtPoints(row.total)}</span>
+              </div>
+            ))}
+            {!podium.length && <p className="muted">No ranking data yet.</p>}
+          </div>
+        </section>
+
+        <section className="display-section">
+          <h3>Service leaders</h3>
+          <div className="display-service-grid">
+            {serviceLeaders.map(({ service, top }) => (
+              <div key={service.id} className="display-service-row">
+                <span>{serviceLabel(service)}</span>
+                <strong>
+                  {top ? (
+                    <>
+                      {flagEmoji(top.country_code)} {top.team_name}
+                    </>
+                  ) : (
+                    "No leader"
+                  )}
+                </strong>
+                <em>{top ? fmtPoints(top.service_total) : "0"}</em>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="display-section">
+          <h3>Live activity</h3>
+          <div className="display-events">
+            {events.map((event) => (
+              <div key={`${event.id}-${event.is_firstblood ? "fb" : "cap"}`}>
+                <span className={event.is_firstblood ? "event-first" : ""}>
+                  {event.is_firstblood ? "First blood" : "Capture"}
+                </span>
+                <strong>{event.attacker_team}</strong>
+                <em>
+                  {event.victim_team ? `vs ${event.victim_team}` : "accepted"}
+                  {event.service_display_name ? ` · ${event.service_display_name}` : ""}
+                </em>
+              </div>
+            ))}
+            {!events.length && <p className="muted">No activity this tick.</p>}
+          </div>
+        </section>
+      </div>
+    </section>
+  );
+}
+
+function ServiceDetailModal({
+  service,
+  data,
+  onClose,
+}: {
+  service: Service | null;
+  data: ScoreboardResponse;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    if (!service) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [service, onClose]);
+
+  if (!service) return null;
+
+  const rows = data.rows
+    .map((row) => ({ row, cell: row.service_cells[service.id] }))
+    .filter((entry) => Boolean(entry.cell))
+    .sort((a, b) => b.cell.service_total - a.cell.service_total);
+  const top = data.service_tops[service.id];
+  const firstBlood = top?.first_blood;
+
+  return (
+    <div
+      className="th-backdrop"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="th-panel service-detail-panel" role="dialog" aria-label="Service details">
+        <header className="th-header">
+          <div>
+            <h2>{serviceLabel(service)}</h2>
+            <p className="th-sub">
+              Service leaderboard, SLA, checker state, and scoring formula.
+            </p>
+          </div>
+          <button className="th-close" onClick={onClose} aria-label="Close">
+            ✕
+          </button>
+        </header>
+
+        <section className="service-detail-summary">
+          <SummaryMetric label="Leader" value={top?.team_name ?? "—"} />
+          <SummaryMetric label="Leader score" value={top ? fmtPoints(top.service_total) : "0"} />
+          <SummaryMetric label="Attackers" value={top?.attackers_count ?? 0} />
+          <SummaryMetric label="Victims" value={top?.victims_count ?? 0} />
+        </section>
+
+        {firstBlood && (
+          <div className="service-firstblood">
+            <StarIcon size={13} />
+            <strong>First blood</strong>
+            <span>
+              {firstBlood.attacker_team}
+              {firstBlood.victim_team ? ` -> ${firstBlood.victim_team}` : ""} · tick{" "}
+              {firstBlood.tick_issued ?? "?"}
+            </span>
+          </div>
+        )}
+
+        <div className="th-scroll">
+          <table className="th-table service-detail-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Team</th>
+                <th>Score</th>
+                <th>Attack</th>
+                <th>Defense</th>
+                <th>SLA</th>
+                <th>Checks</th>
+                <th>Formula</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map(({ row, cell }, idx) => (
+                <tr key={row.team_id}>
+                  <td className="th-rank">#{idx + 1}</td>
+                  <td>
+                    <span className="flag-mini" title={row.country_code}>
+                      <span aria-hidden>{flagEmoji(row.country_code)}</span>
+                    </span>{" "}
+                    <strong>{row.team_name}</strong>
+                  </td>
+                  <td>
+                    <strong>{fmtPoints(cell.service_total)}</strong>{" "}
+                    <Delta value={cell.service_delta} compact />
+                  </td>
+                  <td>{fmtPoints(cell.attack_points)}</td>
+                  <td>{fmtPoints(cell.defense_points)}</td>
+                  <td>{cell.sla_pct.toFixed(2)}%</td>
+                  <td className={cell.is_up ? "ok" : "danger"}>{cell.checker_status}</td>
+                  <td className="muted">
+                    ({fmtPoints(cell.attack_points)} + {fmtPoints(cell.defense_points)}) x{" "}
+                    {cell.sla_pct.toFixed(1)}%
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <footer className="th-footer">
+          <span className="th-meta">{rows.length} team service rows</span>
+          <button className="btn btn-ghost btn-xs" onClick={onClose}>
+            Close (Esc)
+          </button>
+        </footer>
+      </div>
+    </div>
+  );
+}
+
+function SummaryMetric({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="summary-metric">
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
   );
 }
 

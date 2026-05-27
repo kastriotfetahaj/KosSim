@@ -49,6 +49,30 @@ export default function Dashboard() {
         </section>
       )}
 
+      <section className="card export-panel mb-1">
+        <div>
+          <h2>Exports</h2>
+          <p className="subtitle">
+            Download the datasets operators usually need after an incident,
+            appeal, or scoreboard review.
+          </p>
+        </div>
+        <div className="export-actions">
+          <a className="btn btn-ghost btn-xs" href={admin.scoreboardExportUrl()} download>
+            Scoreboard JSON
+          </a>
+          <a className="btn btn-ghost btn-xs" href={admin.submissionsExportUrl()} download>
+            Submissions CSV
+          </a>
+          <a className="btn btn-ghost btn-xs" href={admin.checkerFailuresExportUrl()} download>
+            Checker failures CSV
+          </a>
+          <a className="btn btn-ghost btn-xs" href={admin.logsExportUrl()} download>
+            Audit log CSV
+          </a>
+        </div>
+      </section>
+
       <div className="grid grid-2">
         <section className="card">
           <h2>Submissions by tick</h2>

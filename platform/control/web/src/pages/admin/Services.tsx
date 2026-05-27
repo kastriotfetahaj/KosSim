@@ -16,9 +16,16 @@ export default function Services() {
     [dq, only],
   );
 
-  const toggle = async (id: number, enabled: boolean) => {
+  const toggle = async (row: { id: number; team: string; service: string }, enabled: boolean) => {
+    if (!enabled) {
+      const typed = window.prompt(
+        `Disable checker target ${row.team} / ${row.service}?\n\n` +
+          `Type DISABLE to continue.`,
+      );
+      if (typed !== "DISABLE") return;
+    }
     try {
-      await admin.servicesToggle(id, enabled);
+      await admin.servicesToggle(row.id, enabled);
       refresh();
     } catch (e) {
       alert(e instanceof Error ? e.message : "Toggle failed");
@@ -73,7 +80,7 @@ export default function Services() {
                   <td className="right">
                     <button
                       className={`btn btn-xs ${r.enabled ? "btn-ghost" : "btn-success"}`}
-                      onClick={() => toggle(r.id, !r.enabled)}
+                      onClick={() => toggle(r, !r.enabled)}
                     >
                       {r.enabled ? "Disable" : "Enable"}
                     </button>
