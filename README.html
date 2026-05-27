@@ -238,8 +238,9 @@ export GAME_ADMIN_TOKEN="$(openssl rand -hex 32)"
 python3 scripts/generate_compose.py --team-count 3 --output docker-compose.generated.yml
 docker compose -f docker-compose.generated.yml up -d --build</code></pre>
       <p>Open leaderboard at <code>http://localhost:8088/scoreboard</code> and score JSON at <code>http://localhost:8088/api/v1/scoreboard</code>.</p>
-      <p>Team1 auto-attack loop (team2 + team3):</p>
-      <pre><code class="language-bash">python3 scripts/team1_attack_loop.py --targets team2,team3 --team-token submit-team1</code></pre>
+      <p>Team1 auto-attack loop (run one loop per target):</p>
+      <pre><code class="language-bash">python3 scripts/team1_hack_team2.py --target team2 --team-token submit-team1
+python3 scripts/team1_hack_team2.py --target team3 --team-token submit-team1</code></pre>
       <p>Stop stack:</p>
       <pre><code class="language-bash">docker compose -f docker-compose.generated.yml down -v</code></pre>
     </section>
@@ -247,7 +248,7 @@ docker compose -f docker-compose.generated.yml up -d --build</code></pre>
     <section class="card">
       <h2>Scoring Logic</h2>
       <ul>
-        <li>Attack points use ECSC-style jeopardy scoring: a captured flag starts at <code>10</code> points and decays as more teams submit that same flag.</li>
+        <li>Attack points are fixed per captured flag (base <code>10</code> divided by the number of flag stores for the service) and are cumulative — they never decay, and every team that captures a flag scores independently.</li>
         <li>Defense points reward teams whose flags remain retrievable across the retention window while other teams are compromised.</li>
         <li>SLA points are based on checker health and retained flag availability for each service.</li>
         <li>Leaderboard round number is user-friendly and increments <code>1, 2, 3, ...</code> each tick.</li>

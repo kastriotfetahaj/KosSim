@@ -258,7 +258,7 @@ flowchart LR
         <li>API accepts only valid current-tick flags and updates scores.</li>
         <li>Leaderboard refreshes on tick reset and displays next round counter.</li>
       </ol>
-      <div class="note">Scoring default: captured flags use ECSC-style jeopardy points starting at <code>10</code> and decaying as more teams submit the same flag; defense and SLA are calculated across the retention window.</div>
+      <div class="note">Scoring default: each captured flag is worth a fixed value (base <code>10</code> divided by the number of flag stores for the service); points are cumulative and do not decay, and every team that captures a flag scores independently. Defense and SLA are calculated across the retention window.</div>
     </section>
   </main>
 

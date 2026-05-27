@@ -216,7 +216,7 @@ scp root@&lt;vpn_public_ipv4&gt;:/etc/wireguard/clients/team1/team1-user1.conf .
       <ul>
         <li>Tick length: <code>60s</code> via <code>ROTATION_SECONDS</code>.</li>
         <li>Accepted cap: unlimited when <code>MAX_ACCEPTED_PER_TEAM_PER_ROUND=0</code>.</li>
-        <li>Attack: captured flags use ECSC-style jeopardy points, starting at <code>10</code> and decaying as more teams submit the same flag.</li>
+        <li>Attack: each captured flag is worth a fixed value (base <code>10</code> divided by the number of flag stores for the service), cumulative and non-decaying.</li>
         <li>Defense and SLA: calculated from retained flag availability and checker health across the retention window.</li>
       </ul>
     </section>

@@ -169,7 +169,7 @@
           <p><code>team_total = sum(service_total)</code></p>
           <p><code>service_total = sla_ratio * (attack + defense + uptime - hacked_penalty)</code></p>
           <ul>
-            <li>Successful attack: attacker receives ECSC-style jeopardy points, starting at <code>10</code> and decaying as more teams submit the same flag.</li>
+            <li>Successful attack: attacker receives fixed attack points per captured flag (base <code>10</code> divided by the number of flag stores), cumulative and non-decaying.</li>
             <li>Successful defense: service owners are rewarded for retained, retrievable flags across the retention window.</li>
             <li>Uptime: service owners receive SLA points from checker health and retained flag availability.</li>
             <li>SLA is calculated from service health and flag availability over the retention window.</li>

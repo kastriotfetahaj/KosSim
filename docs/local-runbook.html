@@ -186,22 +186,20 @@ curl -H "Authorization: Bearer $GAME_ADMIN_TOKEN" \
       </div>
 
       <div class="step">
-        <h3>5) Validate NAT Source Behavior</h3>
-        <p><strong>What:</strong> Reach team2 service through team1 NAT gateway.</p>
-        <p><strong>Why:</strong> Confirms targets identify NAT source, not internal attacker IP.</p>
-        <pre><code class="language-bash">curl --get "http://localhost:18081/fetch" \
-  --data-urlencode "url=http://team2-svc1:8080/whoami"</code></pre>
+        <h3>5) NAT Source Identity (Hetzner)</h3>
+        <p><strong>What:</strong> On Hetzner each team host is a kernel NAT gateway (iptables <code>SNAT</code>/<code>MASQUERADE</code>), so all team-originated traffic toward the competition network presents the team's private IP for every protocol.</p>
+        <p><strong>Why:</strong> Targets identify the attacking team's NAT source, not the internal container IP. Locally all teams share one Docker network and attacks reach services directly, so this masking applies to the Hetzner deployment.</p>
       </div>
 
       <div class="step">
-        <h3>6) Run Full Attack Loop (Team1 -> Team2,Team3)</h3>
+        <h3>6) Run Full Attack Loop (Team1 -> Team2, Team3)</h3>
         <p><strong>What:</strong> Automatically hack targets and submit every tick.</p>
         <p><strong>Why:</strong> End-to-end simulation of competition behavior.</p>
-        <pre><code class="language-bash">python3 scripts/team1_attack_loop.py \
-  --targets team2,team3 \
-  --team-token submit-team1</code></pre>
+        <p>The reference attack script targets one team per loop — run one per target:</p>
+        <pre><code class="language-bash">python3 scripts/team1_hack_team2.py --target team2 --team-token submit-team1
+python3 scripts/team1_hack_team2.py --target team3 --team-token submit-team1</code></pre>
         <p>One-round test:</p>
-        <pre><code class="language-bash">python3 scripts/team1_attack_loop.py --once --targets team2,team3</code></pre>
+        <pre><code class="language-bash">python3 scripts/team1_hack_team2.py --once --target team2</code></pre>
       </div>
 
       <div class="step">
@@ -215,7 +213,7 @@ curl -H "Authorization: Bearer $GAME_ADMIN_TOKEN" \
     <section class="card">
       <h2>Scoring and Tick Notes</h2>
       <ul>
-        <li>Attack points use ECSC-style jeopardy scoring: a captured flag starts at <code>10</code> points and decays as more teams submit that same flag.</li>
+        <li>Attack points are fixed per captured flag (base <code>10</code> divided by the number of flag stores for the service) and are cumulative — they never decay, and every team that captures a flag scores independently.</li>
         <li>Defense points reward teams whose flags remain retrievable across the retention window while other teams are compromised.</li>
         <li>SLA points are based on checker health and retained flag availability for each service.</li>
         <li>Accepted cap defaults to unlimited when <code>MAX_ACCEPTED_PER_TEAM_PER_ROUND=0</code>.</li>

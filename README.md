@@ -6,12 +6,11 @@
 
 ## Quick Navigation
 
-- [Overview](README.md)
-- [Architecture](docs/architecture.html)
-- [Challenges](docs/challenges.html)
-- [Data Schema](docs/schema.html)
-- [Local Runbook](docs/local-runbook.html)
-- [Hetzner Runbook](docs/hetzner-runbook.html)
+- [Architecture](docs/architecture.md)
+- [Challenges](docs/challenges.md)
+- [Data Schema](docs/schema.md)
+- [Local Runbook](docs/local-runbook.md)
+- [Hetzner Runbook](docs/hetzner-runbook.md)
 
 ## At a Glance
 
@@ -50,10 +49,11 @@ docker compose -f docker-compose.generated.yml up -d --build
 
 Open leaderboard at `http://localhost:8088/scoreboard` and score JSON at `http://localhost:8088/api/v1/scoreboard`.
 
-Team1 auto-attack loop (team2 + team3):
+Team1 auto-attack loop (run one loop per target):
 
 ```bash
-python3 scripts/team1_attack_loop.py --targets team2,team3 --team-token submit-team1
+python3 scripts/team1_hack_team2.py --target team2 --team-token submit-team1
+python3 scripts/team1_hack_team2.py --target team3 --team-token submit-team1
 ```
 
 Stop stack:
@@ -64,7 +64,7 @@ docker compose -f docker-compose.generated.yml down -v
 
 ## Scoring Logic
 
-- Attack points use ECSC-style jeopardy scoring: a captured flag starts at `10` points and decays as more teams submit that same flag.
+- Attack points are fixed per captured flag (base `10` divided by the number of flag stores for the service) and are cumulative — they never decay, and every team that captures a flag scores independently.
 - Defense points reward teams whose flags remain retrievable across the retention window while other teams are compromised.
 - SLA points are based on checker health and retained flag availability for each service.
 - Leaderboard round number is user-friendly and increments `1, 2, 3, ...` each tick.
