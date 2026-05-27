@@ -1,0 +1,12 @@
+.venv-tests/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+node_modules/
+dist/
+
+docker-compose.generated.yml
+docker-compose.smoke.generated.yml
+platform/control/web/dist/
+platform/control/web/node_modules/

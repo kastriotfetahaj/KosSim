@@ -321,6 +321,8 @@ services:
       SERVICE_NAME: svc4
       BOOT_FLAG: FLAG{BOOT_team1_svc4}
       SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+    volumes:
+      - nanofleet_team1_data:/var/lib/nanofleet
 
   team1-svc5:
     <<: *svc5
@@ -329,6 +331,8 @@ services:
       SERVICE_NAME: svc5
       BOOT_FLAG: FLAG{BOOT_team1_svc5}
       SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+    volumes:
+      - policyforge_team1_data:/var/lib/policyforge
 
   team2-svc1:
     <<: *svc1
@@ -411,6 +415,8 @@ services:
       SERVICE_NAME: svc4
       BOOT_FLAG: FLAG{BOOT_team2_svc4}
       SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+    volumes:
+      - nanofleet_team2_data:/var/lib/nanofleet
 
   team2-svc5:
     <<: *svc5
@@ -419,6 +425,8 @@ services:
       SERVICE_NAME: svc5
       BOOT_FLAG: FLAG{BOOT_team2_svc5}
       SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+    volumes:
+      - policyforge_team2_data:/var/lib/policyforge
 
   team3-svc1:
     <<: *svc1
@@ -501,6 +509,8 @@ services:
       SERVICE_NAME: svc4
       BOOT_FLAG: FLAG{BOOT_team3_svc4}
       SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+    volumes:
+      - nanofleet_team3_data:/var/lib/nanofleet
 
   team3-svc5:
     <<: *svc5
@@ -509,6 +519,8 @@ services:
       SERVICE_NAME: svc5
       BOOT_FLAG: FLAG{BOOT_team3_svc5}
       SERVICE_PUSH_SECRET: ${SERVICE_PUSH_SECRET:?set SERVICE_PUSH_SECRET}
+    volumes:
+      - policyforge_team3_data:/var/lib/policyforge
 
 volumes:
   postgres_data:
@@ -528,6 +540,12 @@ volumes:
   vaultgrid_feed_team2_data:
   vaultgrid_crypt_team3_data:
   vaultgrid_feed_team3_data:
+  nanofleet_team1_data:
+  nanofleet_team2_data:
+  nanofleet_team3_data:
+  policyforge_team1_data:
+  policyforge_team2_data:
+  policyforge_team3_data:
 
 networks:
   ctf_net:

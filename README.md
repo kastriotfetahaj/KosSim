@@ -10,6 +10,8 @@
 - [Challenges](docs/challenges.md)
 - [Data Schema](docs/schema.md)
 - [Local Runbook](docs/local-runbook.md)
+- [Event Day Runbook](docs/event-day-runbook.md)
+- [Production Hardening](docs/production-hardening.md)
 - [Hetzner Runbook](docs/hetzner-runbook.md)
 
 ## At a Glance

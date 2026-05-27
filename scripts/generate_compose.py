@@ -57,6 +57,8 @@ SVCS_WITH_NAMED_VOLUME = {
     1: ("ledgerforge_{team}_data", "/var/lib/ledgerforge"),
     2: ("vaultgrid_{team}_data", "/var/lib/vaultgrid"),
     3: ("specterlog_{team}_data", "/var/lib/specterlog"),
+    4: ("nanofleet_{team}_data", "/var/lib/nanofleet"),
+    5: ("policyforge_{team}_data", "/var/lib/policyforge"),
 }
 
 

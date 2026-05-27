@@ -489,6 +489,17 @@ export type ObservabilityResponse = {
   }>;
   workers: Array<{ worker_name: string; last_seen: string | null; active_jobs: number }>;
   alerts: Array<{ severity: string; title: string; detail: string }>;
+  operational_health: {
+    readiness: "ok" | "warning" | "danger" | string;
+    database: string;
+    redis: string;
+    queue_total: number | null;
+    worker_count: number;
+    active_worker_count: number;
+    overdue_jobs: number;
+    stale_vulnboxes: number;
+    crashed_jobs: number;
+  };
 };
 
 // ---------- Admin endpoints ----------

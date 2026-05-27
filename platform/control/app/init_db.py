@@ -36,17 +36,17 @@ def _get_services() -> List[str]:
 # Per-service flagstore count, mirroring `services.sql` from the ECSC
 # gameserver. Falls back to 1 when the service is not in this table.
 _SERVICE_PAYLOADS: Dict[str, int] = {
-    "svc1": 2,
-    "svc2": 2,
-    "svc3": 2,
-    "svc4": 2,
-    "svc5": 2,
+    "svc1": 3,
+    "svc2": 3,
+    "svc3": 3,
+    "svc4": 3,
+    "svc5": 3,
     # Friendly aliases for the advanced KosSim service packages.
-    "ledgerforge": 2,
-    "vaultgrid": 2,
-    "specterlog": 2,
-    "nanofleet": 2,
-    "policyforge": 2,
+    "ledgerforge": 3,
+    "vaultgrid": 3,
+    "specterlog": 3,
+    "nanofleet": 3,
+    "policyforge": 3,
 }
 
 _DEFAULT_SERVICE_DISPLAY_NAMES: Dict[str, str] = {

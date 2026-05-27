@@ -196,6 +196,10 @@ def build_observability(cur: Any, *, ticks: int = 60) -> Dict[str, Any]:
     stale_vulnboxes = int(cur.fetchone()["n"] or 0)
 
     queue_depths = redis_queue_depths()
+    redis_available = bool(queue_depths) and all(depth is not None for depth in queue_depths.values())
+    queue_total = None if not redis_available else sum(int(depth or 0) for depth in queue_depths.values())
+    worker_count = len(workers)
+    active_worker_count = sum(1 for worker in workers if int(worker["active_jobs"] or 0) > 0)
     alerts = []
     if not workers:
         alerts.append({"severity": "warning", "title": "No checker worker heartbeat", "detail": "No worker has reported activity."})
@@ -207,6 +211,14 @@ def build_observability(cur: Any, *, ticks: int = 60) -> Dict[str, Any]:
         alerts.append({"severity": "danger", "title": "Repeated checker crashes", "detail": str(checker_status.get("CRASHED", 0))})
     if stale_vulnboxes:
         alerts.append({"severity": "warning", "title": "Stale vulnbox status", "detail": str(stale_vulnboxes)})
+    if not redis_available:
+        alerts.append({"severity": "danger", "title": "Redis unavailable", "detail": "Queue depths could not be read."})
+
+    readiness = "ok"
+    if any(alert["severity"] == "danger" for alert in alerts):
+        readiness = "danger"
+    elif alerts:
+        readiness = "warning"
 
     return {
         "latest_tick": latest_tick,
@@ -220,6 +232,17 @@ def build_observability(cur: Any, *, ticks: int = 60) -> Dict[str, Any]:
         "failed_checks": failed_checks,
         "workers": workers,
         "alerts": alerts,
+        "operational_health": {
+            "readiness": readiness,
+            "database": "ok",
+            "redis": "ok" if redis_available else "unavailable",
+            "queue_total": queue_total,
+            "worker_count": worker_count,
+            "active_worker_count": active_worker_count,
+            "overdue_jobs": overdue_jobs,
+            "stale_vulnboxes": stale_vulnboxes,
+            "crashed_jobs": int(checker_status.get("CRASHED", 0)),
+        },
     }
 
 
@@ -230,6 +253,14 @@ def render_prometheus_metrics(data: Dict[str, Any]) -> str:
             lines.append(f'kossim_queue_depth{{queue="{queue}"}} {depth}')
     for status, count in data["checker_status"].items():
         lines.append(f'kossim_checker_jobs{{status="{status}"}} {count}')
+    health = data.get("operational_health", {})
+    if health:
+        queue_total = health.get("queue_total")
+        if queue_total is not None:
+            lines.append(f"kossim_queue_total {queue_total}")
+        lines.append(f"kossim_worker_count {health.get('worker_count', 0)}")
+        lines.append(f"kossim_overdue_checker_jobs {health.get('overdue_jobs', 0)}")
+        lines.append(f"kossim_stale_vulnboxes {health.get('stale_vulnboxes', 0)}")
     cumulative = 0
     for bucket, count in data["runtime_histogram"].items():
         cumulative += int(count)

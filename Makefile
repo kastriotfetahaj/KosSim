@@ -1,9 +1,19 @@
 SHELL := /bin/bash
 COMPOSE ?= docker compose
-PYTHON ?= $(shell if [ -x .venv-tests/bin/python ]; then echo .venv-tests/bin/python; else command -v python3; fi)
+BOOTSTRAP_PYTHON ?= $(shell if command -v python3.12 >/dev/null 2>&1; then command -v python3.12; elif command -v python3.11 >/dev/null 2>&1; then command -v python3.11; elif command -v python3.10 >/dev/null 2>&1; then command -v python3.10; else command -v python3; fi)
+PYTHON ?= $(shell if [ -x .venv-tests/bin/python ]; then echo .venv-tests/bin/python; else echo $(BOOTSTRAP_PYTHON); fi)
 ENV_FILE ?= .env.example
 
-.PHONY: dev build test checkers exploits patches reset lint ci compose-config build-services
+.PHONY: setup verify dev build test checkers exploits patches reset lint validate smoke smoke-docker web-build ci compose-config build-services
+
+setup:
+	rm -rf .venv-tests
+	$(BOOTSTRAP_PYTHON) -m venv .venv-tests
+	.venv-tests/bin/python -m pip install --upgrade pip
+	.venv-tests/bin/python -m pip install -r requirements-dev.txt
+	npm ci --prefix platform/control/web
+
+verify: validate compose-config test web-build smoke
 
 dev:
 	$(COMPOSE) --env-file $(ENV_FILE) up --build
@@ -19,6 +29,19 @@ compose-config:
 test:
 	$(PYTHON) -m pytest tests
 
+web-build:
+	npm ci --prefix platform/control/web
+	npm run build --prefix platform/control/web
+
+validate:
+	$(PYTHON) scripts/validate_platform.py
+
+smoke:
+	$(PYTHON) scripts/smoke_platform.py
+
+smoke-docker:
+	$(PYTHON) scripts/smoke_platform.py --docker
+
 checkers:
 	$(PYTHON) organizer/ci/run_checkers.py
 
@@ -31,7 +54,7 @@ patches:
 reset:
 	$(COMPOSE) --env-file $(ENV_FILE) down -v --remove-orphans
 
-lint:
+lint: validate
 	$(PYTHON) -m pytest tests/unit/test_challenge_pack_contract.py
 
-ci: compose-config test checkers exploits patches
+ci: verify checkers exploits patches

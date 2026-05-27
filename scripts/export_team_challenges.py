@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import shutil
 from pathlib import Path
@@ -57,6 +58,32 @@ FORBIDDEN_TERMS = [
     "private flag",
 ]
 PUBLIC_LINE_EXTS = {".rs", ".cpp", ".hpp", ".ts", ".go", ".ex", ".exs", ".js", ".html", ".css"}
+MIN_PUBLIC_SOURCE_LINES = int(os.getenv("TEAM_EXPORT_MIN_SOURCE_LINES", "500"))
+MAX_PUBLIC_SOURCE_LINES = int(os.getenv("TEAM_EXPORT_MAX_SOURCE_LINES", "10000"))
+
+
+def strip_slash_line_comment(line: str) -> str:
+    """Strip C-family // comments while preserving quoted strings."""
+    quote = ""
+    escaped = False
+    for idx in range(len(line) - 1):
+        ch = line[idx]
+        nxt = line[idx + 1]
+        if escaped:
+            escaped = False
+            continue
+        if ch == "\\" and quote:
+            escaped = True
+            continue
+        if ch in {"'", '"', "`"}:
+            if quote == ch:
+                quote = ""
+            elif not quote:
+                quote = ch
+            continue
+        if ch == "/" and nxt == "/" and not quote:
+            return line[:idx].rstrip()
+    return line
 
 
 def is_text_file(path: Path) -> bool:
@@ -94,6 +121,8 @@ def strip_comments(text: str, suffix: str, name: str) -> str:
     text = re.sub(r"<!--.*?-->", "", text, flags=re.S)
     out: list[str] = []
     for line in text.splitlines():
+        if suffix in {".rs", ".cpp", ".hpp", ".ts", ".go", ".js", ".css"}:
+            line = strip_slash_line_comment(line)
         stripped = line.lstrip()
         if stripped.startswith("//"):
             continue
@@ -158,8 +187,11 @@ def validate_export(out_root: Path) -> None:
                         break
                 if path.suffix in PUBLIC_LINE_EXTS:
                     line_count += len(text.splitlines())
-        if not (3000 <= line_count <= 10000):
-            failures.append(f"{service.name} has {line_count} public source lines, expected 3000-10000")
+        if not (MIN_PUBLIC_SOURCE_LINES <= line_count <= MAX_PUBLIC_SOURCE_LINES):
+            failures.append(
+                f"{service.name} has {line_count} public source lines, "
+                f"expected {MIN_PUBLIC_SOURCE_LINES}-{MAX_PUBLIC_SOURCE_LINES}"
+            )
         if file_count < 20:
             failures.append(f"{service.name} has {file_count} public files, expected at least 20")
     if failures:

@@ -4,9 +4,11 @@ import { usePoll } from "../../hooks";
 
 export default function Dashboard() {
   const { data, error } = usePoll(() => admin.dashboard(), 5000, []);
+  const { data: obs } = usePoll(() => admin.observability({ ticks: 30 }), 5000, []);
   if (error) return <div className="msg error">{error}</div>;
   if (!data) return <div className="msg">Loading…</div>;
   const t = data.summary.timer;
+  const health = obs?.operational_health;
   return (
     <>
       <header className="page-header">
@@ -29,6 +31,24 @@ export default function Dashboard() {
         />
       </div>
 
+      {health && (
+        <section className={`card readiness-card readiness-${health.readiness} mb-1`}>
+          <div>
+            <h2>Operator readiness</h2>
+            <p className="subtitle">
+              DB <strong>{health.database}</strong> · Redis <strong>{health.redis}</strong> ·{" "}
+              {health.worker_count} workers · {health.queue_total ?? "unknown"} queued
+            </p>
+          </div>
+          <div className="readiness-metrics">
+            <MiniStat label="Overdue jobs" value={health.overdue_jobs} />
+            <MiniStat label="Crashed jobs" value={health.crashed_jobs} />
+            <MiniStat label="Stale boxes" value={health.stale_vulnboxes} />
+            <MiniStat label="Alerts" value={obs?.alerts.length ?? 0} />
+          </div>
+        </section>
+      )}
+
       <div className="grid grid-2">
         <section className="card">
           <h2>Submissions by tick</h2>
@@ -40,6 +60,15 @@ export default function Dashboard() {
         </section>
       </div>
     </>
+  );
+}
+
+function MiniStat({ value, label }: { value: number | string; label: string }) {
+  return (
+    <div className="mini-stat">
+      <strong>{value}</strong>
+      <span>{label}</span>
+    </div>
   );
 }
 

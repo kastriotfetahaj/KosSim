@@ -383,6 +383,45 @@ tbody tr:last-child td { border-bottom: 0; }
   margin-bottom: 0;
 }
 
+/* ===== Readiness ===== */
+.readiness-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border-left: 4px solid var(--ok);
+}
+.readiness-warning { border-left-color: var(--warn); }
+.readiness-danger { border-left-color: var(--danger); }
+.readiness-card h2 { margin-bottom: 6px; }
+.readiness-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(92px, 1fr));
+  gap: 8px;
+  min-width: min(520px, 100%);
+}
+.mini-stat {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 9px 10px;
+}
+.mini-stat strong {
+  display: block;
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+.mini-stat span {
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+@media (max-width: 900px) {
+  .readiness-card { align-items: stretch; flex-direction: column; }
+  .readiness-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 /* ===== Timeline ===== */
 .timeline { list-style: none; margin: 0; padding: 0; }
 .timeline li {
