@@ -12,7 +12,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: python -m pip install pytest requests
+      - run: python -m pip install -r requirements-dev.txt
       - run: make compose-config
       - run: make test
 
@@ -23,7 +23,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: python -m pip install pytest requests
+      - run: python -m pip install -r requirements-dev.txt
       - run: make build-services
       - run: make checkers
       - run: make exploits

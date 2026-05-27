@@ -1,16 +1,21 @@
 SHELL := /bin/bash
 COMPOSE ?= docker compose
 BOOTSTRAP_PYTHON ?= $(shell if command -v python3.12 >/dev/null 2>&1; then command -v python3.12; elif command -v python3.11 >/dev/null 2>&1; then command -v python3.11; elif command -v python3.10 >/dev/null 2>&1; then command -v python3.10; else command -v python3; fi)
-PYTHON ?= $(shell if [ -x .venv-tests/bin/python ]; then echo .venv-tests/bin/python; else echo $(BOOTSTRAP_PYTHON); fi)
+VENV ?= .venv-tests
+PYTHON ?= $(VENV)/bin/python
 ENV_FILE ?= .env.example
 
-.PHONY: setup verify dev build test checkers exploits patches reset lint validate smoke smoke-docker web-build ci compose-config build-services
+.PHONY: setup python-deps verify dev build test checkers exploits patches reset lint validate smoke smoke-docker web-build ci compose-config build-services
 
-setup:
-	rm -rf .venv-tests
-	$(BOOTSTRAP_PYTHON) -m venv .venv-tests
-	.venv-tests/bin/python -m pip install --upgrade pip
-	.venv-tests/bin/python -m pip install -r requirements-dev.txt
+$(VENV)/.deps: requirements-dev.txt platform/control/requirements.txt
+	$(BOOTSTRAP_PYTHON) -m venv $(VENV)
+	$(PYTHON) -m pip install --upgrade pip
+	$(PYTHON) -m pip install -r requirements-dev.txt
+	touch $(VENV)/.deps
+
+python-deps: $(VENV)/.deps
+
+setup: python-deps
 	npm ci --prefix platform/control/web
 
 verify: validate compose-config test web-build smoke
@@ -26,29 +31,29 @@ build-services:
 compose-config:
 	$(COMPOSE) --env-file $(ENV_FILE) config >/dev/null
 
-test:
+test: python-deps
 	$(PYTHON) -m pytest tests
 
 web-build:
 	npm ci --prefix platform/control/web
 	npm run build --prefix platform/control/web
 
-validate:
+validate: python-deps
 	$(PYTHON) scripts/validate_platform.py
 
-smoke:
+smoke: python-deps
 	$(PYTHON) scripts/smoke_platform.py
 
-smoke-docker:
+smoke-docker: python-deps
 	$(PYTHON) scripts/smoke_platform.py --docker
 
-checkers:
+checkers: python-deps
 	$(PYTHON) organizer/ci/run_checkers.py
 
-exploits:
+exploits: python-deps
 	$(PYTHON) organizer/ci/run_exploits.py
 
-patches:
+patches: python-deps
 	$(PYTHON) organizer/ci/validate_patches.py
 
 reset:
