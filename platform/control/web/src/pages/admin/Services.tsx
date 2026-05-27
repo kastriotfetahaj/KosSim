@@ -1,4 +1,5 @@
 import { admin } from "../../api";
+import { useConfirmDialog } from "../../components/ConfirmDialog";
 import SearchInput from "../../components/SearchInput";
 import { useDebounced, usePoll, useQueryParam } from "../../hooks";
 
@@ -6,6 +7,7 @@ export default function Services() {
   const [q, setQ] = useQueryParam("q");
   const [only, setOnly] = useQueryParam("only");
   const dq = useDebounced(q, 200);
+  const { confirm, dialog } = useConfirmDialog();
   const { data, error, refresh } = usePoll(
     () =>
       admin.services({
@@ -18,11 +20,18 @@ export default function Services() {
 
   const toggle = async (row: { id: number; team: string; service: string }, enabled: boolean) => {
     if (!enabled) {
-      const typed = window.prompt(
-        `Disable checker target ${row.team} / ${row.service}?\n\n` +
-          `Type DISABLE to continue.`,
-      );
-      if (typed !== "DISABLE") return;
+      confirm({
+        title: `Disable ${row.team} / ${row.service}`,
+        body: "The checker target will be excluded from active checks until it is enabled again.",
+        requiredText: "DISABLE",
+        confirmLabel: "Disable target",
+        tone: "warning",
+        action: async () => {
+          await admin.servicesToggle(row.id, false);
+          refresh();
+        },
+      });
+      return;
     }
     try {
       await admin.servicesToggle(row.id, enabled);
@@ -98,6 +107,7 @@ export default function Services() {
           </table>
         </div>
       </div>
+      {dialog}
     </>
   );
 }

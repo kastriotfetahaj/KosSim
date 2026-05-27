@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { admin, type TeamRow } from "../../api";
+import { useConfirmDialog } from "../../components/ConfirmDialog";
 import CopyButton from "../../components/CopyButton";
 import { usePoll } from "../../hooks";
 
@@ -30,6 +31,7 @@ export default function Teams() {
   const [draft, setDraft] = useState<EditDraft>(EMPTY_DRAFT);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const { confirm, dialog } = useConfirmDialog();
 
   const startEdit = (t: TeamRow) => {
     setEditing(t.id);
@@ -87,38 +89,46 @@ export default function Teams() {
   };
 
   const remove = async (t: TeamRow) => {
-    const typed = window.prompt(
-      `Delete team "${t.name}"?\n\n` +
-        `This cascades and removes all of this team's flags, submissions, ` +
-        `service health, and score history. Type the team name to continue.`,
-    );
-    if (typed !== t.name) return;
-    setBusy(true);
-    try {
-      await admin.teamDelete(t.id);
-      refresh();
-    } catch (e) {
-      alert(e instanceof Error ? e.message : "Delete failed");
-    } finally {
-      setBusy(false);
-    }
+    confirm({
+      title: `Delete ${t.name}`,
+      body:
+        "This removes the team's flags, submissions, service health, and score history. The action cannot be undone.",
+      requiredText: t.name,
+      confirmLabel: "Delete team",
+      tone: "danger",
+      action: async () => {
+        setBusy(true);
+        try {
+          await admin.teamDelete(t.id);
+          refresh();
+        } catch (e) {
+          setMsg(e instanceof Error ? e.message : "Delete failed");
+        } finally {
+          setBusy(false);
+        }
+      },
+    });
   };
 
   const rotate = async (t: TeamRow) => {
-    const typed = window.prompt(
-      `Rotate submit token for "${t.name}"?\n\n` +
-        `The current token will stop working immediately. Type ROTATE to continue.`,
-    );
-    if (typed !== "ROTATE") return;
-    setBusy(true);
-    try {
-      await admin.teamRotateToken(t.id);
-      refresh();
-    } catch (e) {
-      alert(e instanceof Error ? e.message : "Rotate failed");
-    } finally {
-      setBusy(false);
-    }
+    confirm({
+      title: `Rotate token for ${t.name}`,
+      body: "The current submit token stops working immediately after rotation.",
+      requiredText: "ROTATE",
+      confirmLabel: "Rotate token",
+      tone: "warning",
+      action: async () => {
+        setBusy(true);
+        try {
+          await admin.teamRotateToken(t.id);
+          refresh();
+        } catch (e) {
+          setMsg(e instanceof Error ? e.message : "Rotate failed");
+        } finally {
+          setBusy(false);
+        }
+      },
+    });
   };
 
   return (
@@ -283,6 +293,7 @@ export default function Teams() {
           </table>
         </div>
       </div>
+      {dialog}
     </>
   );
 }

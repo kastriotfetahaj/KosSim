@@ -1349,6 +1349,79 @@ tbody tr:last-child td { border-bottom: 0; }
 
 .sb-footer { margin-top: 14px; color: var(--muted); font-size: 12px; }
 
+.activity-strip {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 18px;
+  padding: 10px 12px;
+  background: var(--kct-panel);
+  border: 1px solid var(--kct-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.activity-strip-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--kct-white);
+  white-space: nowrap;
+}
+.activity-strip-head span:last-child {
+  color: var(--kct-white-dim);
+  font-size: 11px;
+  font-family: var(--mono);
+}
+.activity-strip-list {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.activity-pill {
+  display: grid;
+  grid-template-columns: auto minmax(80px, auto) auto;
+  gap: 7px;
+  align-items: center;
+  flex: 0 0 auto;
+  max-width: min(440px, 82vw);
+  padding: 7px 9px;
+  background: rgba(232, 244, 248, 0.05);
+  border: 1px solid rgba(212, 175, 55, 0.1);
+  border-radius: 6px;
+  animation: activity-slide 360ms ease-out both;
+}
+.activity-pill.first {
+  border-color: rgba(212, 175, 55, 0.42);
+  background: rgba(212, 175, 55, 0.08);
+}
+.activity-pill span {
+  color: var(--kct-gold);
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.activity-pill strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.activity-pill em {
+  color: var(--kct-white-dim);
+  font-style: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@keyframes activity-slide {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* ===== Public display mode ===== */
 .public-display {
   display: grid;
@@ -1735,6 +1808,106 @@ kbd {
   padding: 24px 12px;
   color: var(--muted);
   text-align: center;
+}
+
+/* ===== Confirmation dialog ===== */
+.confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 130;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(3, 7, 13, 0.68);
+  backdrop-filter: blur(4px);
+}
+.confirm-dialog {
+  width: min(480px, 100%);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 26px 80px rgba(0, 0, 0, 0.56);
+  padding: 18px;
+}
+.confirm-dialog header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.confirm-mark {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  font-weight: 900;
+  font-family: var(--mono);
+}
+.confirm-danger .confirm-mark {
+  color: #fecaca;
+  background: rgba(248, 113, 113, 0.16);
+  border: 1px solid rgba(248, 113, 113, 0.45);
+}
+.confirm-warning .confirm-mark {
+  color: #fde68a;
+  background: rgba(251, 191, 36, 0.14);
+  border: 1px solid rgba(251, 191, 36, 0.42);
+}
+.confirm-primary .confirm-mark {
+  color: #bfdbfe;
+  background: rgba(110, 168, 255, 0.14);
+  border: 1px solid rgba(110, 168, 255, 0.42);
+}
+.confirm-dialog h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: 16px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.confirm-dialog p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+.confirm-field {
+  display: grid;
+  gap: 7px;
+  margin-top: 16px;
+}
+.confirm-field span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.confirm-field input {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 9px 10px;
+  border-radius: var(--radius-sm);
+  font: inherit;
+}
+.confirm-field input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(110, 168, 255, 0.15);
+}
+.confirm-error {
+  margin-top: 12px;
+  padding: 9px 10px;
+  border-radius: var(--radius-sm);
+  color: var(--danger);
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.28);
+  font-size: 12px;
+}
+.confirm-dialog footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
 }
 
 /* ===== Utility ===== */
@@ -2174,6 +2347,13 @@ kbd {
   .display-grid {
     grid-template-columns: 1fr;
   }
+  .activity-strip {
+    grid-template-columns: 1fr;
+  }
+  .activity-pill {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
   .th-summary-grid,
   .service-detail-summary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2181,5 +2361,16 @@ kbd {
   .command-item {
     grid-template-columns: 1fr;
     gap: 3px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
   }
 }

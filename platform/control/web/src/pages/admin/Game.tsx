@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { admin, type TimerSnapshot } from "../../api";
+import { useConfirmDialog } from "../../components/ConfirmDialog";
 import { usePoll } from "../../hooks";
 
 export default function Game() {
   const { data, error, refresh } = usePoll(() => admin.game(), 3000, []);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const { confirm, dialog } = useConfirmDialog();
 
   const act = async (
     fn: () => Promise<TimerSnapshot>,
@@ -67,9 +69,16 @@ export default function Game() {
             <button
               className="btn btn-danger"
               disabled={busy}
-              onClick={() => {
-                if (confirm("Stop the game now?")) act(admin.gameStop, "Stopped");
-              }}
+              onClick={() =>
+                confirm({
+                  title: "Stop game",
+                  body: "The game will stop immediately and the public scoreboard will show final standings.",
+                  requiredText: "STOP",
+                  confirmLabel: "Stop game",
+                  tone: "danger",
+                  action: () => act(admin.gameStop, "Stopped"),
+                })
+              }
             >
               Stop
             </button>
@@ -78,6 +87,7 @@ export default function Game() {
 
         <ScheduleForm timer={data} onSaved={(msg) => { setNotice(msg); refresh(); }} />
       </div>
+      {dialog}
     </>
   );
 }

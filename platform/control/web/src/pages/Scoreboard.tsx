@@ -29,7 +29,13 @@ export default function Scoreboard({ variant }: { variant: Variant }) {
   const [refreshing, setRefreshing] = useState(false);
   const [drilldown, setDrilldown] = useState<ScoreboardRow | null>(null);
   const [serviceDrilldown, setServiceDrilldown] = useState<Service | null>(null);
-  const [displayMode, setDisplayMode] = useState(false);
+  const [displayMode, setDisplayMode] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("display") === "1") return true;
+    if (params.get("display") === "0") return false;
+    return window.localStorage.getItem("kossim-display-mode") === "1";
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -62,6 +68,15 @@ export default function Scoreboard({ variant }: { variant: Variant }) {
     const id = setInterval(() => setNow(Math.floor(Date.now() / 1000)), 1000);
     return () => clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    if (variant !== "public" || typeof window === "undefined") return;
+    window.localStorage.setItem("kossim-display-mode", displayMode ? "1" : "0");
+    const url = new URL(window.location.href);
+    if (displayMode) url.searchParams.set("display", "1");
+    else url.searchParams.delete("display");
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+  }, [displayMode, variant]);
 
   if (error && !data) return <div className="msg error">Error: {error}</div>;
   if (!data) return <div className="msg">Loading scoreboard…</div>;
@@ -120,6 +135,8 @@ export default function Scoreboard({ variant }: { variant: Variant }) {
             <button
               className="btn btn-ghost btn-xs display-toggle"
               type="button"
+              aria-pressed={displayMode}
+              title="Switch between dense table and public display view"
               onClick={() => setDisplayMode((v) => !v)}
             >
               {displayMode ? "Table view" : "Display mode"}
@@ -129,6 +146,7 @@ export default function Scoreboard({ variant }: { variant: Variant }) {
       </header>
 
       <GameStateBanner data={data} now={now} />
+      <LiveActivityStrip data={data} />
 
       {variant === "public" && displayMode ? (
         <PublicDisplay data={data} secondsLeft={secondsLeft} />
@@ -247,6 +265,40 @@ export default function Scoreboard({ variant }: { variant: Variant }) {
         onClose={() => setServiceDrilldown(null)}
       />
     </div>
+  );
+}
+
+function LiveActivityStrip({ data }: { data: ScoreboardResponse }) {
+  const events = [
+    ...(data.tick_activity?.first_bloods ?? []),
+    ...(data.tick_activity?.captures ?? []),
+  ].slice(0, 6);
+
+  if (!events.length) return null;
+
+  return (
+    <section className="activity-strip" aria-label="Live scoreboard activity" aria-live="polite">
+      <div className="activity-strip-head">
+        <span className="live-dot live" />
+        <strong>Live activity</strong>
+        <span>tick {data.tick_activity?.tick ?? data.display_tick ?? data.round_id}</span>
+      </div>
+      <div className="activity-strip-list">
+        {events.map((event) => (
+          <div
+            key={`${event.id}-${event.is_firstblood ? "first" : "capture"}`}
+            className={event.is_firstblood ? "activity-pill first" : "activity-pill"}
+          >
+            <span>{event.is_firstblood ? "First blood" : "Capture"}</span>
+            <strong>{event.attacker_team}</strong>
+            <em>
+              {event.victim_team ? `vs ${event.victim_team}` : "accepted"}
+              {event.service_display_name ? ` · ${event.service_display_name}` : ""}
+            </em>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 

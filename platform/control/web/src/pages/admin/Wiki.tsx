@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { admin, type WikiPage } from "../../api";
+import { useConfirmDialog } from "../../components/ConfirmDialog";
 import { usePoll } from "../../hooks";
 
 type Draft = {
@@ -24,6 +25,7 @@ export default function Wiki() {
   const [draft, setDraft] = useState<Draft>(EMPTY);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const { confirm, dialog } = useConfirmDialog();
 
   const pages: WikiPage[] = data?.rows ?? [];
 
@@ -72,18 +74,26 @@ export default function Wiki() {
 
   const del = async () => {
     if (selected === null || selected === "new") return;
-    if (!confirm(`Delete page "${selected}"?`)) return;
-    setBusy(true);
-    try {
-      await admin.wikiDelete(selected);
-      setSelected(null);
-      setDraft(EMPTY);
-      refresh();
-    } catch (e) {
-      setMsg(e instanceof Error ? e.message : String(e));
-    } finally {
-      setBusy(false);
-    }
+    confirm({
+      title: `Delete ${selected}`,
+      body: "The public wiki page will be removed immediately.",
+      requiredText: selected,
+      confirmLabel: "Delete page",
+      tone: "danger",
+      action: async () => {
+        setBusy(true);
+        try {
+          await admin.wikiDelete(selected);
+          setSelected(null);
+          setDraft(EMPTY);
+          refresh();
+        } catch (e) {
+          setMsg(e instanceof Error ? e.message : String(e));
+        } finally {
+          setBusy(false);
+        }
+      },
+    });
   };
 
   return (
@@ -195,6 +205,7 @@ export default function Wiki() {
           )}
         </section>
       </div>
+      {dialog}
     </div>
   );
 }

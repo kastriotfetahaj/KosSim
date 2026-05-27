@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { admin, patchDownloadUrl, type PatchRow } from "../../api";
+import { useConfirmDialog } from "../../components/ConfirmDialog";
 import { usePoll } from "../../hooks";
 
 function humanBytes(n: number): string {
@@ -15,6 +16,7 @@ export default function Patches() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const { confirm, dialog } = useConfirmDialog();
 
   const services = data?.services ?? [];
   const rows: PatchRow[] = data?.rows ?? [];
@@ -54,16 +56,24 @@ export default function Patches() {
   };
 
   const del = async (id: number, filename: string) => {
-    if (!confirm(`Delete patch "${filename}"?`)) return;
-    setBusy(true);
-    try {
-      await admin.patchesDelete(id);
-      refresh();
-    } catch (e) {
-      setMsg(e instanceof Error ? e.message : String(e));
-    } finally {
-      setBusy(false);
-    }
+    confirm({
+      title: `Delete ${filename}`,
+      body: "Teams will no longer be able to download this patch bundle.",
+      requiredText: filename,
+      confirmLabel: "Delete patch",
+      tone: "danger",
+      action: async () => {
+        setBusy(true);
+        try {
+          await admin.patchesDelete(id);
+          refresh();
+        } catch (e) {
+          setMsg(e instanceof Error ? e.message : String(e));
+        } finally {
+          setBusy(false);
+        }
+      },
+    });
   };
 
   return (
@@ -164,6 +174,7 @@ export default function Patches() {
           </section>
         ))
       )}
+      {dialog}
     </div>
   );
 }
