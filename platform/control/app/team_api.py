@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from typing import Any, Callable, Dict, List, Optional
 
 from fastapi import APIRouter, Header, HTTPException, Request
@@ -13,6 +14,15 @@ from .flag_submit import submit_flags as process_flag_submissions
 class FlagSubmitRequest(BaseModel):
     team_token: str = Field(min_length=3)
     flags: List[str] = Field(min_length=1, max_length=256)
+
+
+def _http_flag_submit_enabled() -> bool:
+    return os.getenv("HTTP_FLAG_SUBMIT_ENABLED", "0").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
 
 
 def build_team_router(
@@ -385,6 +395,8 @@ def build_team_router(
 
     @router.post("/api/v1/flags/submit")
     def submit_flags_http(payload: FlagSubmitRequest, request: Request) -> Dict[str, Any]:
+        if not _http_flag_submit_enabled():
+            raise HTTPException(status_code=404, detail="Flag submission is TCP-only")
         source_ip = request.headers.get("x-source-ip") or (
             request.client.host if request.client else "unknown"
         )
