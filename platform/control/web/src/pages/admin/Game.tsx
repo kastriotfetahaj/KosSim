@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { admin, type TimerSnapshot } from "../../api";
 import { useConfirmDialog } from "../../components/ConfirmDialog";
+import { emitToast } from "../../components/ToastProvider";
 import { usePoll } from "../../hooks";
 
 export default function Game() {
@@ -17,9 +18,12 @@ export default function Game() {
     try {
       await fn();
       setNotice(label);
+      emitToast(label, "success");
       refresh();
     } catch (e: unknown) {
-      setNotice(e instanceof Error ? e.message : "Failed");
+      const message = e instanceof Error ? e.message : "Failed";
+      setNotice(message);
+      emitToast(message, "danger");
     } finally {
       setBusy(false);
     }
@@ -126,9 +130,12 @@ function ScheduleForm({
         stop_after_tick: parse(stopT),
         scoreboard_freeze_tick: parse(freeze),
       });
+      emitToast("Schedule saved", "success");
       onSaved("Schedule saved");
     } catch (e: unknown) {
-      onSaved(e instanceof Error ? e.message : "Save failed");
+      const message = e instanceof Error ? e.message : "Save failed";
+      emitToast(message, "danger");
+      onSaved(message);
     } finally {
       setBusy(false);
     }

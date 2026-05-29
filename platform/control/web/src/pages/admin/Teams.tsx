@@ -2,6 +2,7 @@ import { useState } from "react";
 import { admin, type TeamRow } from "../../api";
 import { useConfirmDialog } from "../../components/ConfirmDialog";
 import CopyButton from "../../components/CopyButton";
+import { emitToast } from "../../components/ToastProvider";
 import { usePoll } from "../../hooks";
 
 type EditDraft = {
@@ -59,6 +60,7 @@ export default function Teams() {
   const save = async () => {
     if (!draft.name.trim()) {
       setMsg("Name is required");
+      emitToast("Name is required", "warning");
       return;
     }
     setBusy(true);
@@ -71,6 +73,7 @@ export default function Teams() {
           country_code: draft.country_code.trim().toUpperCase(),
           is_nop: draft.is_nop,
         });
+        emitToast(`Created ${draft.name.trim()}`, "success");
       } else if (typeof editing === "number") {
         await admin.teamUpdate(editing, {
           name: draft.name.trim(),
@@ -78,11 +81,14 @@ export default function Teams() {
           country_code: draft.country_code.trim().toUpperCase(),
           is_nop: draft.is_nop,
         });
+        emitToast(`Updated ${draft.name.trim()}`, "success");
       }
       cancel();
       refresh();
     } catch (e) {
-      setMsg(e instanceof Error ? e.message : "Save failed");
+      const message = e instanceof Error ? e.message : "Save failed";
+      setMsg(message);
+      emitToast(message, "danger");
     } finally {
       setBusy(false);
     }
@@ -100,9 +106,12 @@ export default function Teams() {
         setBusy(true);
         try {
           await admin.teamDelete(t.id);
+          emitToast(`Deleted ${t.name}`, "success");
           refresh();
         } catch (e) {
-          setMsg(e instanceof Error ? e.message : "Delete failed");
+          const message = e instanceof Error ? e.message : "Delete failed";
+          setMsg(message);
+          emitToast(message, "danger");
         } finally {
           setBusy(false);
         }
@@ -121,9 +130,12 @@ export default function Teams() {
         setBusy(true);
         try {
           await admin.teamRotateToken(t.id);
+          emitToast(`Rotated token for ${t.name}`, "success");
           refresh();
         } catch (e) {
-          setMsg(e instanceof Error ? e.message : "Rotate failed");
+          const message = e instanceof Error ? e.message : "Rotate failed";
+          setMsg(message);
+          emitToast(message, "danger");
         } finally {
           setBusy(false);
         }

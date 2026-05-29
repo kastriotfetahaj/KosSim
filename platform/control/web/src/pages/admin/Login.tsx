@@ -35,7 +35,10 @@ export default function Login() {
     <div className="login-shell">
       <form className="card login-card" onSubmit={submit}>
         <div className="brand brand-large">
-          Kos<span>Sim</span>
+          <img src="/static/kct-logo.png" alt="" />
+          <strong>
+            Kos<span>Sim</span>
+          </strong>
         </div>
         <p className="subtitle">Operator sign in</p>
         {err && <div className="alert alert-danger">{err}</div>}

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { admin, type WikiPage } from "../../api";
 import { useConfirmDialog } from "../../components/ConfirmDialog";
+import { emitToast } from "../../components/ToastProvider";
 import { usePoll } from "../../hooks";
 
 type Draft = {
@@ -28,6 +29,10 @@ export default function Wiki() {
   const { confirm, dialog } = useConfirmDialog();
 
   const pages: WikiPage[] = data?.rows ?? [];
+  const publishedCount = pages.filter((page) => page.is_published).length;
+  const draftCount = pages.length - publishedCount;
+  const selectedPage = selected === "new" ? null : pages.find((page) => page.slug === selected);
+  const bodyStats = getBodyStats(draft.body_md);
 
   // Load a page into the draft when it is selected from the list. Doing this
   // on the click (instead of in an effect keyed on `pages`) means the 30s
@@ -50,6 +55,7 @@ export default function Wiki() {
   const save = async () => {
     if (!draft.slug.trim() || !draft.title.trim()) {
       setMsg("slug and title required");
+      emitToast("Slug and title are required", "warning");
       return;
     }
     setBusy(true);
@@ -64,9 +70,12 @@ export default function Wiki() {
       });
       setSelected(out.slug);
       setMsg("Saved.");
+      emitToast(`Saved ${out.title}`, "success");
       refresh();
     } catch (e) {
-      setMsg(e instanceof Error ? e.message : String(e));
+      const message = e instanceof Error ? e.message : String(e);
+      setMsg(message);
+      emitToast(message, "danger");
     } finally {
       setBusy(false);
     }
@@ -84,11 +93,14 @@ export default function Wiki() {
         setBusy(true);
         try {
           await admin.wikiDelete(selected);
+          emitToast(`Deleted ${selected}`, "success");
           setSelected(null);
           setDraft(EMPTY);
           refresh();
         } catch (e) {
-          setMsg(e instanceof Error ? e.message : String(e));
+          const message = e instanceof Error ? e.message : String(e);
+          setMsg(message);
+          emitToast(message, "danger");
         } finally {
           setBusy(false);
         }
@@ -99,17 +111,30 @@ export default function Wiki() {
   return (
     <div className="page">
       <header className="page-header">
-        <h1>Wiki</h1>
-        <p className="muted">
-          Markdown pages served at <code>/wiki</code> and via{" "}
-          <code>/api/v1/wiki</code>.
-        </p>
+        <div>
+          <h1>Wiki</h1>
+          <p className="subtitle">
+            Manage public Markdown pages served at <code>/wiki</code>.
+          </p>
+        </div>
       </header>
+
+      <div className="admin-metric-row">
+        <MetricCard label="Pages" value={pages.length} />
+        <MetricCard label="Published" value={publishedCount} />
+        <MetricCard label="Drafts" value={draftCount} />
+        <MetricCard label="Last updated" value={formatPageDate(getLatestUpdatedAt(pages))} />
+      </div>
+
       {error && <p className="error">Failed to load: {error}</p>}
-      <div style={{ display: "grid", gap: 16, gridTemplateColumns: "260px 1fr" }}>
-        <aside className="card">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <strong>Pages</strong>
+
+      <div className="wiki-admin-layout">
+        <aside className="admin-panel wiki-page-list">
+          <div className="admin-panel-head">
+            <div>
+              <h2>Pages</h2>
+              <p>{pages.length ? "Sorted by public order" : "No pages yet"}</p>
+            </div>
             <button
               className="btn btn-ghost btn-xs"
               onClick={() => {
@@ -121,49 +146,100 @@ export default function Wiki() {
               + New
             </button>
           </div>
-          <ul style={{ listStyle: "none", padding: 0, marginTop: 8 }}>
+
+          <div className="wiki-admin-pages">
             {pages.map((p) => (
-              <li key={p.slug}>
-                <button
-                  className={`nav-item ${selected === p.slug ? "active" : ""}`}
-                  style={{ width: "100%", textAlign: "left" }}
-                  onClick={() => selectPage(p.slug)}
-                >
-                  {p.title}
-                  {!p.is_published && (
-                    <span className="muted" style={{ marginLeft: 6 }}>
-                      (draft)
-                    </span>
-                  )}
-                </button>
-              </li>
+              <button
+                key={p.slug}
+                className={`wiki-admin-page ${selected === p.slug ? "active" : ""}`}
+                type="button"
+                onClick={() => selectPage(p.slug)}
+              >
+                <span>
+                  <strong>{p.title}</strong>
+                  <small>{p.slug}</small>
+                </span>
+                <em className={p.is_published ? "status-live" : "status-draft"}>
+                  {p.is_published ? "Live" : "Draft"}
+                </em>
+              </button>
             ))}
-            {pages.length === 0 && <li className="muted">No pages yet.</li>}
-          </ul>
+            {pages.length === 0 && (
+              <div className="admin-empty compact">
+                <h2>No wiki pages</h2>
+                <p>Create the first public rulebook page.</p>
+              </div>
+            )}
+          </div>
         </aside>
-        <section className="card">
+
+        <section className="admin-panel wiki-editor-panel">
           {selected === null ? (
-            <p className="muted">Pick a page on the left, or click + New.</p>
+            <div className="wiki-editor-empty">
+              <h2>Select a page to edit</h2>
+              <p>Pick an existing public page, or create a new Markdown document.</p>
+              <button
+                className="btn btn-primary"
+                type="button"
+                onClick={() => {
+                  setSelected("new");
+                  setDraft(EMPTY);
+                  setMsg(null);
+                }}
+              >
+                Create page
+              </button>
+            </div>
           ) : (
             <>
-              <div style={{ display: "grid", gap: 8, gridTemplateColumns: "1fr 1fr" }}>
-                <label>
-                  Slug
+              <div className="admin-panel-head wiki-editor-head">
+                <div>
+                  <h2>{selected === "new" ? "New wiki page" : draft.title || "Untitled page"}</h2>
+                  <p>
+                    {selected === "new"
+                      ? "Create a public page"
+                      : `Editing /wiki/${selected}`}
+                  </p>
+                </div>
+                <div className="wiki-editor-actions">
+                  {selectedPage && selectedPage.is_published && (
+                    <a
+                      className="btn btn-ghost btn-xs"
+                      href={`/wiki/${encodeURIComponent(selectedPage.slug)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      View public
+                    </a>
+                  )}
+                  {selected !== "new" && (
+                    <button className="btn btn-ghost btn-xs" onClick={del} disabled={busy}>
+                      Delete
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="wiki-editor-grid">
+                <label className="field">
+                  <span>Slug</span>
                   <input
                     value={draft.slug}
                     onChange={(e) => setDraft({ ...draft, slug: e.target.value })}
                     disabled={selected !== "new"}
+                    placeholder="team-api-reference"
                   />
                 </label>
-                <label>
-                  Title
+                <label className="field">
+                  <span>Title</span>
                   <input
                     value={draft.title}
                     onChange={(e) => setDraft({ ...draft, title: e.target.value })}
+                    placeholder="Team API Reference"
                   />
                 </label>
-                <label>
-                  Sort order
+                <label className="field">
+                  <span>Sort order</span>
                   <input
                     type="number"
                     value={draft.sort_order}
@@ -172,34 +248,41 @@ export default function Wiki() {
                     }
                   />
                 </label>
-                <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <label className="wiki-publish-toggle">
                   <input
                     type="checkbox"
                     checked={draft.is_published}
                     onChange={(e) => setDraft({ ...draft, is_published: e.target.checked })}
                   />
-                  Published
+                  <span>
+                    <strong>{draft.is_published ? "Published" : "Draft"}</strong>
+                    <small>Visible in the public wiki</small>
+                  </span>
                 </label>
               </div>
-              <label style={{ display: "block", marginTop: 12 }}>
-                Body (markdown)
+
+              <label className="field wiki-body-editor">
+                <span>Body markdown</span>
                 <textarea
                   value={draft.body_md}
                   onChange={(e) => setDraft({ ...draft, body_md: e.target.value })}
-                  rows={18}
-                  style={{ width: "100%", fontFamily: "monospace" }}
+                  rows={20}
+                  placeholder="# Page heading&#10;&#10;Write the rules, API notes, and examples here."
                 />
               </label>
-              <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+
+              <div className="wiki-editor-meta">
+                <span>{bodyStats.words} words</span>
+                <span>{bodyStats.headings} headings</span>
+                <span>{bodyStats.codeBlocks} code blocks</span>
+                <span>{selectedPage ? `Updated ${formatPageDate(selectedPage.updated_at)}` : "New page"}</span>
+              </div>
+
+              <div className="admin-panel-actions">
                 <button className="btn btn-primary" onClick={save} disabled={busy}>
                   {busy ? "Saving…" : "Save"}
                 </button>
-                {selected !== "new" && (
-                  <button className="btn btn-ghost" onClick={del} disabled={busy}>
-                    Delete
-                  </button>
-                )}
-                {msg && <span className="muted" style={{ alignSelf: "center" }}>{msg}</span>}
+                {msg && <span className="inline-status">{msg}</span>}
               </div>
             </>
           )}
@@ -208,4 +291,39 @@ export default function Wiki() {
       {dialog}
     </div>
   );
+}
+
+function MetricCard({ label, value }: { label: string; value: number | string }) {
+  return (
+    <div className="admin-metric-card">
+      <strong>{value}</strong>
+      <span>{label}</span>
+    </div>
+  );
+}
+
+function getBodyStats(body: string) {
+  const words = body.trim() ? body.trim().split(/\s+/).length : 0;
+  return {
+    words,
+    headings: (body.match(/^#{1,6}\s+/gm) ?? []).length,
+    codeBlocks: Math.floor((body.match(/```/g) ?? []).length / 2),
+  };
+}
+
+function getLatestUpdatedAt(pages: WikiPage[]): string | null {
+  return (
+    pages
+      .map((page) => page.updated_at)
+      .filter((value): value is string => Boolean(value))
+      .sort()
+      .at(-1) ?? null
+  );
+}
+
+function formatPageDate(value?: string | null): string {
+  if (!value) return "None";
+  const date = new Date(value);
+  if (Number.isNaN(date.valueOf())) return value.replace("T", " ").slice(0, 10);
+  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
